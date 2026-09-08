@@ -1,0 +1,633 @@
+/* 
+ * Mostaager Facility PRO - Advanced Import Wizard UI
+ * Step-by-step import process with validation and preview
+ */
+
+:root {
+    --ms-import-primary: var(--e-global-color-secondary, #2563eb);
+    --ms-import-secondary: #64748b;
+    --ms-import-success: #10b981;
+    --ms-import-warning: #f59e0b;
+    --ms-import-error: #ef4444;
+    --ms-import-bg: #f8fafc;
+    --ms-import-card-bg: #ffffff;
+    --ms-import-border: #e2e8f0;
+    --ms-import-text-primary: #0f172a;
+    --ms-import-text-secondary: #64748b;
+}
+
+/* ===== IMPORT WIZARD CONTAINER ===== */
+.ms-import-wizard-advanced {
+    max-width: 1200px;
+    margin: 0 auto;
+    padding: 32px;
+    background: var(--ms-import-bg);
+    font-family: 'Cairo', 'Segoe UI', Tahoma, sans-serif;
+    direction: rtl;
+}
+
+/* ===== WIZARD HEADER ===== */
+.ms-import-wizard-header {
+    background: white;
+    padding: 32px;
+    border-radius: 16px;
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
+    margin-bottom: 32px;
+    text-align: center;
+}
+
+.ms-import-wizard-title {
+    font-size: 2rem;
+    font-weight: 700;
+    color: var(--ms-import-text-primary);
+    margin-bottom: 12px;
+}
+
+.ms-import-wizard-description {
+    color: var(--ms-import-text-secondary);
+    font-size: 1.1rem;
+}
+
+/* ===== WIZARD STEPS ===== */
+.ms-import-wizard-steps {
+    display: flex;
+    justify-content: space-between;
+    margin-bottom: 40px;
+    position: relative;
+}
+
+.ms-import-wizard-steps::before {
+    content: '';
+    position: absolute;
+    top: 24px;
+    left: 0;
+    right: 0;
+    height: 2px;
+    background: var(--ms-import-border);
+    z-index: 0;
+}
+
+.ms-import-wizard-step {
+    position: relative;
+    z-index: 1;
+    text-align: center;
+    flex: 1;
+}
+
+.ms-import-step-number {
+    width: 48px;
+    height: 48px;
+    border-radius: 50%;
+    background: white;
+    border: 2px solid var(--ms-import-border);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin: 0 auto 12px;
+    font-weight: 700;
+    color: var(--ms-import-text-secondary);
+    transition: all 0.3s ease;
+}
+
+.ms-import-wizard-step.active .ms-import-step-number {
+    background: var(--ms-import-primary);
+    border-color: var(--ms-import-primary);
+    color: white;
+    transform: scale(1.1);
+}
+
+.ms-import-wizard-step.completed .ms-import-step-number {
+    background: var(--ms-import-success);
+    border-color: var(--ms-import-success);
+    color: white;
+}
+
+.ms-import-step-label {
+    font-size: 0.9rem;
+    font-weight: 600;
+    color: var(--ms-import-text-secondary);
+    transition: all 0.3s ease;
+}
+
+.ms-import-wizard-step.active .ms-import-step-label {
+    color: var(--ms-import-primary);
+}
+
+/* ===== WIZARD CONTENT ===== */
+.ms-import-wizard-content {
+    background: white;
+    padding: 32px;
+    border-radius: 16px;
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
+    margin-bottom: 24px;
+    min-height: 400px;
+}
+
+.ms-import-step-content {
+    display: none;
+    animation: fadeIn 0.4s ease;
+}
+
+.ms-import-step-content.active {
+    display: block;
+}
+
+@keyframes fadeIn {
+    from {
+        opacity: 0;
+        transform: translateY(10px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+/* ===== STEP 1: FILE UPLOAD ===== */
+.ms-import-file-upload {
+    border: 2px dashed var(--ms-import-border);
+    border-radius: 16px;
+    padding: 48px;
+    text-align: center;
+    transition: all 0.3s ease;
+    cursor: pointer;
+}
+
+.ms-import-file-upload:hover,
+.ms-import-file-upload.dragover {
+    border-color: var(--ms-import-primary);
+    background: rgba(37, 99, 235, 0.05);
+}
+
+.ms-import-file-upload-icon {
+    font-size: 4rem;
+    margin-bottom: 16px;
+}
+
+.ms-import-file-upload-title {
+    font-size: 1.25rem;
+    font-weight: 600;
+    color: var(--ms-import-text-primary);
+    margin-bottom: 8px;
+}
+
+.ms-import-file-upload-description {
+    color: var(--ms-import-text-secondary);
+    margin-bottom: 24px;
+}
+
+.ms-import-file-upload-button {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    padding: 14px 28px;
+    background: var(--ms-import-primary);
+    color: white;
+    border: none;
+    border-radius: 10px;
+    font-size: 1rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.3s ease;
+}
+
+.ms-import-file-upload-button:hover {
+    background: #1d4ed8;
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(37, 99, 235, 0.3);
+}
+
+.ms-import-file-info {
+    display: none;
+    background: var(--ms-import-bg);
+    padding: 16px;
+    border-radius: 10px;
+    margin-top: 16px;
+    align-items: center;
+    gap: 12px;
+}
+
+.ms-import-file-info.show {
+    display: flex;
+}
+
+.ms-import-file-info-icon {
+    font-size: 2rem;
+}
+
+.ms-import-file-info-name {
+    flex: 1;
+    font-weight: 600;
+    color: var(--ms-import-text-primary);
+}
+
+.ms-import-file-info-size {
+    color: var(--ms-import-text-secondary);
+    font-size: 0.9rem;
+}
+
+.ms-import-file-info-remove {
+    background: none;
+    border: none;
+    color: var(--ms-import-error);
+    cursor: pointer;
+    font-size: 1.5rem;
+    padding: 0;
+}
+
+/* ===== STEP 2: TEMPLATE SELECTION ===== */
+.ms-import-templates-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+    gap: 24px;
+}
+
+.ms-import-template-card {
+    border: 2px solid var(--ms-import-border);
+    border-radius: 16px;
+    padding: 24px;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    position: relative;
+}
+
+.ms-import-template-card:hover {
+    border-color: var(--ms-import-primary);
+    transform: translateY(-4px);
+    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.1);
+}
+
+.ms-import-template-card.selected {
+    border-color: var(--ms-import-primary);
+    background: rgba(37, 99, 235, 0.05);
+}
+
+.ms-import-template-card.selected::after {
+    content: '✓';
+    position: absolute;
+    top: 16px;
+    left: 16px;
+    width: 32px;
+    height: 32px;
+    background: var(--ms-import-primary);
+    color: white;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: 700;
+}
+
+.ms-import-template-icon {
+    font-size: 3rem;
+    margin-bottom: 16px;
+}
+
+.ms-import-template-name {
+    font-size: 1.25rem;
+    font-weight: 700;
+    color: var(--ms-import-text-primary);
+    margin-bottom: 8px;
+}
+
+.ms-import-template-description {
+    color: var(--ms-import-text-secondary);
+    font-size: 0.9rem;
+    line-height: 1.5;
+}
+
+.ms-import-template-features {
+    margin-top: 16px;
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+}
+
+.ms-import-template-feature {
+    background: var(--ms-import-bg);
+    padding: 4px 12px;
+    border-radius: 20px;
+    font-size: 0.8rem;
+    color: var(--ms-import-text-secondary);
+}
+
+/* ===== STEP 3: FIELD MAPPING ===== */
+.ms-import-field-mapping {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 32px;
+}
+
+.ms-import-mapping-columns,
+.ms-import-mapping-targets {
+    background: var(--ms-import-bg);
+    padding: 20px;
+    border-radius: 12px;
+}
+
+.ms-import-mapping-title {
+    font-size: 1.1rem;
+    font-weight: 700;
+    color: var(--ms-import-text-primary);
+    margin-bottom: 16px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.ms-import-mapping-item {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 12px;
+    background: white;
+    border-radius: 8px;
+    margin-bottom: 8px;
+    transition: all 0.3s ease;
+}
+
+.ms-import-mapping-item:hover {
+    transform: translateX(-4px);
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+}
+
+.ms-import-mapping-item.dragging {
+    opacity: 0.5;
+    transform: scale(0.95);
+}
+
+.ms-import-mapping-item-icon {
+    color: var(--ms-import-text-secondary);
+    cursor: grab;
+}
+
+.ms-import-mapping-item-name {
+    flex: 1;
+    font-weight: 600;
+    color: var(--ms-import-text-primary);
+}
+
+.ms-import-mapping-select {
+    padding: 8px 12px;
+    border: 1px solid var(--ms-import-border);
+    border-radius: 6px;
+    font-size: 0.9rem;
+    font-family: inherit;
+    min-width: 150px;
+}
+
+.ms-import-auto-map {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    margin-bottom: 20px;
+    padding: 16px;
+    background: rgba(37, 99, 235, 0.1);
+    border-radius: 10px;
+}
+
+.ms-import-auto-map-icon {
+    font-size: 1.5rem;
+}
+
+.ms-import-auto-map-text {
+    flex: 1;
+    font-weight: 600;
+    color: var(--ms-import-text-primary);
+}
+
+.ms-import-auto-map-button {
+    padding: 8px 16px;
+    background: var(--ms-import-primary);
+    color: white;
+    border: none;
+    border-radius: 6px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.3s ease;
+}
+
+.ms-import-auto-map-button:hover {
+    background: #1d4ed8;
+}
+
+/* ===== STEP 4: PREVIEW ===== */
+.ms-import-preview-table {
+    width: 100%;
+    border-collapse: collapse;
+    margin-bottom: 24px;
+}
+
+.ms-import-preview-table th,
+.ms-import-preview-table td {
+    padding: 12px 16px;
+    text-align: right;
+    border-bottom: 1px solid var(--ms-import-border);
+}
+
+.ms-import-preview-table th {
+    background: var(--ms-import-bg);
+    font-weight: 700;
+    color: var(--ms-import-text-primary);
+    font-size: 0.85rem;
+    text-transform: uppercase;
+}
+
+.ms-import-preview-table td {
+    color: var(--ms-import-text-secondary);
+    font-size: 0.9rem;
+}
+
+.ms-import-preview-table tr:hover {
+    background: var(--ms-import-bg);
+}
+
+.ms-import-preview-stats {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    gap: 16px;
+    margin-bottom: 24px;
+}
+
+.ms-import-preview-stat {
+    background: var(--ms-import-bg);
+    padding: 16px;
+    border-radius: 10px;
+    text-align: center;
+}
+
+.ms-import-preview-stat-value {
+    font-size: 1.5rem;
+    font-weight: 800;
+    color: var(--ms-import-primary);
+    margin-bottom: 4px;
+}
+
+.ms-import-preview-stat-label {
+    color: var(--ms-import-text-secondary);
+    font-size: 0.85rem;
+}
+
+.ms-import-validation-results {
+    background: rgba(16, 185, 129, 0.1);
+    border: 1px solid var(--ms-import-success);
+    padding: 16px;
+    border-radius: 10px;
+    margin-bottom: 24px;
+}
+
+.ms-import-validation-results.has-errors {
+    background: rgba(239, 68, 68, 0.1);
+    border-color: var(--ms-import-error);
+}
+
+.ms-import-validation-title {
+    font-weight: 700;
+    color: var(--ms-import-text-primary);
+    margin-bottom: 12px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.ms-import-validation-item {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 8px 0;
+    font-size: 0.9rem;
+}
+
+.ms-import-validation-item.error {
+    color: var(--ms-import-error);
+}
+
+.ms-import-validation-item.success {
+    color: var(--ms-import-success);
+}
+
+/* ===== WIZARD ACTIONS ===== */
+.ms-import-wizard-actions {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 24px 32px;
+    background: white;
+    border-radius: 16px;
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
+}
+
+.ms-import-wizard-progress {
+    flex: 1;
+    margin: 0 32px;
+}
+
+.ms-import-progress-bar {
+    height: 8px;
+    background: var(--ms-import-border);
+    border-radius: 4px;
+    overflow: hidden;
+}
+
+.ms-import-progress-fill {
+    height: 100%;
+    background: var(--ms-import-primary);
+    transition: width 0.3s ease;
+}
+
+.ms-import-progress-text {
+    text-align: center;
+    margin-top: 8px;
+    font-size: 0.85rem;
+    color: var(--ms-import-text-secondary);
+}
+
+.ms-import-wizard-buttons {
+    display: flex;
+    gap: 12px;
+}
+
+.ms-import-wizard-button {
+    padding: 12px 24px;
+    border: none;
+    border-radius: 10px;
+    font-size: 0.95rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.3s ease;
+}
+
+.ms-import-wizard-button-secondary {
+    background: var(--ms-import-bg);
+    color: var(--ms-import-text-primary);
+}
+
+.ms-import-wizard-button-secondary:hover {
+    background: #f1f5f9;
+}
+
+.ms-import-wizard-button-primary {
+    background: var(--ms-import-primary);
+    color: white;
+}
+
+.ms-import-wizard-button-primary:hover {
+    background: #1d4ed8;
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(37, 99, 235, 0.3);
+}
+
+.ms-import-wizard-button:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+    transform: none;
+}
+
+/* ===== RESPONSIVE DESIGN ===== */
+@media (max-width: 768px) {
+    .ms-import-wizard-advanced {
+        padding: 16px;
+    }
+    
+    .ms-import-wizard-steps {
+        flex-direction: column;
+        gap: 16px;
+    }
+    
+    .ms-import-wizard-steps::before {
+        display: none;
+    }
+    
+    .ms-import-wizard-step {
+        display: flex;
+        align-items: center;
+        gap: 12px;
+        text-align: right;
+    }
+    
+    .ms-import-step-number {
+        margin: 0;
+    }
+    
+    .ms-import-field-mapping {
+        grid-template-columns: 1fr;
+    }
+    
+    .ms-import-wizard-actions {
+        flex-direction: column;
+        gap: 16px;
+    }
+    
+    .ms-import-wizard-progress {
+        margin: 0;
+        width: 100%;
+    }
+    
+    .ms-import-wizard-buttons {
+        width: 100%;
+    }
+    
+    .ms-import-wizard-button {
+        flex: 1;
+    }
+}

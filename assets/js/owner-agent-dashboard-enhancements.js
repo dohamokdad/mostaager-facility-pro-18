@@ -1,0 +1,5 @@
+(function(){'use strict';
+function qs(s,r){return(r||document).querySelector(s)}
+function bindQuickActions(){document.querySelectorAll('.ms-dashboard [data-tab-target]').forEach(function(btn){if(btn.dataset.ownerAgentBound)return;btn.dataset.ownerAgentBound='1';btn.addEventListener('click',function(){var id=btn.getAttribute('data-tab-target');var tab=qs('#'+id);if(!tab)return;document.querySelectorAll('.ms-tab-content').forEach(function(x){x.classList.remove('active')});tab.classList.add('active');history.replaceState(null,'','#'+id);tab.scrollIntoView({behavior:'smooth',block:'start'});document.querySelectorAll('.ms-dashboard [data-tab-target]').forEach(function(x){x.setAttribute('aria-current',x===btn?'page':'false')})})})}
+function decodeNotifications(){document.querySelectorAll('.ms-dashboard .ms-notification-message').forEach(function(el){try{var text=el.textContent||'';if(text.indexOf('%')>=0)el.textContent=decodeURIComponent(text)}catch(e){}})}
+function init(){bindQuickActions();decodeNotifications()}document.addEventListener('DOMContentLoaded',init);window.addEventListener('hashchange',init)})();

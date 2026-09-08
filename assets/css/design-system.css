@@ -1,0 +1,402 @@
+/* Mostaager design system overrides
+   Purpose: neutralize legacy fullscreen/fixed rules and provide a lightweight design-system entry.
+*/
+
+/* Reset problematic global rules that prevent dashboard from rendering properly */
+html, body {
+    position: static !important;
+    overflow: visible !important;
+    height: auto !important;
+}
+
+.mostaager-full-wrapper,
+.mostaager-main-viewport {
+    position: static !important;
+    overflow: visible !important;
+    height: auto !important;
+}
+
+/* Small helpful defaults for the dashboard */
+.ms-dashboard { box-sizing: border-box; }
+
+.ms-status-badge{display:inline-block;padding:4px 8px;border-radius:4px;font-weight:600}
+.ms-status-badge--paid{background:#10b981;color:#fff}
+.ms-status-badge--pending{background:#f59e0b;color:#fff}
+.ms-status-badge--overdue{background:#ef4444;color:#fff}
+
+.ms-table{width:100%;border-collapse:collapse}
+.ms-table th,.ms-table td{padding:10px;border-bottom:1px solid #e5e7eb;text-align:right}
+
+.ms-toast{background:#111;color:#fff;padding:10px 14px;border-radius:6px;margin-bottom:8px;box-shadow:0 6px 18px rgba(2,6,23,0.08)}
+.ms-toast--success{background:#10b981}
+.ms-toast--error{background:#ef4444}
+
+.ms-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:16px}
+.ms-card{background:#fff;border:1px solid #e5e7eb;padding:16px;border-radius:8px}
+.ms-input{width:100%;padding:8px;border:1px solid #ddd;border-radius:6px}
+.ms-button{display:inline-block;padding:10px 14px;border-radius:6px;border:none;cursor:pointer}
+.ms-button-primary{background:#2563eb;color:#fff}
+.ms-form-row{margin-bottom:12px}
+
+/* Additional design-system utilities requested by migration plan */
+.ms-badge-paid{background:#10b981;color:#fff;padding:4px 8px;border-radius:6px;font-weight:700}
+.ms-badge-pending{background:#f59e0b;color:#fff;padding:4px 8px;border-radius:6px;font-weight:700}
+.ms-badge-overdue{background:#ef4444;color:#fff;padding:4px 8px;border-radius:6px;font-weight:700}
+
+.ms-skeleton{background:linear-gradient(90deg,#f3f4f6 25%,#e5e7eb 37%,#f3f4f6 63%);background-size:400% 100%;animation:ms-skeleton 1.2s ease-in-out infinite;border-radius:6px}
+@keyframes ms-skeleton{0%{background-position:100% 50%}100%{background-position:0 50%}}
+
+.ms-loading-spinner{width:28px;height:28px;border:4px solid rgba(0,0,0,0.08);border-top-color:#2563eb;border-radius:50%;animation:ms-spin 1s linear infinite}
+@keyframes ms-spin{to{transform:rotate(360deg)}}
+
+.ms-empty-state{padding:40px;text-align:center;color:#6b7280}
+.ms-empty-state h3{margin:0 0 8px;font-size:18px}
+.ms-empty-state p{margin:0;font-size:14px}
+
+.ms-form-group{margin-bottom:12px;display:block}
+.ms-form-error{color:#ef4444;font-size:13px;margin-top:6px}
+
+/* ============================================
+   تحسينات تصميم لوحة التحكم
+   Mostaager Facility Pro v2.0
+   ============================================ */
+
+:root {
+    --color-primary: var(--e-global-color-secondary, #2563eb);
+    --color-success: #10b981;
+    --color-warning: #f59e0b;
+    --color-error: #ef4444;
+    --color-info: #3b82f6;
+    
+    --color-bg-light: #f8fafc;
+    --color-bg-lighter: #f1f5f9;
+    --color-border: #e2e8f0;
+    --color-text-primary: #0f172a;
+    --color-text-secondary: #64748b;
+}
+
+.ms-card {
+    transition: box-shadow 0.3s ease, transform 0.2s ease;
+}
+
+.ms-card:hover {
+    box-shadow: 0 24px 64px rgba(15, 23, 42, 0.12);
+    transform: translateY(-2px);
+}
+
+.ms-card h3 {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin: 0 0 20px;
+    font-size: 1.1rem;
+    color: var(--color-text-primary);
+    font-weight: 700;
+}
+
+table {
+    width: 100%;
+    border-collapse: collapse;
+    background: #fff;
+}
+
+table thead tr {
+    background: var(--color-bg-lighter);
+    border-bottom: 2px solid var(--color-border);
+}
+
+table th {
+    padding: 14px 12px;
+    text-align: right;
+    font-weight: 700;
+    color: var(--color-text-primary);
+    font-size: 13px;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+table td {
+    padding: 12px;
+    border-bottom: 1px solid var(--color-border);
+    color: var(--color-text-secondary);
+    font-size: 14px;
+}
+
+table tbody tr:hover {
+    background: var(--color-bg-light);
+}
+
+table tbody tr:last-child td {
+    border-bottom: none;
+}
+
+.ms-discussion-create-form,
+.ms-discussion-reply-form {
+    background: #fff;
+    padding: 16px;
+    border-radius: 8px;
+    border: 1px solid var(--color-border);
+}
+
+.ms-discussion-create-form input,
+.ms-discussion-create-form textarea,
+.ms-discussion-reply-form textarea {
+    width: 100%;
+    padding: 10px 12px;
+    border: 1px solid var(--color-border);
+    border-radius: 6px;
+    font-family: inherit;
+    font-size: 14px;
+    transition: border-color 0.2s ease, box-shadow 0.2s ease;
+}
+
+.ms-discussion-create-form input:focus,
+.ms-discussion-create-form textarea:focus,
+.ms-discussion-reply-form textarea:focus {
+    outline: none;
+    border-color: var(--color-primary);
+    box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.1);
+}
+
+.ms-discussion-create-form button,
+.ms-discussion-reply-form button {
+    padding: 10px 16px;
+    background: var(--color-primary);
+    color: #fff;
+    border: none;
+    border-radius: 6px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: background 0.2s ease, transform 0.1s ease;
+}
+
+.ms-discussion-create-form button:hover,
+.ms-discussion-reply-form button:hover {
+    background: #1d4ed8;
+    transform: translateY(-1px);
+}
+
+.ms-discussion-create-form button:active,
+.ms-discussion-reply-form button:active {
+    transform: translateY(0);
+}
+
+.ms-discussions-list-ul {
+    list-style: none;
+    margin: 0;
+    padding: 0;
+}
+
+.ms-discussions-list-ul li {
+    padding: 12px;
+    border-bottom: 1px solid var(--color-border);
+    cursor: pointer;
+    transition: background 0.2s ease, color 0.2s ease;
+}
+
+.ms-discussions-list-ul li:hover {
+    background: var(--color-bg-light);
+}
+
+.ms-discussions-list-ul li:last-child {
+    border-bottom: none;
+}
+
+.ms-discussion-messages {
+    background: #fff;
+    border: 1px solid var(--color-border);
+    border-radius: 8px;
+    padding: 12px;
+    max-height: 400px;
+    overflow-y: auto;
+}
+
+.ms-discussion-messages .comment {
+    margin-bottom: 12px;
+    padding: 12px;
+    background: var(--color-bg-light);
+    border-radius: 6px;
+    border-left: 3px solid var(--color-primary);
+}
+
+.ms-discussion-messages .comment:last-child {
+    margin-bottom: 0;
+}
+
+.ms-discussion-messages .comment-author {
+    font-weight: 600;
+    color: var(--color-text-primary);
+    margin-bottom: 4px;
+}
+
+.ms-discussion-messages .comment-date {
+    font-size: 12px;
+    color: var(--color-text-secondary);
+    margin-bottom: 8px;
+}
+
+.ms-discussion-messages .comment-content {
+    color: var(--color-text-secondary);
+    line-height: 1.5;
+}
+
+/* Fix: Ensure owner 'Properties' tab (Houzez tabs) remains visible and clickable
+   when embedded inside the Mostaager dashboard. Prevent overlays from
+   blocking pointer events on small screens or within stacked contexts. */
+.property-nav-tabs,
+.houzez-properties-tabs-js {
+    position: relative;
+    z-index: 9999 !important;
+    pointer-events: auto !important;
+}
+.houzez-data-content,
+.houzez-tab-content {
+    position: relative;
+    z-index: 1;
+}
+
+.ms-facilities-derived-status {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+    gap: 12px;
+}
+
+.ms-facilities-derived-status .status-card {
+    padding: 12px;
+    background: #fff;
+}
+
+
+
+/* Guided dashboard actions and empty states */
+.ms-owner-top,
+.ms-agent-topbar {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: 24px;
+    margin-bottom: 22px;
+}
+
+.ms-eyebrow {
+    margin: 0 0 5px;
+    color: #2563eb;
+    font-size: 12px;
+    font-weight: 800;
+    letter-spacing: .02em;
+}
+
+.ms-page-subtitle {
+    margin: 6px 0 0;
+    color: #64748b;
+    font-size: 14px;
+    line-height: 1.7;
+}
+
+.ms-dashboard-actions {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: flex-end;
+    gap: 8px;
+}
+
+.ms-action-button {
+    min-height: 40px;
+    padding: 9px 14px;
+    border: 1px solid #cbd5e1;
+    border-radius: 9px;
+    background: #fff;
+    color: #334155;
+    cursor: pointer;
+    font: inherit;
+    font-size: 13px;
+    font-weight: 700;
+    transition: .18s ease;
+}
+
+.ms-action-button:hover,
+.ms-action-button:focus-visible {
+    border-color: #2563eb;
+    background: #eff6ff;
+    color: #1d4ed8;
+    outline: 2px solid #93c5fd;
+    outline-offset: 2px;
+}
+
+.ms-action-button-primary {
+    border-color: #2563eb;
+    background: #2563eb;
+    color: #fff;
+}
+
+.ms-action-button-primary:hover,
+.ms-action-button-primary:focus-visible {
+    background: #1d4ed8;
+    color: #fff;
+}
+
+.ms-guided-empty-state {
+    display: grid;
+    grid-template-columns: auto 1fr auto;
+    align-items: center;
+    gap: 16px;
+    margin: 0 0 20px;
+    padding: 18px 20px;
+    border: 1px solid #bfdbfe;
+    border-radius: 14px;
+    background: linear-gradient(90deg, #eff6ff, #fff);
+}
+
+.ms-guided-empty-state__icon {
+    display: grid;
+    width: 46px;
+    height: 46px;
+    place-items: center;
+    border-radius: 12px;
+    background: #dbeafe;
+    font-size: 22px;
+}
+
+.ms-guided-empty-state h2 {
+    margin: 0 0 4px;
+    color: #0f172a;
+    font-size: 17px;
+}
+
+.ms-guided-empty-state p {
+    margin: 0;
+    color: #475569;
+    font-size: 13px;
+    line-height: 1.7;
+}
+
+@media (max-width: 760px) {
+    .ms-owner-top,
+    .ms-agent-topbar {
+        display: block;
+    }
+
+    .ms-dashboard-actions {
+        justify-content: flex-start;
+        margin-top: 14px;
+    }
+
+    .ms-guided-empty-state {
+        grid-template-columns: auto 1fr;
+    }
+
+    .ms-guided-empty-state .ms-action-button {
+        grid-column: 1 / -1;
+        width: 100%;
+    }
+}
+
+.ms-action-center{margin:0 0 20px;padding:18px 20px;border:1px solid #e2e8f0;border-radius:16px;background:#fff;box-shadow:0 4px 14px rgba(15,23,42,.04)}
+.ms-action-center__header{display:flex;justify-content:space-between;align-items:center;gap:12px;margin-bottom:14px}.ms-action-center__header h2{margin:0;color:#0f172a;font-size:18px}.ms-action-center__header>span{padding:5px 10px;border-radius:999px;background:#f1f5f9;color:#475569;font-size:12px}
+.ms-action-center__empty{padding:12px;border-radius:10px;background:#f8fafc;color:#64748b;font-size:13px}.ms-action-center__grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(230px,1fr));gap:10px}
+.ms-action-item{display:flex;justify-content:space-between;align-items:center;gap:12px;text-align:right;padding:14px;border:1px solid #e2e8f0;border-radius:12px;background:#fff;cursor:pointer;color:#0f172a}.ms-action-item:hover,.ms-action-item:focus-visible{border-color:#93c5fd;background:#eff6ff;outline:2px solid #bfdbfe;outline-offset:2px}.ms-action-item strong,.ms-action-item small{display:block}.ms-action-item small{margin-top:4px;color:#64748b;font-size:12px}.ms-action-item b{min-width:34px;height:34px;display:grid;place-items:center;border-radius:10px;background:#eff6ff;color:#1d4ed8}.ms-action-item--warning b{background:#fef3c7;color:#92400e}.ms-action-item--info b{background:#dbeafe;color:#1e40af}
+@media(max-width:600px){.ms-action-center__header{display:block}.ms-action-center__header>span{display:inline-block;margin-top:8px}.ms-action-center__grid{grid-template-columns:1fr}}
+
+.ms-subscription-summary>div{border:1px solid #dbe3ea;background:#f8fafc;padding:14px 16px;min-height:74px}.ms-subscription-summary small{display:block;color:#64748b;font-size:12px;margin-bottom:8px}.ms-subscription-summary strong{display:block;color:#0f172a;font-size:16px}.ms-subscription-status-active,.ms-subscription-status-paid{color:#15803d!important}.ms-subscription-status-expired{color:#b91c1c!important}.ms-subscription-status-due,.ms-subscription-status-pending{color:#b45309!important}@media(max-width:720px){.ms-subscription-summary{grid-template-columns:repeat(2,minmax(0,1fr))!important}}@media(max-width:480px){.ms-subscription-summary{grid-template-columns:1fr!important}}
+
+.ms-count-badge{display:inline-flex;align-items:center;gap:5px;padding:8px 12px;border:1px solid #e2e8f0;background:#f8fafc;color:#475569;font-size:13px;font-weight:600;white-space:nowrap}.ms-count-badge strong{color:#c24126;font-size:16px}.ms-agent-properties-grid .ms-property-card{min-width:0}@media(max-width:700px){.ms-properties-header{align-items:stretch!important;flex-direction:column}.ms-properties-header .ms-action-button{width:100%}.ms-building-selector-row{align-items:stretch!important;flex-direction:column}.ms-building-counts{width:100%}.ms-count-badge{flex:1;justify-content:center}}

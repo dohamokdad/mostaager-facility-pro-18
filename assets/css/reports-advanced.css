@@ -1,0 +1,551 @@
+/* 
+ * Mostaager Facility PRO - Advanced Reports UI
+ * Interactive charts, filtering, and export functionality
+ */
+
+:root {
+    --ms-reports-primary: var(--e-global-color-secondary, #2563eb);
+    --ms-reports-secondary: #64748b;
+    --ms-reports-success: #10b981;
+    --ms-reports-warning: #f59e0b;
+    --ms-reports-error: #ef4444;
+    --ms-reports-bg: #f8fafc;
+    --ms-reports-card-bg: #ffffff;
+    --ms-reports-border: #e2e8f0;
+    --ms-reports-text-primary: #0f172a;
+    --ms-reports-text-secondary: #64748b;
+}
+
+/* ===== REPORTS CONTAINER ===== */
+.ms-reports-advanced {
+    display: grid;
+    grid-template-columns: 280px 1fr;
+    gap: 24px;
+    min-height: 100vh;
+    background: var(--ms-reports-bg);
+    font-family: 'Cairo', 'Segoe UI', Tahoma, sans-serif;
+    direction: rtl;
+}
+
+/* ===== REPORTS SIDEBAR ===== */
+.ms-reports-sidebar {
+    background: white;
+    padding: 24px;
+    border-radius: 16px;
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
+    height: fit-content;
+    position: sticky;
+    top: 24px;
+}
+
+.ms-reports-sidebar-title {
+    font-size: 1.25rem;
+    font-weight: 700;
+    color: var(--ms-reports-text-primary);
+    margin-bottom: 20px;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+.ms-reports-categories {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+
+.ms-reports-category {
+    padding: 12px 16px;
+    border-radius: 10px;
+    background: var(--ms-reports-bg);
+    cursor: pointer;
+    transition: all 0.3s ease;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    font-weight: 600;
+    color: var(--ms-reports-text-secondary);
+}
+
+.ms-reports-category:hover,
+.ms-reports-category.active {
+    background: var(--ms-reports-primary);
+    color: white;
+    transform: translateX(-4px);
+}
+
+.ms-reports-category-icon {
+    font-size: 1.2rem;
+}
+
+/* ===== REPORTS MAIN CONTENT ===== */
+.ms-reports-main {
+    display: flex;
+    flex-direction: column;
+    gap: 24px;
+}
+
+/* ===== REPORTS HEADER ===== */
+.ms-reports-header {
+    background: white;
+    padding: 24px 32px;
+    border-radius: 16px;
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 16px;
+}
+
+.ms-reports-title h1 {
+    font-size: 1.75rem;
+    font-weight: 700;
+    color: var(--ms-reports-text-primary);
+    margin: 0 0 8px 0;
+}
+
+.ms-reports-title p {
+    color: var(--ms-reports-text-secondary);
+    font-size: 0.95rem;
+    margin: 0;
+}
+
+.ms-reports-actions {
+    display: flex;
+    gap: 12px;
+    flex-wrap: wrap;
+}
+
+.ms-reports-button {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    padding: 12px 20px;
+    border-radius: 10px;
+    border: none;
+    font-size: 0.9rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    text-decoration: none;
+}
+
+.ms-reports-button-primary {
+    background: var(--ms-reports-primary);
+    color: white;
+}
+
+.ms-reports-button-primary:hover {
+    background: #1d4ed8;
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(37, 99, 235, 0.3);
+}
+
+.ms-reports-button-secondary {
+    background: var(--ms-reports-bg);
+    color: var(--ms-reports-text-primary);
+    border: 1px solid var(--ms-reports-border);
+}
+
+.ms-reports-button-secondary:hover {
+    background: #f1f5f9;
+    transform: translateY(-2px);
+}
+
+/* ===== REPORTS FILTERS ===== */
+.ms-reports-filters {
+    background: white;
+    padding: 20px 24px;
+    border-radius: 16px;
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    gap: 16px;
+    align-items: end;
+}
+
+.ms-filter-group {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+
+.ms-filter-label {
+    font-size: 0.85rem;
+    font-weight: 600;
+    color: var(--ms-reports-text-secondary);
+}
+
+.ms-filter-input,
+.ms-filter-select {
+    padding: 10px 14px;
+    border: 1px solid var(--ms-reports-border);
+    border-radius: 8px;
+    font-size: 0.9rem;
+    font-family: inherit;
+    transition: all 0.3s ease;
+    background: white;
+}
+
+.ms-filter-input:focus,
+.ms-filter-select:focus {
+    outline: none;
+    border-color: var(--ms-reports-primary);
+    box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.1);
+}
+
+.ms-filter-button {
+    padding: 10px 20px;
+    background: var(--ms-reports-primary);
+    color: white;
+    border: none;
+    border-radius: 8px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.3s ease;
+}
+
+.ms-filter-button:hover {
+    background: #1d4ed8;
+    transform: translateY(-2px);
+}
+
+/* ===== REPORTS CHARTS ===== */
+.ms-reports-charts {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(400px, 1fr));
+    gap: 24px;
+}
+
+.ms-report-chart-card {
+    background: white;
+    padding: 24px;
+    border-radius: 16px;
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
+    transition: all 0.3s ease;
+}
+
+.ms-report-chart-card:hover {
+    box-shadow: 0 8px 30px rgba(0, 0, 0, 0.12);
+    transform: translateY(-4px);
+}
+
+.ms-report-chart-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 20px;
+}
+
+.ms-report-chart-title {
+    font-size: 1.1rem;
+    font-weight: 700;
+    color: var(--ms-reports-text-primary);
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+.ms-report-chart-actions {
+    display: flex;
+    gap: 8px;
+}
+
+.ms-report-chart-action {
+    width: 36px;
+    height: 36px;
+    border-radius: 8px;
+    border: 1px solid var(--ms-reports-border);
+    background: white;
+    color: var(--ms-reports-text-secondary);
+    cursor: pointer;
+    transition: all 0.3s ease;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.ms-report-chart-action:hover {
+    background: var(--ms-reports-bg);
+    color: var(--ms-reports-primary);
+    border-color: var(--ms-reports-primary);
+}
+
+.ms-report-chart-container {
+    height: 350px;
+    position: relative;
+}
+
+/* ===== REPORTS TABLE ===== */
+.ms-reports-table-container {
+    background: white;
+    padding: 24px;
+    border-radius: 16px;
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
+    overflow-x: auto;
+}
+
+.ms-reports-table {
+    width: 100%;
+    border-collapse: collapse;
+}
+
+.ms-reports-table th,
+.ms-reports-table td {
+    padding: 16px;
+    text-align: right;
+    border-bottom: 1px solid var(--ms-reports-border);
+}
+
+.ms-reports-table th {
+    background: var(--ms-reports-bg);
+    font-weight: 700;
+    color: var(--ms-reports-text-primary);
+    font-size: 0.85rem;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+.ms-reports-table td {
+    color: var(--ms-reports-text-secondary);
+    font-size: 0.9rem;
+}
+
+.ms-reports-table tr:hover {
+    background: var(--ms-reports-bg);
+}
+
+.ms-reports-table tr:last-child td {
+    border-bottom: none;
+}
+
+/* ===== REPORTS SUMMARY CARDS ===== */
+.ms-reports-summary {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+    gap: 24px;
+}
+
+.ms-report-summary-card {
+    background: white;
+    padding: 24px;
+    border-radius: 16px;
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
+    transition: all 0.3s ease;
+    position: relative;
+    overflow: hidden;
+}
+
+.ms-report-summary-card::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 4px;
+    background: linear-gradient(90deg, var(--ms-reports-primary), #60a5fa);
+}
+
+.ms-report-summary-card:hover {
+    transform: translateY(-4px);
+    box-shadow: 0 8px 30px rgba(0, 0, 0, 0.12);
+}
+
+.ms-report-summary-icon {
+    width: 48px;
+    height: 48px;
+    border-radius: 12px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.5rem;
+    background: linear-gradient(135deg, rgba(37, 99, 235, 0.1), rgba(96, 165, 250, 0.1));
+    color: var(--ms-reports-primary);
+    margin-bottom: 16px;
+}
+
+.ms-report-summary-value {
+    font-size: 2rem;
+    font-weight: 800;
+    color: var(--ms-reports-text-primary);
+    margin-bottom: 8px;
+}
+
+.ms-report-summary-label {
+    color: var(--ms-reports-text-secondary);
+    font-size: 0.9rem;
+    font-weight: 500;
+}
+
+.ms-report-summary-trend {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    margin-top: 12px;
+    font-size: 0.85rem;
+    font-weight: 600;
+}
+
+.ms-report-summary-trend.positive {
+    color: var(--ms-reports-success);
+}
+
+.ms-report-summary-trend.negative {
+    color: var(--ms-reports-error);
+}
+
+/* ===== REPORTS EXPORT MODAL ===== */
+.ms-export-modal {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: rgba(0, 0, 0, 0.5);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 10000;
+    opacity: 0;
+    visibility: hidden;
+    transition: all 0.3s ease;
+}
+
+.ms-export-modal.active {
+    opacity: 1;
+    visibility: visible;
+}
+
+.ms-export-modal-content {
+    background: white;
+    padding: 32px;
+    border-radius: 16px;
+    max-width: 500px;
+    width: 90%;
+    transform: scale(0.9);
+    transition: all 0.3s ease;
+}
+
+.ms-export-modal.active .ms-export-modal-content {
+    transform: scale(1);
+}
+
+.ms-export-modal-title {
+    font-size: 1.25rem;
+    font-weight: 700;
+    color: var(--ms-reports-text-primary);
+    margin-bottom: 24px;
+}
+
+.ms-export-options {
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+}
+
+.ms-export-option {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 16px;
+    border: 2px solid var(--ms-reports-border);
+    border-radius: 12px;
+    cursor: pointer;
+    transition: all 0.3s ease;
+}
+
+.ms-export-option:hover,
+.ms-export-option.selected {
+    border-color: var(--ms-reports-primary);
+    background: rgba(37, 99, 235, 0.05);
+}
+
+.ms-export-option-icon {
+    font-size: 1.5rem;
+}
+
+.ms-export-option-info {
+    flex: 1;
+}
+
+.ms-export-option-title {
+    font-weight: 600;
+    color: var(--ms-reports-text-primary);
+    margin-bottom: 4px;
+}
+
+.ms-export-option-description {
+    font-size: 0.85rem;
+    color: var(--ms-reports-text-secondary);
+}
+
+.ms-export-modal-actions {
+    display: flex;
+    gap: 12px;
+    margin-top: 24px;
+}
+
+/* ===== RESPONSIVE DESIGN ===== */
+@media (max-width: 1200px) {
+    .ms-reports-advanced {
+        grid-template-columns: 1fr;
+    }
+    
+    .ms-reports-sidebar {
+        position: relative;
+        top: 0;
+    }
+    
+    .ms-reports-charts {
+        grid-template-columns: 1fr;
+    }
+}
+
+@media (max-width: 768px) {
+    .ms-reports-header {
+        flex-direction: column;
+        align-items: flex-start;
+    }
+    
+    .ms-reports-actions {
+        width: 100%;
+    }
+    
+    .ms-reports-filters {
+        grid-template-columns: 1fr;
+    }
+    
+    .ms-reports-summary {
+        grid-template-columns: 1fr;
+    }
+    
+    .ms-report-chart-container {
+        height: 250px;
+    }
+}
+
+/* ===== ANIMATIONS ===== */
+@keyframes fadeIn {
+    from {
+        opacity: 0;
+        transform: translateY(10px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+.ms-report-chart-card,
+.ms-report-summary-card {
+    animation: fadeIn 0.5s ease;
+}
+
+.ms-report-chart-card:nth-child(1) { animation-delay: 0.1s; }
+.ms-report-chart-card:nth-child(2) { animation-delay: 0.2s; }
+.ms-report-chart-card:nth-child(3) { animation-delay: 0.3s; }
+.ms-report-summary-card:nth-child(1) { animation-delay: 0.1s; }
+.ms-report-summary-card:nth-child(2) { animation-delay: 0.2s; }
+.ms-report-summary-card:nth-child(3) { animation-delay: 0.3s; }
+.ms-report-summary-card:nth-child(4) { animation-delay: 0.4s; }

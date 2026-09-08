@@ -1,0 +1,622 @@
+/* 
+ * Mostaager Facility PRO - Responsive Design
+ * Mobile-first approach with breakpoints for all devices
+ */
+
+/* ===== BASE STYLES ===== */
+* {
+    box-sizing: border-box;
+}
+
+html {
+    font-size: 16px;
+    -webkit-text-size-adjust: 100%;
+    -ms-text-size-adjust: 100%;
+}
+
+body {
+    margin: 0;
+    padding: 0;
+    font-family: 'Cairo', 'Segoe UI', Tahoma, sans-serif;
+    line-height: 1.6;
+    color: #0f172a;
+}
+
+/* ===== BREAKPOINTS ===== */
+/* Extra Small Devices (phones, less than 480px) */
+@media (max-width: 479px) {
+    html {
+        font-size: 14px;
+    }
+    
+    .ms-dashboard-advanced,
+    .ms-reports-advanced,
+    .ms-automation-dashboard {
+        grid-template-columns: 1fr;
+    }
+    
+    .ms-sidebar-advanced,
+    .ms-reports-sidebar,
+    .ms-automation-sidebar {
+        position: relative;
+        height: auto;
+        border-radius: 0 0 16px 16px;
+        padding: 16px;
+    }
+    
+    .ms-main-content,
+    .ms-reports-main,
+    .ms-automation-main {
+        padding: 16px;
+    }
+    
+    .ms-dashboard-header,
+    .ms-reports-header,
+    .ms-automation-header {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 12px;
+        padding: 16px;
+    }
+    
+    .ms-header-actions,
+    .ms-reports-actions,
+    .ms-automation-actions {
+        width: 100%;
+        flex-wrap: wrap;
+    }
+    
+    .ms-header-button,
+    .ms-reports-button,
+    .ms-automation-button {
+        flex: 1;
+        justify-content: center;
+        min-width: 120px;
+    }
+    
+    .ms-stats-grid,
+    .ms-reports-summary,
+    .ms-monitoring-dashboard {
+        grid-template-columns: 1fr;
+    }
+    
+    .ms-charts-grid,
+    .ms-activity-grid,
+    .ms-reports-charts {
+        grid-template-columns: 1fr;
+    }
+    
+    .ms-quick-actions {
+        grid-template-columns: 1fr;
+    }
+    
+    .ms-stat-value,
+    .ms-report-summary-value,
+    .ms-monitoring-metric {
+        font-size: 1.75rem;
+    }
+    
+    .ms-chart-container,
+    .ms-report-chart-container,
+    .ms-monitoring-chart {
+        height: 200px;
+    }
+    
+    .ms-reports-table-container {
+        overflow-x: auto;
+    }
+    
+    .ms-reports-table {
+        min-width: 600px;
+    }
+    
+    .ms-import-wizard-steps {
+        flex-direction: column;
+        gap: 16px;
+    }
+    
+    .ms-import-wizard-steps::before {
+        display: none;
+    }
+    
+    .ms-import-wizard-step {
+        display: flex;
+        align-items: center;
+        gap: 12px;
+        text-align: right;
+    }
+    
+    .ms-import-step-number {
+        margin: 0;
+    }
+    
+    .ms-import-field-mapping {
+        grid-template-columns: 1fr;
+    }
+    
+    .ms-import-wizard-actions {
+        flex-direction: column;
+        gap: 16px;
+    }
+    
+    .ms-import-wizard-progress {
+        margin: 0;
+        width: 100%;
+    }
+    
+    .ms-import-wizard-buttons {
+        width: 100%;
+    }
+    
+    .ms-import-wizard-button {
+        flex: 1;
+    }
+    
+    .ms-automation-tasks-grid {
+        grid-template-columns: 1fr;
+    }
+    
+    .ms-automation-rule-content {
+        grid-template-columns: 1fr;
+        gap: 8px;
+    }
+    
+    .ms-automation-rule-arrow {
+        transform: rotate(90deg);
+    }
+    
+    .ms-activity-log-item {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 8px;
+    }
+}
+
+/* Small Devices (landscape phones, 480px to 767px) */
+@media (min-width: 480px) and (max-width: 767px) {
+    .ms-stats-grid,
+    .ms-reports-summary {
+        grid-template-columns: repeat(2, 1fr);
+    }
+    
+    .ms-charts-grid,
+    .ms-reports-charts {
+        grid-template-columns: 1fr;
+    }
+    
+    .ms-activity-grid {
+        grid-template-columns: 1fr;
+    }
+    
+    .ms-quick-actions {
+        grid-template-columns: repeat(2, 1fr);
+    }
+    
+    .ms-monitoring-dashboard {
+        grid-template-columns: repeat(2, 1fr);
+    }
+    
+    .ms-automation-tasks-grid {
+        grid-template-columns: repeat(2, 1fr);
+    }
+}
+
+/* Medium Devices (tablets, 768px to 991px) */
+@media (min-width: 768px) and (max-width: 991px) {
+    .ms-dashboard-advanced,
+    .ms-reports-advanced,
+    .ms-automation-dashboard {
+        grid-template-columns: 1fr;
+    }
+    
+    .ms-sidebar-advanced,
+    .ms-reports-sidebar,
+    .ms-automation-sidebar {
+        position: relative;
+        top: 0;
+        height: auto;
+    }
+    
+    .ms-stats-grid,
+    .ms-reports-summary {
+        grid-template-columns: repeat(2, 1fr);
+    }
+    
+    .ms-charts-grid,
+    .ms-reports-charts {
+        grid-template-columns: 1fr;
+    }
+    
+    .ms-activity-grid {
+        grid-template-columns: 1fr;
+    }
+    
+    .ms-quick-actions {
+        grid-template-columns: repeat(3, 1fr);
+    }
+    
+    .ms-monitoring-dashboard {
+        grid-template-columns: repeat(2, 1fr);
+    }
+    
+    .ms-automation-tasks-grid {
+        grid-template-columns: repeat(2, 1fr);
+    }
+    
+    .ms-import-field-mapping {
+        grid-template-columns: 1fr;
+    }
+    
+    .ms-import-wizard-actions {
+        flex-direction: column;
+        gap: 16px;
+    }
+    
+    .ms-import-wizard-buttons {
+        width: 100%;
+    }
+}
+
+/* Large Devices (desktops, 992px to 1199px) */
+@media (min-width: 992px) and (max-width: 1199px) {
+    .ms-dashboard-advanced,
+    .ms-reports-advanced,
+    .ms-automation-dashboard {
+        grid-template-columns: 260px 1fr;
+    }
+    
+    .ms-stats-grid,
+    .ms-reports-summary {
+        grid-template-columns: repeat(2, 1fr);
+    }
+    
+    .ms-charts-grid,
+    .ms-reports-charts {
+        grid-template-columns: 1fr;
+    }
+    
+    .ms-activity-grid {
+        grid-template-columns: 1fr;
+    }
+    
+    .ms-quick-actions {
+        grid-template-columns: repeat(4, 1fr);
+    }
+    
+    .ms-monitoring-dashboard {
+        grid-template-columns: repeat(2, 1fr);
+    }
+    
+    .ms-automation-tasks-grid {
+        grid-template-columns: repeat(2, 1fr);
+    }
+}
+
+/* Extra Large Devices (large desktops, 1200px and up) */
+@media (min-width: 1200px) {
+    .ms-dashboard-advanced,
+    .ms-reports-advanced,
+    .ms-automation-dashboard {
+        grid-template-columns: 280px 1fr;
+    }
+    
+    .ms-stats-grid,
+    .ms-reports-summary {
+        grid-template-columns: repeat(4, 1fr);
+    }
+    
+    .ms-charts-grid {
+        grid-template-columns: 2fr 1fr;
+    }
+    
+    .ms-reports-charts {
+        grid-template-columns: repeat(2, 1fr);
+    }
+    
+    .ms-activity-grid {
+        grid-template-columns: 1fr 1fr;
+    }
+    
+    .ms-quick-actions {
+        grid-template-columns: repeat(4, 1fr);
+    }
+    
+    .ms-monitoring-dashboard {
+        grid-template-columns: repeat(3, 1fr);
+    }
+    
+    .ms-automation-tasks-grid {
+        grid-template-columns: repeat(3, 1fr);
+    }
+}
+
+/* ===== DEVICE-SPECIFIC STYLES ===== */
+
+/* Touch devices */
+@media (hover: none) and (pointer: coarse) {
+    .ms-stat-card,
+    .ms-report-chart-card,
+    .ms-automation-task-card,
+    .ms-monitoring-card {
+        &:hover {
+            transform: none;
+        }
+    }
+    
+    .ms-header-button,
+    .ms-reports-button,
+    .ms-automation-button {
+        &:hover {
+            transform: none;
+        }
+    }
+    
+    .ms-sidebar-nav-item,
+    .ms-reports-category,
+    .ms-automation-nav-item {
+        &:hover {
+            transform: none;
+        }
+    }
+    
+    /* Larger touch targets */
+    .ms-header-button,
+    .ms-reports-button,
+    .ms-automation-button,
+    .ms-chart-action-btn,
+    .ms-automation-task-action {
+        min-height: 48px;
+        min-width: 48px;
+    }
+    
+    /* Disable hover animations */
+    .ms-button-hover,
+    .ms-hover-active,
+    .ms-nav-hover {
+        animation: none !important;
+    }
+}
+
+/* High DPI displays */
+@media (-webkit-min-device-pixel-ratio: 2), (min-resolution: 192dpi) {
+    .ms-stat-icon,
+    .ms-report-summary-icon,
+    .ms-automation-task-icon {
+        image-rendering: -webkit-optimize-contrast;
+    }
+    
+    canvas {
+        image-rendering: -webkit-optimize-contrast;
+    }
+}
+
+/* Dark mode support */
+@media (prefers-color-scheme: dark) {
+    :root {
+        --ms-bg-light: #1e293b;
+        --ms-bg-white: #0f172a;
+        --ms-text-primary: #f1f5f9;
+        --ms-text-secondary: #94a3b8;
+        --ms-border: #334155;
+    }
+    
+    .ms-dashboard-advanced,
+    .ms-reports-advanced,
+    .ms-automation-dashboard {
+        background: #0f172a;
+    }
+    
+    .ms-sidebar-advanced {
+        background: linear-gradient(180deg, #1e293b 0%, #0f172a 100%);
+    }
+    
+    .ms-stat-card,
+    .ms-report-chart-card,
+    .ms-automation-task-card,
+    .ms-monitoring-card {
+        background: #1e293b;
+        border-color: #334155;
+    }
+    
+    .ms-header-button-secondary,
+    .ms-reports-button-secondary,
+    .ms-automation-button-secondary {
+        background: #334155;
+        color: #f1f5f9;
+        border-color: #475569;
+    }
+}
+
+/* Reduced motion */
+@media (prefers-reduced-motion: reduce) {
+    *,
+    *::before,
+    *::after {
+        animation-duration: 0.01ms !important;
+        animation-iteration-count: 1 !important;
+        transition-duration: 0.01ms !important;
+    }
+    
+    .ms-pulse,
+    .ms-loading-spinner {
+        animation: none;
+    }
+}
+
+/* Print styles */
+@media print {
+    .ms-sidebar-advanced,
+    .ms-reports-sidebar,
+    .ms-automation-sidebar,
+    .ms-header-actions,
+    .ms-reports-actions,
+    .ms-automation-actions,
+    .ms-chart-actions,
+    .ms-back-to-top,
+    .ms-notifications-container {
+        display: none !important;
+    }
+    
+    .ms-dashboard-advanced,
+    .ms-reports-advanced,
+    .ms-automation-dashboard {
+        grid-template-columns: 1fr;
+    }
+    
+    .ms-main-content,
+    .ms-reports-main,
+    .ms-automation-main {
+        padding: 0;
+    }
+    
+    .ms-stat-card,
+    .ms-report-chart-card,
+    .ms-automation-task-card,
+    .ms-monitoring-card {
+        break-inside: avoid;
+        box-shadow: none;
+        border: 1px solid #e2e8f0;
+    }
+    
+    body {
+        background: white;
+        color: black;
+    }
+}
+
+/* Landscape orientation */
+@media (orientation: landscape) and (max-height: 500px) {
+    .ms-sidebar-advanced,
+    .ms-reports-sidebar,
+    .ms-automation-sidebar {
+        height: auto;
+        max-height: 300px;
+        overflow-y: auto;
+    }
+    
+    .ms-chart-container,
+    .ms-report-chart-container,
+    .ms-monitoring-chart {
+        height: 150px;
+    }
+    
+    .ms-import-wizard-content {
+        min-height: 200px;
+    }
+}
+
+/* Portrait orientation */
+@media (orientation: portrait) {
+    .ms-dashboard-advanced,
+    .ms-reports-advanced,
+    .ms-automation-dashboard {
+        grid-template-columns: 1fr;
+    }
+    
+    .ms-sidebar-advanced,
+    .ms-reports-sidebar,
+    .ms-automation-sidebar {
+        position: relative;
+        height: auto;
+    }
+}
+
+/* ===== UTILITY CLASSES ===== */
+.ms-hidden-mobile {
+    @media (max-width: 767px) {
+        display: none !important;
+    }
+}
+
+.ms-hidden-tablet {
+    @media (min-width: 768px) and (max-width: 991px) {
+        display: none !important;
+    }
+}
+
+.ms-hidden-desktop {
+    @media (min-width: 992px) {
+        display: none !important;
+    }
+}
+
+.ms-visible-mobile {
+    @media (min-width: 768px) {
+        display: none !important;
+    }
+}
+
+.ms-visible-tablet {
+    @media (max-width: 767px), (min-width: 992px) {
+        display: none !important;
+    }
+}
+
+.ms-visible-desktop {
+    @media (max-width: 991px) {
+        display: none !important;
+    }
+}
+
+/* ===== PERFORMANCE OPTIMIZATIONS ===== */
+@media (max-width: 767px) {
+    /* Disable heavy animations on mobile */
+    .ms-stat-card,
+    .ms-report-chart-card,
+    .ms-automation-task-card {
+        will-change: auto;
+    }
+    
+    /* Simplified shadows */
+    .ms-stat-card,
+    .ms-report-chart-card,
+    .ms-automation-task-card,
+    .ms-monitoring-card {
+        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+    }
+    
+    /* Reduce chart complexity */
+    canvas {
+        max-width: 100%;
+    }
+}
+
+/* ===== ACCESSIBILITY ===== */
+@media (max-width: 767px) {
+    /* Larger tap targets */
+    button,
+    a,
+    input,
+    select,
+    textarea {
+        min-height: 44px;
+        min-width: 44px;
+    }
+    
+    /* Better focus states */
+    button:focus,
+    a:focus,
+    input:focus,
+    select:focus,
+    textarea:focus {
+        outline: 3px solid var(--ms-primary-color);
+        outline-offset: 2px;
+    }
+}
+
+/* ===== ORIENTATION-SPECIFIC ===== */
+@media (max-width: 767px) and (orientation: landscape) {
+    .ms-import-wizard-steps {
+        flex-direction: row;
+        flex-wrap: wrap;
+    }
+    
+    .ms-import-wizard-steps::before {
+        display: block;
+    }
+    
+    .ms-import-wizard-step {
+        flex: 1;
+        min-width: 80px;
+    }
+}

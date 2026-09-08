@@ -1,0 +1,21 @@
+.ms-building-facilities-section,
+.ms-building-maintenance-section {
+    direction: rtl;
+    text-align: right;
+}
+
+.ms-building-facilities-section .ms-building-facilities-grid,
+.ms-building-maintenance-section .ms-building-maintenance-grid {
+    display: grid;
+    gap: 16px;
+}
+
+.ms-building-facilities-section a,
+.ms-building-maintenance-section a {
+    transition: opacity 0.2s ease;
+}
+
+.ms-building-facilities-section a:hover,
+.ms-building-maintenance-section a:hover {
+    opacity: 0.9;
+}

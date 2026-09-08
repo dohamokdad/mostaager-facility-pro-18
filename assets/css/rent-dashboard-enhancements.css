@@ -1,0 +1,17 @@
+/* Rent dashboard enhancements — RTL/Houzez */
+.ms-dashboard{direction:rtl}
+.ms-dashboard .ms-content{max-width:1180px;margin-inline:auto}
+.ms-dashboard .ms-grid>.ms-card{border-top:3px solid #d4a017;min-height:118px}
+.ms-dashboard .ms-number{font-variant-numeric:tabular-nums}
+.ms-tenant-maintenance-filters{display:flex;gap:8px;flex-wrap:wrap;margin-top:14px}
+.ms-maintenance-filter{border:1px solid #dbe3ee;background:#fff;color:#334155;border-radius:999px;padding:8px 14px;cursor:pointer;font-family:inherit;font-weight:600}
+.ms-maintenance-filter.active{background:#1d4ed8;color:#fff;border-color:#1d4ed8}
+.ms-maintenance-status,.ms-maintenance-paid{display:inline-flex;align-items:center;border-radius:999px;padding:5px 10px;font-size:12px;font-weight:700;white-space:nowrap}
+.ms-status-active{background:#dbeafe;color:#1d4ed8}.ms-status-completed{background:#dcfce7;color:#166534}.ms-status-cancelled{background:#fee2e2;color:#991b1b}.ms-maintenance-paid{background:#dcfce7;color:#166534}
+.ms-tenant-pay-maintenance{border:0;background:#1d4ed8;color:#fff;border-radius:8px;padding:8px 11px;cursor:pointer;font-family:inherit;font-size:12px;font-weight:700;white-space:nowrap}
+.ms-tenant-pay-maintenance[disabled]{opacity:.65;cursor:wait}
+.ms-rent-data-warning{margin:0 0 18px;padding:12px 14px;background:#fffbeb;border:1px solid #fde68a;border-radius:12px;color:#92400e;font-size:13px}
+.ms-rent-quick-actions{display:flex;flex-wrap:wrap;gap:8px;margin:0 0 18px}.ms-rent-quick-actions a{display:inline-flex;align-items:center;gap:6px;padding:9px 12px;border-radius:10px;border:1px solid #e5e7eb;background:#fff;color:#334155;text-decoration:none;font-size:13px;font-weight:700}.ms-rent-quick-actions a.ms-primary{background:#1d4ed8;color:#fff;border-color:#1d4ed8}
+.ms-dashboard table{direction:rtl}.ms-dashboard table th{text-align:right!important}
+@media(max-width:760px){.ms-dashboard .ms-grid{grid-template-columns:1fr!important}.ms-rent-quick-actions a{flex:1;justify-content:center;min-width:130px}.ms-dashboard table{min-width:700px}}
+.ms-file-thumb,.ms-meter-thumb{display:inline-flex;align-items:center;justify-content:center;width:42px;height:42px;margin-inline-end:8px;border-radius:8px;background:#f1f5f9;vertical-align:middle;font-size:20px;overflow:hidden}.ms-file-thumb img,.ms-meter-thumb img{width:100%;height:100%;object-fit:cover}.ms-doc-lease{color:#1d4ed8;font-weight:700;background:#dbeafe;border-radius:999px;padding:5px 9px}.ms-doc-identity{color:#7c3aed;font-weight:700;background:#ede9fe;border-radius:999px;padding:5px 9px}.ms-doc-insurance{color:#047857;font-weight:700;background:#d1fae5;border-radius:999px;padding:5px 9px}.ms-doc-other{color:#475569;font-weight:700;background:#f1f5f9;border-radius:999px;padding:5px 9px}.ms-meter-electricity{color:#a16207;font-weight:700;background:#fef3c7;border-radius:999px;padding:5px 9px}.ms-meter-water{color:#0369a1;font-weight:700;background:#e0f2fe;border-radius:999px;padding:5px 9px}.ms-meter-gas{color:#be123c;font-weight:700;background:#ffe4e6;border-radius:999px;padding:5px 9px}

@@ -1,0 +1,655 @@
+/* 
+ * Mostaager Facility PRO - Advanced Dashboard UI
+ * Modern Grid-based design with animations and performance optimizations
+ */
+
+:root {
+    --ms-grid-gap: 24px;
+    --ms-card-radius: 16px;
+    --ms-card-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
+    --ms-card-shadow-hover: 0 8px 30px rgba(0, 0, 0, 0.12);
+    --ms-transition-speed: 0.3s;
+    --ms-primary-color: var(--e-global-color-secondary, #2563eb);
+    --ms-secondary-color: #64748b;
+    --ms-success-color: #10b981;
+    --ms-warning-color: #f59e0b;
+    --ms-error-color: #ef4444;
+    --ms-bg-light: #f8fafc;
+    --ms-bg-white: #ffffff;
+    --ms-text-primary: #0f172a;
+    --ms-text-secondary: #64748b;
+}
+
+/* ===== MAIN DASHBOARD GRID ===== */
+.ms-dashboard-advanced {
+    display: grid;
+    grid-template-columns: 280px 1fr;
+    grid-template-rows: auto 1fr;
+    gap: var(--ms-grid-gap);
+    min-height: 100vh;
+    background: var(--ms-bg-light);
+    font-family: 'Cairo', 'Segoe UI', Tahoma, sans-serif;
+    direction: rtl;
+}
+
+/* ===== SIDEBAR ===== */
+.ms-sidebar-advanced {
+    grid-row: 1 / -1;
+    background: linear-gradient(180deg, #1e293b 0%, #0f172a 100%);
+    padding: 32px 24px;
+    border-radius: 0 24px 24px 0;
+    box-shadow: 4px 0 20px rgba(0, 0, 0, 0.1);
+    display: flex;
+    flex-direction: column;
+    gap: 32px;
+    position: sticky;
+    top: 0;
+    height: 100vh;
+    overflow-y: auto;
+}
+
+.ms-sidebar-brand {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding-bottom: 24px;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.ms-sidebar-brand h2 {
+    color: #f5af02;
+    font-size: 1.25rem;
+    font-weight: 700;
+    margin: 0;
+}
+
+.ms-sidebar-nav {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+
+.ms-sidebar-nav-item {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 14px 16px;
+    border-radius: 12px;
+    color: #e2e8f0;
+    text-decoration: none;
+    transition: all var(--ms-transition-speed) ease;
+    position: relative;
+    overflow: hidden;
+}
+
+.ms-sidebar-nav-item::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    right: 0;
+    width: 4px;
+    height: 100%;
+    background: #f5af02;
+    transform: scaleY(0);
+    transition: transform var(--ms-transition-speed) ease;
+}
+
+.ms-sidebar-nav-item:hover,
+.ms-sidebar-nav-item.active {
+    background: rgba(245, 175, 2, 0.15);
+    color: #f5af02;
+}
+
+.ms-sidebar-nav-item:hover::before,
+.ms-sidebar-nav-item.active::before {
+    transform: scaleY(1);
+}
+
+.ms-sidebar-nav-icon {
+    width: 24px;
+    height: 24px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.1rem;
+}
+
+/* ===== MAIN CONTENT ===== */
+.ms-main-content {
+    padding: 32px;
+    display: flex;
+    flex-direction: column;
+    gap: 32px;
+}
+
+/* ===== HEADER ===== */
+.ms-dashboard-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 24px 32px;
+    background: var(--ms-bg-white);
+    border-radius: var(--ms-card-radius);
+    box-shadow: var(--ms-card-shadow);
+    animation: slideDown 0.5s ease;
+}
+
+.ms-header-title h1 {
+    color: var(--ms-text-primary);
+    font-size: 1.75rem;
+    font-weight: 700;
+    margin: 0 0 8px 0;
+}
+
+.ms-header-title p {
+    color: var(--ms-text-secondary);
+    font-size: 0.95rem;
+    margin: 0;
+}
+
+.ms-header-actions {
+    display: flex;
+    gap: 12px;
+}
+
+.ms-header-button {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    padding: 12px 20px;
+    border-radius: 10px;
+    border: none;
+    font-size: 0.9rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all var(--ms-transition-speed) ease;
+    text-decoration: none;
+}
+
+.ms-header-button-primary {
+    background: var(--ms-primary-color);
+    color: white;
+}
+
+.ms-header-button-primary:hover {
+    background: #1d4ed8;
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(37, 99, 235, 0.3);
+}
+
+.ms-header-button-secondary {
+    background: var(--ms-bg-light);
+    color: var(--ms-text-primary);
+    border: 1px solid #e2e8f0;
+}
+
+.ms-header-button-secondary:hover {
+    background: #f1f5f9;
+    transform: translateY(-2px);
+}
+
+/* ===== STATS GRID ===== */
+.ms-stats-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+    gap: var(--ms-grid-gap);
+    animation: fadeInUp 0.6s ease;
+}
+
+.ms-stat-card {
+    background: var(--ms-bg-white);
+    padding: 28px;
+    border-radius: var(--ms-card-radius);
+    box-shadow: var(--ms-card-shadow);
+    transition: all var(--ms-transition-speed) ease;
+    position: relative;
+    overflow: hidden;
+    animation: fadeInUp 0.6s ease;
+    animation-fill-mode: both;
+}
+
+.ms-stat-card:nth-child(1) { animation-delay: 0.1s; }
+.ms-stat-card:nth-child(2) { animation-delay: 0.2s; }
+.ms-stat-card:nth-child(3) { animation-delay: 0.3s; }
+.ms-stat-card:nth-child(4) { animation-delay: 0.4s; }
+
+.ms-stat-card:hover {
+    transform: translateY(-8px);
+    box-shadow: var(--ms-card-shadow-hover);
+}
+
+.ms-stat-card::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 4px;
+    background: linear-gradient(90deg, var(--ms-primary-color), #60a5fa);
+}
+
+.ms-stat-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 20px;
+}
+
+.ms-stat-icon {
+    width: 56px;
+    height: 56px;
+    border-radius: 14px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.5rem;
+    background: linear-gradient(135deg, rgba(37, 99, 235, 0.1), rgba(96, 165, 250, 0.1));
+    color: var(--ms-primary-color);
+}
+
+.ms-stat-trend {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    padding: 6px 12px;
+    border-radius: 20px;
+    font-size: 0.85rem;
+    font-weight: 600;
+}
+
+.ms-stat-trend.positive {
+    background: rgba(16, 185, 129, 0.1);
+    color: var(--ms-success-color);
+}
+
+.ms-stat-trend.negative {
+    background: rgba(239, 68, 68, 0.1);
+    color: var(--ms-error-color);
+}
+
+.ms-stat-value {
+    font-size: 2.5rem;
+    font-weight: 800;
+    color: var(--ms-text-primary);
+    margin-bottom: 8px;
+    line-height: 1;
+}
+
+.ms-stat-label {
+    color: var(--ms-text-secondary);
+    font-size: 0.95rem;
+    font-weight: 500;
+}
+
+/* ===== CHARTS GRID ===== */
+.ms-charts-grid {
+    display: grid;
+    grid-template-columns: 2fr 1fr;
+    gap: var(--ms-grid-gap);
+    animation: fadeInUp 0.7s ease;
+}
+
+.ms-chart-card {
+    background: var(--ms-bg-white);
+    padding: 28px;
+    border-radius: var(--ms-card-radius);
+    box-shadow: var(--ms-card-shadow);
+    transition: all var(--ms-transition-speed) ease;
+}
+
+.ms-chart-card:hover {
+    box-shadow: var(--ms-card-shadow-hover);
+}
+
+.ms-chart-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 24px;
+}
+
+.ms-chart-title {
+    font-size: 1.1rem;
+    font-weight: 700;
+    color: var(--ms-text-primary);
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+.ms-chart-actions {
+    display: flex;
+    gap: 8px;
+}
+
+.ms-chart-action-btn {
+    width: 36px;
+    height: 36px;
+    border-radius: 8px;
+    border: 1px solid #e2e8f0;
+    background: white;
+    color: var(--ms-text-secondary);
+    cursor: pointer;
+    transition: all var(--ms-transition-speed) ease;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.ms-chart-action-btn:hover {
+    background: var(--ms-bg-light);
+    color: var(--ms-primary-color);
+    border-color: var(--ms-primary-color);
+}
+
+.ms-chart-container {
+    height: 350px;
+    position: relative;
+}
+
+/* ===== ACTIVITY GRID ===== */
+.ms-activity-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: var(--ms-grid-gap);
+    animation: fadeInUp 0.8s ease;
+}
+
+.ms-activity-card {
+    background: var(--ms-bg-white);
+    padding: 28px;
+    border-radius: var(--ms-card-radius);
+    box-shadow: var(--ms-card-shadow);
+}
+
+.ms-activity-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 20px;
+}
+
+.ms-activity-title {
+    font-size: 1.1rem;
+    font-weight: 700;
+    color: var(--ms-text-primary);
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+.ms-activity-list {
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+}
+
+.ms-activity-item {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+    padding: 16px;
+    border-radius: 12px;
+    background: var(--ms-bg-light);
+    transition: all var(--ms-transition-speed) ease;
+}
+
+.ms-activity-item:hover {
+    background: #f1f5f9;
+    transform: translateX(-4px);
+}
+
+.ms-activity-icon {
+    width: 48px;
+    height: 48px;
+    border-radius: 12px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.2rem;
+    flex-shrink: 0;
+}
+
+.ms-activity-icon.maintenance {
+    background: rgba(239, 68, 68, 0.1);
+    color: var(--ms-error-color);
+}
+
+.ms-activity-icon.invoice {
+    background: rgba(245, 175, 2, 0.1);
+    color: var(--ms-warning-color);
+}
+
+.ms-activity-icon.property {
+    background: rgba(37, 99, 235, 0.1);
+    color: var(--ms-primary-color);
+}
+
+.ms-activity-icon.user {
+    background: rgba(16, 185, 129, 0.1);
+    color: var(--ms-success-color);
+}
+
+.ms-activity-content {
+    flex: 1;
+}
+
+.ms-activity-text {
+    color: var(--ms-text-primary);
+    font-weight: 600;
+    margin-bottom: 4px;
+}
+
+.ms-activity-time {
+    color: var(--ms-text-secondary);
+    font-size: 0.85rem;
+}
+
+.ms-activity-amount {
+    font-weight: 700;
+    color: var(--ms-primary-color);
+}
+
+/* ===== QUICK ACTIONS ===== */
+.ms-quick-actions {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    gap: 16px;
+    animation: fadeInUp 0.9s ease;
+}
+
+.ms-quick-action {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 12px;
+    padding: 24px 20px;
+    background: var(--ms-bg-white);
+    border-radius: var(--ms-card-radius);
+    box-shadow: var(--ms-card-shadow);
+    text-decoration: none;
+    color: inherit;
+    transition: all var(--ms-transition-speed) ease;
+    border: 2px solid transparent;
+}
+
+.ms-quick-action:hover {
+    border-color: var(--ms-primary-color);
+    transform: translateY(-4px);
+    box-shadow: var(--ms-card-shadow-hover);
+}
+
+.ms-quick-action-icon {
+    width: 56px;
+    height: 56px;
+    border-radius: 14px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.5rem;
+    background: linear-gradient(135deg, rgba(37, 99, 235, 0.1), rgba(96, 165, 250, 0.1));
+    color: var(--ms-primary-color);
+    transition: all var(--ms-transition-speed) ease;
+}
+
+.ms-quick-action:hover .ms-quick-action-icon {
+    background: var(--ms-primary-color);
+    color: white;
+    transform: scale(1.1);
+}
+
+.ms-quick-action-label {
+    font-weight: 600;
+    color: var(--ms-text-primary);
+    text-align: center;
+}
+
+/* ===== ANIMATIONS ===== */
+@keyframes fadeInUp {
+    from {
+        opacity: 0;
+        transform: translateY(20px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+@keyframes slideDown {
+    from {
+        opacity: 0;
+        transform: translateY(-20px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+@keyframes fadeIn {
+    from {
+        opacity: 0;
+    }
+    to {
+        opacity: 1;
+    }
+}
+
+/* ===== RESPONSIVE DESIGN ===== */
+@media (max-width: 1200px) {
+    .ms-dashboard-advanced {
+        grid-template-columns: 1fr;
+    }
+    
+    .ms-sidebar-advanced {
+        position: relative;
+        height: auto;
+        border-radius: 0 0 24px 24px;
+    }
+    
+    .ms-charts-grid {
+        grid-template-columns: 1fr;
+    }
+    
+    .ms-activity-grid {
+        grid-template-columns: 1fr;
+    }
+}
+
+@media (max-width: 768px) {
+    .ms-main-content {
+        padding: 20px;
+    }
+    
+    .ms-dashboard-header {
+        flex-direction: column;
+        gap: 16px;
+        align-items: flex-start;
+    }
+    
+    .ms-header-actions {
+        width: 100%;
+        flex-wrap: wrap;
+    }
+    
+    .ms-header-button {
+        flex: 1;
+        justify-content: center;
+    }
+    
+    .ms-stats-grid {
+        grid-template-columns: 1fr;
+    }
+    
+    .ms-quick-actions {
+        grid-template-columns: repeat(2, 1fr);
+    }
+}
+
+@media (max-width: 480px) {
+    .ms-quick-actions {
+        grid-template-columns: 1fr;
+    }
+    
+    .ms-stat-value {
+        font-size: 2rem;
+    }
+    
+    .ms-chart-container {
+        height: 250px;
+    }
+}
+
+/* ===== PERFORMANCE OPTIMIZATIONS ===== */
+.ms-dashboard-advanced,
+.ms-stat-card,
+.ms-chart-card,
+.ms-activity-card {
+    will-change: transform;
+    backface-visibility: hidden;
+    -webkit-backface-visibility: hidden;
+}
+
+/* ===== LOADING STATES ===== */
+.ms-loading {
+    position: relative;
+    overflow: hidden;
+}
+
+.ms-loading::after {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.8), transparent);
+    animation: loading 1.5s infinite;
+}
+
+@keyframes loading {
+    0% {
+        transform: translateX(-100%);
+    }
+    100% {
+        transform: translateX(100%);
+    }
+}
+
+/* ===== SKELETON LOADING ===== */
+.ms-skeleton {
+    background: linear-gradient(90deg, #f0f0f0 25%, #e0e0e0 50%, #f0f0f0 75%);
+    background-size: 200% 100%;
+    animation: skeleton 1.5s infinite;
+    border-radius: 8px;
+}
+
+@keyframes skeleton {
+    0% {
+        background-position: 200% 0;
+    }
+    100% {
+        background-position: -200% 0;
+    }
+}

@@ -1,0 +1,637 @@
+/* 
+ * Mostaager Facility PRO - Advanced Automation & Monitoring UI
+ * Task scheduling, automation rules, and real-time monitoring
+ */
+
+:root {
+    --ms-automation-primary: var(--e-global-color-secondary, #2563eb);
+    --ms-automation-secondary: #64748b;
+    --ms-automation-success: #10b981;
+    --ms-automation-warning: #f59e0b;
+    --ms-automation-error: #ef4444;
+    --ms-automation-bg: #f8fafc;
+    --ms-automation-card-bg: #ffffff;
+    --ms-automation-border: #e2e8f0;
+    --ms-automation-text-primary: #0f172a;
+    --ms-automation-text-secondary: #64748b;
+}
+
+/* ===== AUTOMATION DASHBOARD ===== */
+.ms-automation-dashboard {
+    display: grid;
+    grid-template-columns: 320px 1fr;
+    gap: 24px;
+    min-height: 100vh;
+    background: var(--ms-automation-bg);
+    font-family: 'Cairo', 'Segoe UI', Tahoma, sans-serif;
+    direction: rtl;
+}
+
+/* ===== SIDEBAR ===== */
+.ms-automation-sidebar {
+    background: white;
+    padding: 24px;
+    border-radius: 16px;
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
+    height: fit-content;
+    position: sticky;
+    top: 24px;
+}
+
+.ms-automation-sidebar-title {
+    font-size: 1.25rem;
+    font-weight: 700;
+    color: var(--ms-automation-text-primary);
+    margin-bottom: 24px;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+.ms-automation-nav {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+
+.ms-automation-nav-item {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 14px 16px;
+    border-radius: 10px;
+    background: var(--ms-automation-bg);
+    cursor: pointer;
+    transition: all 0.3s ease;
+    font-weight: 600;
+    color: var(--ms-automation-text-secondary);
+}
+
+.ms-automation-nav-item:hover,
+.ms-automation-nav-item.active {
+    background: var(--ms-automation-primary);
+    color: white;
+    transform: translateX(-4px);
+}
+
+.ms-automation-nav-icon {
+    font-size: 1.2rem;
+}
+
+/* ===== MAIN CONTENT ===== */
+.ms-automation-main {
+    display: flex;
+    flex-direction: column;
+    gap: 24px;
+}
+
+/* ===== HEADER ===== */
+.ms-automation-header {
+    background: white;
+    padding: 24px 32px;
+    border-radius: 16px;
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.ms-automation-title h1 {
+    font-size: 1.75rem;
+    font-weight: 700;
+    color: var(--ms-automation-text-primary);
+    margin: 0 0 8px 0;
+}
+
+.ms-automation-title p {
+    color: var(--ms-automation-text-secondary);
+    font-size: 0.95rem;
+    margin: 0;
+}
+
+.ms-automation-actions {
+    display: flex;
+    gap: 12px;
+}
+
+.ms-automation-button {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    padding: 12px 20px;
+    border-radius: 10px;
+    border: none;
+    font-size: 0.9rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    text-decoration: none;
+}
+
+.ms-automation-button-primary {
+    background: var(--ms-automation-primary);
+    color: white;
+}
+
+.ms-automation-button-primary:hover {
+    background: #1d4ed8;
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(37, 99, 235, 0.3);
+}
+
+.ms-automation-button-secondary {
+    background: var(--ms-automation-bg);
+    color: var(--ms-automation-text-primary);
+    border: 1px solid var(--ms-automation-border);
+}
+
+.ms-automation-button-secondary:hover {
+    background: #f1f5f9;
+    transform: translateY(-2px);
+}
+
+/* ===== SCHEDULED TASKS ===== */
+.ms-automation-section {
+    background: white;
+    padding: 24px;
+    border-radius: 16px;
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
+}
+
+.ms-automation-section-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 24px;
+}
+
+.ms-automation-section-title {
+    font-size: 1.25rem;
+    font-weight: 700;
+    color: var(--ms-automation-text-primary);
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+.ms-automation-tasks-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+    gap: 20px;
+}
+
+.ms-automation-task-card {
+    border: 1px solid var(--ms-automation-border);
+    border-radius: 12px;
+    padding: 20px;
+    transition: all 0.3s ease;
+    position: relative;
+}
+
+.ms-automation-task-card:hover {
+    border-color: var(--ms-automation-primary);
+    transform: translateY(-4px);
+    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.1);
+}
+
+.ms-automation-task-card.active {
+    border-color: var(--ms-automation-success);
+    background: rgba(16, 185, 129, 0.05);
+}
+
+.ms-automation-task-card.paused {
+    border-color: var(--ms-automation-warning);
+    background: rgba(245, 175, 2, 0.05);
+}
+
+.ms-automation-task-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: start;
+    margin-bottom: 16px;
+}
+
+.ms-automation-task-icon {
+    width: 48px;
+    height: 48px;
+    border-radius: 12px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.5rem;
+    background: linear-gradient(135deg, rgba(37, 99, 235, 0.1), rgba(96, 165, 250, 0.1));
+    color: var(--ms-automation-primary);
+}
+
+.ms-automation-task-status {
+    width: 12px;
+    height: 12px;
+    border-radius: 50%;
+    background: var(--ms-automation-success);
+    animation: pulse 2s infinite;
+}
+
+.ms-automation-task-card.paused .ms-automation-task-status {
+    background: var(--ms-automation-warning);
+    animation: none;
+}
+
+@keyframes pulse {
+    0%, 100% {
+        opacity: 1;
+    }
+    50% {
+        opacity: 0.5;
+    }
+}
+
+.ms-automation-task-name {
+    font-size: 1.1rem;
+    font-weight: 700;
+    color: var(--ms-automation-text-primary);
+    margin-bottom: 8px;
+}
+
+.ms-automation-task-description {
+    color: var(--ms-automation-text-secondary);
+    font-size: 0.9rem;
+    margin-bottom: 16px;
+    line-height: 1.5;
+}
+
+.ms-automation-task-schedule {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 8px 12px;
+    background: var(--ms-automation-bg);
+    border-radius: 8px;
+    font-size: 0.85rem;
+    color: var(--ms-automation-text-secondary);
+    margin-bottom: 12px;
+}
+
+.ms-automation-task-stats {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 12px;
+    margin-bottom: 16px;
+}
+
+.ms-automation-task-stat {
+    text-align: center;
+    padding: 8px;
+    background: var(--ms-automation-bg);
+    border-radius: 8px;
+}
+
+.ms-automation-task-stat-value {
+    font-size: 1.25rem;
+    font-weight: 700;
+    color: var(--ms-automation-primary);
+}
+
+.ms-automation-task-stat-label {
+    font-size: 0.75rem;
+    color: var(--ms-automation-text-secondary);
+}
+
+.ms-automation-task-actions {
+    display: flex;
+    gap: 8px;
+}
+
+.ms-automation-task-action {
+    flex: 1;
+    padding: 8px 12px;
+    border: 1px solid var(--ms-automation-border);
+    border-radius: 6px;
+    background: white;
+    color: var(--ms-automation-text-secondary);
+    font-size: 0.85rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.3s ease;
+}
+
+.ms-automation-task-action:hover {
+    background: var(--ms-automation-bg);
+    color: var(--ms-automation-primary);
+    border-color: var(--ms-automation-primary);
+}
+
+/* ===== AUTOMATION RULES ===== */
+.ms-automation-rules-container {
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+}
+
+.ms-automation-rule-card {
+    background: var(--ms-automation-bg);
+    padding: 20px;
+    border-radius: 12px;
+    border-right: 4px solid var(--ms-automation-primary);
+    transition: all 0.3s ease;
+}
+
+.ms-automation-rule-card:hover {
+    transform: translateX(-4px);
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+}
+
+.ms-automation-rule-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 16px;
+}
+
+.ms-automation-rule-name {
+    font-size: 1.1rem;
+    font-weight: 700;
+    color: var(--ms-automation-text-primary);
+}
+
+.ms-automation-rule-toggle {
+    width: 48px;
+    height: 24px;
+    background: var(--ms-automation-border);
+    border-radius: 12px;
+    position: relative;
+    cursor: pointer;
+    transition: all 0.3s ease;
+}
+
+.ms-automation-rule-toggle.active {
+    background: var(--ms-automation-success);
+}
+
+.ms-automation-rule-toggle::after {
+    content: '';
+    position: absolute;
+    top: 2px;
+    right: 2px;
+    width: 20px;
+    height: 20px;
+    background: white;
+    border-radius: 50%;
+    transition: all 0.3s ease;
+}
+
+.ms-automation-rule-toggle.active::after {
+    right: 26px;
+}
+
+.ms-automation-rule-content {
+    display: grid;
+    grid-template-columns: 1fr auto 1fr;
+    gap: 16px;
+    align-items: center;
+}
+
+.ms-automation-rule-trigger,
+.ms-automation-rule-action {
+    padding: 12px;
+    background: white;
+    border-radius: 8px;
+    text-align: center;
+}
+
+.ms-automation-rule-label {
+    font-size: 0.8rem;
+    font-weight: 600;
+    color: var(--ms-automation-text-secondary);
+    margin-bottom: 8px;
+    text-transform: uppercase;
+}
+
+.ms-automation-rule-value {
+    font-size: 0.95rem;
+    color: var(--ms-automation-text-primary);
+    font-weight: 600;
+}
+
+.ms-automation-rule-arrow {
+    font-size: 1.5rem;
+    color: var(--ms-automation-text-secondary);
+}
+
+/* ===== MONITORING DASHBOARD ===== */
+.ms-monitoring-dashboard {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+    gap: 24px;
+}
+
+.ms-monitoring-card {
+    background: white;
+    padding: 24px;
+    border-radius: 16px;
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
+    transition: all 0.3s ease;
+}
+
+.ms-monitoring-card:hover {
+    transform: translateY(-4px);
+    box-shadow: 0 8px 30px rgba(0, 0, 0, 0.12);
+}
+
+.ms-monitoring-card-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 20px;
+}
+
+.ms-monitoring-card-title {
+    font-size: 1.1rem;
+    font-weight: 700;
+    color: var(--ms-automation-text-primary);
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+.ms-monitoring-card-status {
+    width: 12px;
+    height: 12px;
+    border-radius: 50%;
+    background: var(--ms-automation-success);
+}
+
+.ms-monitoring-card.status-warning .ms-monitoring-card-status {
+    background: var(--ms-automation-warning);
+}
+
+.ms-monitoring-card.status-error .ms-monitoring-card-status {
+    background: var(--ms-automation-error);
+}
+
+.ms-monitoring-metric {
+    font-size: 2.5rem;
+    font-weight: 800;
+    color: var(--ms-automation-text-primary);
+    margin-bottom: 8px;
+}
+
+.ms-monitoring-label {
+    color: var(--ms-automation-text-secondary);
+    font-size: 0.9rem;
+    margin-bottom: 16px;
+}
+
+.ms-monitoring-chart {
+    height: 200px;
+    position: relative;
+}
+
+.ms-monitoring-alerts {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+}
+
+.ms-monitoring-alert {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 12px;
+    border-radius: 8px;
+    font-size: 0.9rem;
+}
+
+.ms-monitoring-alert.warning {
+    background: rgba(245, 175, 2, 0.1);
+    color: var(--ms-automation-warning);
+}
+
+.ms-monitoring-alert.error {
+    background: rgba(239, 68, 68, 0.1);
+    color: var(--ms-automation-error);
+}
+
+.ms-monitoring-alert.info {
+    background: rgba(37, 99, 235, 0.1);
+    color: var(--ms-automation-primary);
+}
+
+/* ===== ACTIVITY LOG ===== */
+.ms-automation-activity-log {
+    background: white;
+    padding: 24px;
+    border-radius: 16px;
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
+}
+
+.ms-activity-log-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 20px;
+}
+
+.ms-activity-log-list {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    max-height: 400px;
+    overflow-y: auto;
+}
+
+.ms-activity-log-item {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+    padding: 16px;
+    border-radius: 10px;
+    background: var(--ms-automation-bg);
+    transition: all 0.3s ease;
+}
+
+.ms-activity-log-item:hover {
+    background: #f1f5f9;
+    transform: translateX(-4px);
+}
+
+.ms-activity-log-icon {
+    width: 40px;
+    height: 40px;
+    border-radius: 10px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.2rem;
+    flex-shrink: 0;
+}
+
+.ms-activity-log-icon.success {
+    background: rgba(16, 185, 129, 0.1);
+    color: var(--ms-automation-success);
+}
+
+.ms-activity-log-icon.error {
+    background: rgba(239, 68, 68, 0.1);
+    color: var(--ms-automation-error);
+}
+
+.ms-activity-log-icon.info {
+    background: rgba(37, 99, 235, 0.1);
+    color: var(--ms-automation-primary);
+}
+
+.ms-activity-log-content {
+    flex: 1;
+}
+
+.ms-activity-log-text {
+    font-weight: 600;
+    color: var(--ms-automation-text-primary);
+    margin-bottom: 4px;
+}
+
+.ms-activity-log-time {
+    color: var(--ms-automation-text-secondary);
+    font-size: 0.85rem;
+}
+
+/* ===== RESPONSIVE DESIGN ===== */
+@media (max-width: 1200px) {
+    .ms-automation-dashboard {
+        grid-template-columns: 1fr;
+    }
+    
+    .ms-automation-sidebar {
+        position: relative;
+        top: 0;
+    }
+    
+    .ms-automation-rule-content {
+        grid-template-columns: 1fr;
+        gap: 8px;
+    }
+    
+    .ms-automation-rule-arrow {
+        transform: rotate(90deg);
+    }
+}
+
+@media (max-width: 768px) {
+    .ms-automation-header {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 16px;
+    }
+    
+    .ms-automation-actions {
+        width: 100%;
+    }
+    
+    .ms-automation-tasks-grid {
+        grid-template-columns: 1fr;
+    }
+    
+    .ms-monitoring-dashboard {
+        grid-template-columns: 1fr;
+    }
+}
