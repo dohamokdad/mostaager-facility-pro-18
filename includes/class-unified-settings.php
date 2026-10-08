@@ -432,36 +432,10 @@ class MS_Unified_Settings {
                         'default' => true,
                         'description' => 'إنشاء فواتير تلقائياً للرسومات الدورية'
                     ),
-                    'payment_gateway' => array(
-                        'type' => 'select',
-                        'label' => 'بوابة الدفع الافتراضية',
-                        'default' => 'telr',
-                        'options' => array(
-                            'telr' => 'Telr',
-                            'stripe' => 'Stripe',
-                            'paypal' => 'PayPal',
-                            'bank_transfer' => 'حوالة بنكية',
-                            'manual' => 'يدوي'
-                        ),
-                        'description' => 'بوابة الدفع الافتراضية'
-                    ),
-                    'telr_merchant_id' => array(
-                        'type' => 'text',
-                        'label' => 'Telr Merchant ID',
-                        'default' => '',
-                        'description' => 'معرّف التاجر في Telr'
-                    ),
-                    'telr_auth_key' => array(
-                        'type' => 'password',
-                        'label' => 'Telr Auth Key',
-                        'default' => '',
-                        'description' => 'مفتاح المصادقة في Telr'
-                    ),
-                    'telr_test_mode' => array(
-                        'type' => 'checkbox',
-                        'label' => 'وضع اختبار Telr',
-                        'default' => true,
-                        'description' => 'تفعيل وضع الاختبار لـ Telr'
+                    'payment_note' => array(
+                        'type' => 'info',
+                        'label' => 'بوابات الدفع',
+                        'description' => 'الدفع يتم بالكامل عبر WooCommerce. فعّلي البوابة من: ووكومرس ← الإعدادات ← المدفوعات.'
                     ),
                     'bank_name' => array(
                         'type' => 'text',
@@ -584,7 +558,8 @@ class MS_Unified_Settings {
         
         foreach ($this->settings_sections as $section_key => $section) {
             foreach ($section['fields'] as $field_key => $field) {
-                $this->settings_defaults[$section_key . '_' . $field_key] = $field['default'];
+                // حقول العرض فقط (type=info) بلا قيمة افتراضية
+                $this->settings_defaults[$section_key . '_' . $field_key] = $field['default'] ?? '';
             }
         }
     }

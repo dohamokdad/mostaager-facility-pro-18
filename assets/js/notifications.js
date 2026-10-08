@@ -10,7 +10,12 @@
             this.initScheduleForm();
             this.initTemplateSelector();
             this.initPreferencesForm();
-            this.loadStats();
+            // إحصائيات الإشعارات واجهة إدارية فقط. استدعاؤها في كل صفحة لوحة
+            // كان يرسل ms_get_notification_stats بلا معالج مسجّل، فيرد admin-ajax
+            // بـ 400 (Bad Request) مع كل فتح تبويب.
+            if ($('#ms-send-notification-form').length || $('#ms-notification-stats').length) {
+                this.loadStats();
+            }
             this.initRealtimeNotifications();
         },
         

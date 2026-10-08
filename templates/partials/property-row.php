@@ -87,7 +87,7 @@ $edit_url = $edit_url ? esc_url($edit_url) : '';
         <?php endif; ?>
         <?php if (!empty($property_status_terms) && !is_wp_error($property_status_terms)): ?>
             <div style="margin-top:8px;">
-                <select class="agent-property-status" data-prop-id="<?php echo intval($post_id); ?>" style="padding:6px 8px;border:1px solid #d1d5db;border-radius:6px;background:#fff;min-width:180px;">
+                <select class="agent-property-status" data-prop-id="<?php echo intval($post_id); ?>" style="padding:6px 8px;border:1px solid var(--ms-border-strong, #DCCFB8);border-radius:6px;background:#fff;min-width:180px;">
                     <option value=""><?php echo esc_html__('تغيير الحالة', 'mostaager-facility-pro'); ?></option>
                     <?php foreach ($property_status_terms as $term): ?>
                         <option value="<?php echo esc_attr($term->slug); ?>" <?php selected($current_property_status_slug, $term->slug); ?>>
@@ -108,17 +108,17 @@ $edit_url = $edit_url ? esc_url($edit_url) : '';
         <td>
             <?php if ($contract_url): ?>
                 <div style="margin-bottom:8px;">
-                    <a href="<?php echo esc_url($contract_url); ?>" target="_blank" style="color:#2563eb;text-decoration:underline;">
+                    <a href="<?php echo esc_url($contract_url); ?>" target="_blank" style="color:var(--ms-primary, #0D1B2A);text-decoration:underline;">
                         <?php echo esc_html($contract_type === 'sale' ? 'عرض عقد البيع' : ($contract_type === 'rent' ? 'عرض عقد الإيجار' : 'عرض العقد')); ?>
                     </a>
                 </div>
                 <?php $contract_signature_status = sanitize_key(get_post_meta($post_id, 'ms_property_contract_signature_status', true)); ?>
-                <div style="margin-bottom:8px;font-size:12px;color:<?php echo $contract_signature_status === 'signed_by_both' ? '#166534' : '#92400e'; ?>;font-weight:600;">
+                <div style="margin-bottom:8px;font-size:12px;color:<?php echo $contract_signature_status === 'signed_by_both' ? 'var(--ms-success, #15803D)' : 'var(--ms-warning, #B45309)'; ?>;font-weight:600;">
                     <?php echo esc_html($contract_signature_status === 'signed_by_both' ? '✓ موقع من الطرفين' : '⏳ بانتظار توقيع الطرفين'); ?>
                 </div>
             <?php endif; ?>
-            <button type="button" class="button agent-upload-contract-button" data-prop-id="<?php echo intval($post_id); ?>" data-contract-type="rent" style="margin-right:6px;padding:6px 10px;background:#2563eb;color:#fff;border:none;border-radius:6px;cursor:pointer;">رفع عقد إيجار</button>
-            <button type="button" class="button agent-upload-contract-button" data-prop-id="<?php echo intval($post_id); ?>" data-contract-type="sale" style="padding:6px 10px;background:#10b981;color:#fff;border:none;border-radius:6px;cursor:pointer;">رفع عقد بيع</button>
+            <button type="button" class="button agent-upload-contract-button" data-prop-id="<?php echo intval($post_id); ?>" data-contract-type="rent" style="margin-right:6px;padding:6px 10px;background:var(--ms-accent, #D4AF37);color: var(--ms-primary, #0D1B2A);border:none;border-radius:6px;cursor:pointer;">رفع عقد إيجار</button>
+            <button type="button" class="button agent-upload-contract-button" data-prop-id="<?php echo intval($post_id); ?>" data-contract-type="sale" style="padding:6px 10px;background:var(--ms-success, #15803D);color:#fff;border:none;border-radius:6px;cursor:pointer;">رفع عقد بيع</button>
             <input type="file" name="contract_file" class="agent-contract-file-input" data-prop-id="<?php echo intval($post_id); ?>" data-contract-type="rent" style="display:none;" accept=".pdf,.png,.jpg,.jpeg,.doc,.docx">
             <input type="file" name="contract_file" class="agent-contract-file-input" data-prop-id="<?php echo intval($post_id); ?>" data-contract-type="sale" style="display:none;" accept=".pdf,.png,.jpg,.jpeg,.doc,.docx">
             <?php if ($edit_url): ?>
@@ -131,16 +131,16 @@ $edit_url = $edit_url ? esc_url($edit_url) : '';
         <td>
             <?php if ($contract_url): ?>
                 <div style="margin-bottom:8px;">
-                    <a href="<?php echo esc_url($contract_url); ?>" target="_blank" style="color:#2563eb;text-decoration:underline;">
+                    <a href="<?php echo esc_url($contract_url); ?>" target="_blank" style="color:var(--ms-primary, #0D1B2A);text-decoration:underline;">
                         <?php echo esc_html($contract_type === 'sale' ? 'عرض عقد البيع' : ($contract_type === 'rent' ? 'عرض عقد الإيجار' : 'عرض العقد')); ?>
                     </a>
                 </div>
             <?php endif; ?>
-            <button type="button" class="button agent-upload-contract-button" data-prop-id="<?php echo intval($post_id); ?>" data-contract-type="rent" style="margin-right:6px;padding:6px 10px;background:#2563eb;color:#fff;border:none;border-radius:6px;cursor:pointer;">رفع عقد إيجار</button>
-            <button type="button" class="button agent-upload-contract-button" data-prop-id="<?php echo intval($post_id); ?>" data-contract-type="sale" style="padding:6px 10px;background:#10b981;color:#fff;border:none;border-radius:6px;cursor:pointer;">رفع عقد بيع</button>
+            <button type="button" class="button agent-upload-contract-button" data-prop-id="<?php echo intval($post_id); ?>" data-contract-type="rent" style="margin-right:6px;padding:6px 10px;background:var(--ms-accent, #D4AF37);color: var(--ms-primary, #0D1B2A);border:none;border-radius:6px;cursor:pointer;">رفع عقد إيجار</button>
+            <button type="button" class="button agent-upload-contract-button" data-prop-id="<?php echo intval($post_id); ?>" data-contract-type="sale" style="padding:6px 10px;background:var(--ms-success, #15803D);color:#fff;border:none;border-radius:6px;cursor:pointer;">رفع عقد بيع</button>
             <input type="file" name="contract_file" class="agent-contract-file-input" data-prop-id="<?php echo intval($post_id); ?>" data-contract-type="rent" style="display:none;" accept=".pdf,.png,.jpg,.jpeg,.doc,.docx">
             <input type="file" name="contract_file" class="agent-contract-file-input" data-prop-id="<?php echo intval($post_id); ?>" data-contract-type="sale" style="display:none;" accept=".pdf,.png,.jpg,.jpeg,.doc,.docx">
-            <div style="margin-top:10px;color:#64748b;font-size:0.95rem;line-height:1.4;">
+            <div style="margin-top:10px;color:var(--ms-muted, #6B7280);font-size:0.95rem;line-height:1.4;">
                 <div><?php echo esc_html__('رقم العقار:', 'mostaager-facility-pro'); ?> <?php echo intval($post_id); ?></div>
                 <div><?php echo esc_html($type); ?></div>
                 <div><?php echo esc_html($date); ?></div>

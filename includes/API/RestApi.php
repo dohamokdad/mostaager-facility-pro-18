@@ -249,28 +249,70 @@ class RestApi {
         return self::user_has_role($user_id, 'tenant');
     }
 
+    /**
+     * تفويض على مستوى الكائن: لا يكفي امتلاك توكن صالح لقراءة مبنى بتمرير رقمه.
+     * يعتمد الطبقة الموحّدة (مدير المبنى، الوكيل المعيّن، المالك، المستأجر).
+     */
+    private static function can_access_building($user_id, $building_id)
+    {
+        // منطق واحد مشترك مع mostager/v1
+        return \MS_API::can_access_building($user_id, $building_id);
+    }
+
     private static function api_response($success, $data_or_message, $status = 200)
     {
         if ($success) {
             return new \WP_REST_Response(array('success' => true, 'data' => $data_or_message), $status);
         }
-        return new \WP_REST_Response(array('success' => false, 'message' => $data_or_message), $status);
+        return new \WP_REST_Response(array('success' => false, 'code' => 'error', 'message' => $data_or_message), $status);
+    }
+
+    /* الاستجابة والترقيم من الطبقة المشتركة MS_API */
+    private static function api_success($data, $meta = array(), $status = 200)
+    {
+        return \MS_API::success($data, $meta, $status);
+    }
+
+    private static function api_error($code, $message, $status = 400, $details = array())
+    {
+        return \MS_API::error($code, $message, $status, $details);
+    }
+
+    private static function paging($request, $default_per_page = 20)
+    {
+        return \MS_API::paging($request, $default_per_page);
+    }
+
+    private static function paginate($items, $page, $per_page)
+    {
+        return \MS_API::paginate($items, $page, $per_page);
     }
 
     public static function handle_auth_token($request)
     {
         $params = $request->get_json_params();
         $username = isset($params['username']) ? sanitize_text_field($params['username']) : '';
-        $password = isset($params['password']) ? sanitize_text_field($params['password']) : '';
+        // لا تُعقَّم كلمة المرور: sanitize_text_field كانت تحذف رموزاً مثل < و & فيفشل الدخول
+        $password = isset($params['password']) ? (string) $params['password'] : '';
 
-        if (empty($username) || empty($password)) {
+        if (empty($username) || $password === '') {
             return self::api_response(false, 'Missing credentials', 400);
+        }
+
+        // حد المحاولات: 5 محاولات فاشلة لكل IP خلال 15 دقيقة
+        $ip       = isset($_SERVER['REMOTE_ADDR']) ? sanitize_text_field(wp_unslash($_SERVER['REMOTE_ADDR'])) : 'unknown';
+        $rate_key = 'ms_auth_fail_' . md5($ip);
+        $fails    = (int) get_transient($rate_key);
+        if ($fails >= 5) {
+            return self::api_response(false, 'Too many attempts. Try again in 15 minutes.', 429);
         }
 
         $user = wp_authenticate($username, $password);
         if (is_wp_error($user)) {
+            set_transient($rate_key, $fails + 1, 15 * MINUTE_IN_SECONDS);
             return self::api_response(false, 'Invalid credentials', 401);
         }
+        delete_transient($rate_key);
 
         $role = !empty($user->roles) ? sanitize_text_field($user->roles[0]) : 'subscriber';
         $token = self::generate_jwt($user->ID, $role);
@@ -303,27 +345,16 @@ class RestApi {
             return self::api_response(false, 'Invalid building id', 400);
         }
 
-        if (!self::user_is_admin($user_id) && !self::user_is_building_manager($user_id)) {
-            return self::api_response(false, 'غير مصرح', 403);
-        }
-
-        if (self::user_is_building_manager($user_id)) {
-            $allowed = false;
-            $buildings = function_exists('ms_get_buildings_by_manager') ? ms_get_buildings_by_manager($user_id) : array();
-            foreach ($buildings as $building) {
-                $bid = intval($building->id ?? $building->ID ?? 0);
-                if ($bid === $building_id) {
-                    $allowed = true;
-                    break;
-                }
-            }
-            if (!$allowed) {
-                return self::api_response(false, 'غير مصرح', 403);
-            }
+        // كان المالك والمستأجر يُرفضان دائماً؛ والتحقق الآن على مستوى المبنى نفسه
+        if (!self::can_access_building($user_id, $building_id)) {
+            return self::api_error('forbidden_building', 'لا تملك صلاحية الوصول إلى هذا المبنى', 403);
         }
 
         $units = function_exists('ms_get_units_by_building') ? ms_get_units_by_building($building_id) : array();
-        return self::api_response(true, $units);
+        list($page, $per_page) = self::paging($request, 50);
+        list($items, $meta) = self::paginate($units, $page, $per_page);
+
+        return self::api_success($items, $meta);
     }
 
     public static function get_invoices($request)
@@ -392,13 +423,24 @@ class RestApi {
             }
         } else {
             if (!$building_id) {
-                return self::api_response(false, 'building_id is required for this role', 400);
+                return self::api_error('missing_building_id', 'building_id مطلوب لهذا الدور', 400);
+            }
+            // كان أي حامل توكن يقرأ صيانة أي مبنى بتمرير رقمه
+            if (!self::can_access_building($user_id, $building_id)) {
+                return self::api_error('forbidden_building', 'لا تملك صلاحية الوصول إلى هذا المبنى', 403);
             }
             $args['building_id'] = $building_id;
         }
 
+        if ($building_id && !self::can_access_building($user_id, $building_id)) {
+            return self::api_error('forbidden_building', 'لا تملك صلاحية الوصول إلى هذا المبنى', 403);
+        }
+
         $requests = function_exists('ms_get_maintenance_requests') ? ms_get_maintenance_requests($args) : array();
-        return self::api_response(true, $requests);
+        list($page, $per_page) = self::paging($request);
+        list($items, $meta) = self::paginate($requests, $page, $per_page);
+
+        return self::api_success($items, $meta);
     }
 
     public static function create_maintenance($request)
@@ -422,13 +464,37 @@ class RestApi {
             return self::api_response(false, 'Missing required maintenance details', 400);
         }
 
-        if (!self::user_is_admin($user_id)
-            && (!function_exists('ms_current_user_manages_building')
-                || !ms_current_user_manages_building($user_id, $building_id))) {
-            return self::api_response(false, 'غير مصرح', 403);
+        if (!self::can_access_building($user_id, $building_id)) {
+            return self::api_error('forbidden_building', 'لا تملك صلاحية على هذا المبنى', 403);
+        }
+
+        // قائمة حالات مسموحة بدل قبول أي نص
+        $allowed_statuses = array('open', 'in_progress', 'completed', 'closed');
+        if (!in_array($status, $allowed_statuses, true)) {
+            return self::api_error('invalid_status', 'حالة غير صالحة', 422, array('allowed' => $allowed_statuses));
+        }
+        $allowed_priorities = array('low', 'medium', 'high');
+        $priority = isset($params['priority']) ? sanitize_key($params['priority']) : 'medium';
+        if (!in_array($priority, $allowed_priorities, true)) {
+            return self::api_error('invalid_priority', 'أولوية غير صالحة', 422, array('allowed' => $allowed_priorities));
+        }
+        $allowed_payers = array('tenant', 'owner', 'building');
+        if (!in_array($payer_type, $allowed_payers, true)) {
+            return self::api_error('invalid_payer_type', 'جهة الدفع غير صالحة', 422, array('allowed' => $allowed_payers));
         }
 
         global $wpdb;
+        // الوحدة يجب أن تنتمي لنفس المبنى، وإلا نُسب الطلب لمبنى آخر
+        if ($unit_id) {
+            $unit_building = absint($wpdb->get_var($wpdb->prepare(
+                "SELECT building_id FROM {$wpdb->prefix}ms_units WHERE id = %d",
+                $unit_id
+            )));
+            if (!$unit_building || $unit_building !== $building_id) {
+                return self::api_error('unit_building_mismatch', 'الوحدة لا تتبع هذا المبنى', 422);
+            }
+        }
+
         $table = $wpdb->prefix . 'ms_maintenance_requests';
         $inserted = $wpdb->insert($table, array(
             'building_id' => $building_id,
@@ -439,7 +505,7 @@ class RestApi {
             'tenant_phone' => '',
             'cost' => $cost,
             'status' => $status,
-            'priority' => isset($params['priority']) ? sanitize_text_field($params['priority']) : 'medium',
+            'priority' => $priority,
             'maintenance_type' => isset($params['maintenance_type']) ? sanitize_text_field($params['maintenance_type']) : 'general',
             'created_at' => current_time('mysql'),
             'updated_at' => current_time('mysql'),
@@ -453,39 +519,39 @@ class RestApi {
         if (function_exists('ms_distribute_maintenance_invoices')) {
             ms_distribute_maintenance_invoices($maintenance_id, $building_id, $cost, $payer_type);
         }
+        do_action('ms_maintenance_created', $maintenance_id, $building_id, $unit_id);
 
-        return self::api_response(true, array('maintenance_id' => $maintenance_id));
+        return self::api_success(array('maintenance_id' => $maintenance_id), array(), 201);
     }
 
     public static function patch_maintenance($request)
     {
         $user_id = self::get_jwt_user_id($request);
 
-        if (!self::user_is_building_manager($user_id)) {
-            return self::api_response(false, 'غير مصرح', 403);
+        if (!self::user_is_building_manager($user_id) && !self::user_is_admin($user_id)) {
+            return self::api_error('forbidden', 'غير مصرح', 403);
         }
 
         $maintenance_id = intval($request->get_param('id'));
         if (!$maintenance_id) {
-            return self::api_response(false, 'Invalid maintenance id', 400);
+            return self::api_error('invalid_id', 'رقم طلب الصيانة غير صالح', 400);
         }
 
                 $params = $request->get_json_params();
         $status = sanitize_key($params['status'] ?? '');
         $allowed_statuses = array('open', 'in_progress', 'completed', 'closed');
         if (!$status || !in_array($status, $allowed_statuses, true)) {
-            return self::api_response(false, 'Invalid status', 422);
+            return self::api_error('invalid_status', 'حالة غير صالحة', 422, array('allowed' => $allowed_statuses));
         }
 
         global $wpdb;
         $table = $wpdb->prefix . 'ms_maintenance_requests';
         $current = $wpdb->get_row($wpdb->prepare("SELECT * FROM {$table} WHERE id = %d LIMIT 1", $maintenance_id));
-        if (!$current) return self::api_response(false, 'Maintenance request not found', 404);
-        if (!self::user_is_admin($user_id) && !function_exists('ms_current_user_manages_building')) {
-            return self::api_response(false, 'غير مصرح', 403);
+        if (!$current) {
+            return self::api_error('not_found', 'طلب الصيانة غير موجود', 404);
         }
-        if (!self::user_is_admin($user_id) && !ms_current_user_manages_building($user_id, absint($current->building_id))) {
-            return self::api_response(false, 'غير مصرح', 403);
+        if (!self::can_access_building($user_id, absint($current->building_id))) {
+            return self::api_error('forbidden_building', 'لا تملك صلاحية على هذا المبنى', 403);
         }
         $old_status = sanitize_key($current->status ?? '');
         $updated = $wpdb->update($table, array('status' => $status, 'updated_at' => current_time('mysql')), array('id' => $maintenance_id), array('%s','%s'), array('%d'));
@@ -600,13 +666,21 @@ class RestApi {
     public static function get_discussions($request)
 
     {
+        $user_id = self::get_jwt_user_id($request);
         $building_id = intval($request->get_param('building_id'));
         if (!$building_id) {
-            return self::api_response(false, 'building_id is required', 400);
+            return self::api_error('missing_building_id', 'building_id مطلوب', 400);
+        }
+        // لم يكن هناك أي تحقق: أي توكن صالح كان يقرأ نقاشات أي مبنى
+        if (!self::can_access_building($user_id, $building_id)) {
+            return self::api_error('forbidden_building', 'لا تملك صلاحية الوصول إلى هذا المبنى', 403);
         }
 
         $discussions = function_exists('ms_get_building_discussions') ? ms_get_building_discussions($building_id) : array();
-        return self::api_response(true, $discussions);
+        list($page, $per_page) = self::paging($request);
+        list($items, $meta) = self::paginate($discussions, $page, $per_page);
+
+        return self::api_success($items, $meta);
     }
 
     public static function create_reply($request)
@@ -639,10 +713,14 @@ class RestApi {
 
         if (self::user_is_admin($user_id) || self::user_is_building_manager($user_id)) {
             if (!$building_id) {
-                return self::api_response(false, 'building_id is required for building wallet', 400);
+                return self::api_error('missing_building_id', 'building_id مطلوب لمحفظة المبنى', 400);
+            }
+            // كان مدير أي مبنى يقرأ محفظة أي مبنى آخر بتمرير رقمه
+            if (!self::can_access_building($user_id, $building_id)) {
+                return self::api_error('forbidden_building', 'لا تملك صلاحية الوصول إلى محفظة هذا المبنى', 403);
             }
             $wallet = function_exists('ms_get_building_wallet') ? ms_get_building_wallet($building_id) : null;
-            return self::api_response(true, $wallet);
+            return self::api_success($wallet);
         }
 
         $wallet = function_exists('ms_get_user_wallet_balance') ? ms_get_user_wallet_balance($user_id) : 0;

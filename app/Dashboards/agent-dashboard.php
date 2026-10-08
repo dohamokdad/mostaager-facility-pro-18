@@ -6,11 +6,11 @@ add_shortcode('agent_dashboard_v4', function () {
         ob_start();
         ?>
         <div style="max-width:400px;margin:50px auto;padding:40px;background:#fff;border-radius:16px;box-shadow:0 4px 20px rgba(0,0,0,0.1);">
-            <h2 style="text-align:center;margin-bottom:30px;color:#0f172a;">تسجيل الدخول</h2>
+            <h2 style="text-align:center;margin-bottom:30px;color:var(--ms-primary, #0D1B2A);">تسجيل الدخول</h2>
             <?php
             $args = array(
                 'echo' => true,
-                'redirect' => (is_ssl() ? 'https://' : 'http://') . $_SERVER['HTTP_HOST'] . $_SERVER['REQUEST_URI'],
+                'redirect' => esc_url_raw(home_url(add_query_arg(array()))),
                 'form_id' => 'ms-loginform',
                 'label_username' => 'البريد الإلكتروني',
                 'label_password' => 'كلمة المرور',
@@ -27,7 +27,7 @@ add_shortcode('agent_dashboard_v4', function () {
             wp_login_form($args);
             ?>
             <p style="text-align:center;margin-top:20px;">
-                <a href="<?php echo wp_lostpassword_url(); ?>" style="color:#2563eb;text-decoration:none;">نسيت كلمة المرور؟</a>
+                <a href="<?php echo wp_lostpassword_url(); ?>" style="color:var(--ms-primary, #0D1B2A);text-decoration:none;">نسيت كلمة المرور؟</a>
             </p>
         </div>
         <?php
@@ -207,18 +207,18 @@ add_shortcode('agent_dashboard_v4', function () {
                     <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:14px;">
                         <h3 style="margin:0;">الإشعارات الأخيرة</h3>
                         <?php if ($unread_notifications_count > 0) : ?>
-                            <span style="background:#ef4444;color:#fff;padding:3px 10px;border-radius:999px;font-size:0.78rem;font-weight:700;"><?php echo intval($unread_notifications_count); ?> غير مقروء</span>
+                            <span style="background:var(--ms-danger, #B42318);color:#fff;padding:3px 10px;border-radius:999px;font-size:0.78rem;font-weight:700;"><?php echo intval($unread_notifications_count); ?> غير مقروء</span>
                         <?php endif; ?>
                         <?php if (!empty($notifications)) : ?>
-                            <button type="button" id="ms-mark-all-notifications-read" style="background:none;border:1px solid #d1d5db;padding:6px 14px;border-radius:8px;cursor:pointer;font-size:0.82rem;color:#4b5563;">تعليم الكل كمقروء</button>
+                            <button type="button" id="ms-mark-all-notifications-read" style="background:none;border:1px solid var(--ms-border-strong, #DCCFB8);padding:6px 14px;border-radius:8px;cursor:pointer;font-size:0.82rem;color:var(--ms-text, #1E2B3A);">تعليم الكل كمقروء</button>
                         <?php endif; ?>
                     </div>
                     <?php if (!empty($notifications)) : ?>
                         <div style="display:flex;flex-direction:column;gap:10px;">
                             <?php foreach ($notifications as $note) : ?>
-                                <div style="padding:14px 16px;border-radius:12px;background:<?php echo !empty($note->is_read) ? '#f9fafb' : '#eff6ff'; ?>;border:1px solid <?php echo !empty($note->is_read) ? '#e5e7eb' : '#bfdbfe'; ?>;">
-                                    <div class="ms-notification-message" style="font-size:14px;color:#111;line-height:1.6;"><?php echo esc_html(rawurldecode((string) ($note->message ?? ''))); ?></div>
-                                    <div style="margin-top:6px;font-size:12px;color:#6b7280;"><?php echo esc_html(date_i18n('Y-m-d H:i', strtotime($note->created_at ?? $note->created_on ?? ''))); ?></div>
+                                <div style="padding:14px 16px;border-radius:12px;background:<?php echo !empty($note->is_read) ? 'var(--ms-surface-alt, #FAF6EF)' : 'var(--ms-accent-soft, #F8F0D8)'; ?>;border:1px solid <?php echo !empty($note->is_read) ? 'var(--ms-border, #ECE3D4)' : 'var(--ms-accent-line, #E9D69B)'; ?>;">
+                                    <div class="ms-notification-message" style="font-size:14px;color:var(--ms-primary, #0D1B2A);line-height:1.6;"><?php echo esc_html(rawurldecode((string) ($note->message ?? ''))); ?></div>
+                                    <div style="margin-top:6px;font-size:12px;color:var(--ms-muted, #6B7280);"><?php echo esc_html(date_i18n('Y-m-d H:i', strtotime($note->created_at ?? $note->created_on ?? ''))); ?></div>
                                 </div>
                             <?php endforeach; ?>
                         </div>
@@ -231,14 +231,14 @@ add_shortcode('agent_dashboard_v4', function () {
             <div class="ms-tab-content" id="add-property">
                 <div class="ms-card">
                     <h3>إضافة عقار جديد</h3>
-                    <p style="color:#64748b;margin-bottom:16px;">أكمل البيانات هنا دون مغادرة لوحة التحكم. تُحفظ المسودة تلقائيًا أثناء الكتابة.</p>
+                    <p style="color:var(--ms-muted, #6B7280);margin-bottom:16px;">أكمل البيانات هنا دون مغادرة لوحة التحكم. تُحفظ المسودة تلقائيًا أثناء الكتابة.</p>
                     <?php echo do_shortcode('[ms_inline_add_property]'); ?>
                 </div>
             </div>
 
             <div class="ms-tab-content" id="listings">
                 <div class="ms-properties-header" style="display:flex;justify-content:space-between;align-items:center;gap:14px;margin:20px 0 18px;">
-                    <div><h2 style="margin:0;color:#0f172a;">العقارات</h2><p style="margin:6px 0 0;color:#64748b;font-size:14px;">اعرض عقاراتك وغيّر الحالة وارفع عقود الإيجار أو البيع من البطاقة نفسها.</p></div>
+                    <div><h2 style="margin:0;color:var(--ms-primary, #0D1B2A);">العقارات</h2><p style="margin:6px 0 0;color:var(--ms-muted, #6B7280);font-size:14px;">اعرض عقاراتك وغيّر الحالة وارفع عقود الإيجار أو البيع من البطاقة نفسها.</p></div>
                     <button type="button" class="ms-action-button ms-action-button-primary" data-tab-target="add-property">إضافة جديدة</button>
                 </div>
                 <div class="ms-card" style="margin-top:20px">
@@ -563,19 +563,19 @@ add_shortcode('agent_dashboard_v4', function () {
                     </div>
                     <div style="display:flex;gap:10px;flex-wrap:wrap;margin-top:18px;">
                         <?php if ($is_subscribed && $active_plan_key): ?><button type="button" class="ms-action-button ms-subscription-action-btn" data-mode="renew" data-plan-key="<?php echo esc_attr($active_plan_key); ?>">تجديد الاشتراك</button><?php endif; ?>
-                        <span style="color:#64748b;font-size:13px;align-self:center;">سيتم إنشاء فاتورة ودفع آمن قبل تفعيل التغيير.</span>
+                        <span style="color:var(--ms-muted, #6B7280);font-size:13px;align-self:center;">سيتم إنشاء فاتورة ودفع آمن قبل تفعيل التغيير.</span>
                     </div>
                 </div>
                 <div class="ms-card" style="margin-top:18px;">
                     <h3>الترقية إلى باقة أفضل</h3>
                     <div class="ms-subscription-cards" style="display:grid;grid-template-columns:repeat(auto-fit,minmax(250px,1fr));gap:16px;margin-top:16px;">
                         <?php foreach ($plans as $plan): $is_active = $is_subscribed && $active_plan_key === $plan['package_key']; $is_upgrade = !$active_plan_key || $plan['rank'] > (array_values(array_filter($plans, function($p) use ($active_plan_key){ return $p['package_key'] === $active_plan_key; }))[0]['rank'] ?? 0); ?>
-                            <div class="ms-subscription-card" style="border:1px solid <?php echo $is_active ? '#2563eb' : '#e5e7eb'; ?>;border-radius:16px;padding:20px;background:#fff;">
-                                <h4 style="margin:0 0 8px;font-size:1.1rem;"><?php echo esc_html($plan['name']); ?> <?php if ($is_active): ?><span style="color:#2563eb;font-size:.8rem;">(الحالية)</span><?php endif; ?></h4>
-                                <p style="margin:0 0 14px;color:#475569;line-height:1.5;"><?php echo esc_html($plan['description']); ?></p>
-                                <strong style="font-size:1.8rem;color:#111827;"><?php echo esc_html($plan['display_price']); ?></strong><span style="color:#475569;"> شهريًا</span>
-                                <p style="color:#334155;font-weight:700;">حتى <?php echo esc_html($plan['capacity']); ?></p>
-                                <?php if ($is_active): ?><span style="color:#16a34a;font-weight:700;">مشترك حاليًا</span><?php elseif ($is_upgrade): ?><button type="button" class="ms-action-button ms-action-button-primary ms-subscription-action-btn" data-mode="upgrade" data-plan-key="<?php echo esc_attr($plan['package_key']); ?>">ترقية إلى هذه الباقة</button><?php else: ?><span style="color:#64748b;font-size:13px;">باقة أقل من اشتراكك الحالي</span><?php endif; ?>
+                            <div class="ms-subscription-card" style="border:1px solid <?php echo $is_active ? 'var(--ms-accent, #D4AF37)' : 'var(--ms-border, #ECE3D4)'; ?>;border-radius:16px;padding:20px;background:#fff;">
+                                <h4 style="margin:0 0 8px;font-size:1.1rem;"><?php echo esc_html($plan['name']); ?> <?php if ($is_active): ?><span style="color:var(--ms-primary, #0D1B2A);font-size:.8rem;">(الحالية)</span><?php endif; ?></h4>
+                                <p style="margin:0 0 14px;color:var(--ms-text, #1E2B3A);line-height:1.5;"><?php echo esc_html($plan['description']); ?></p>
+                                <strong style="font-size:1.8rem;color:var(--ms-primary, #0D1B2A);"><?php echo esc_html($plan['display_price']); ?></strong><span style="color:var(--ms-text, #1E2B3A);"> شهريًا</span>
+                                <p style="color:var(--ms-text, #1E2B3A);font-weight:700;">حتى <?php echo esc_html($plan['capacity']); ?></p>
+                                <?php if ($is_active): ?><span style="color:var(--ms-success, #15803D);font-weight:700;">مشترك حاليًا</span><?php elseif ($is_upgrade): ?><button type="button" class="ms-action-button ms-action-button-primary ms-subscription-action-btn" data-mode="upgrade" data-plan-key="<?php echo esc_attr($plan['package_key']); ?>">ترقية إلى هذه الباقة</button><?php else: ?><span style="color:var(--ms-muted, #6B7280);font-size:13px;">باقة أقل من اشتراكك الحالي</span><?php endif; ?>
                             </div>
                         <?php endforeach; ?>
                     </div>
@@ -585,7 +585,7 @@ add_shortcode('agent_dashboard_v4', function () {
             <div class="ms-tab-content" id="maintenance">
                 <div class="ms-card">
                     <h3>طلبات الصيانة</h3>
-                    <p style="color:#666;margin-top:8px">عرض طلبات الصيانة المرتبطة بالمباني الخاصة بالعقارات التي يديرها الوسيط.</p>
+                    <p style="color:var(--ms-muted, #6B7280);margin-top:8px">عرض طلبات الصيانة المرتبطة بالمباني الخاصة بالعقارات التي يديرها الوسيط.</p>
                     <?php if (!empty($agent_maintenance_requests)): ?>
                         <div class="table-responsive" style="margin-top:14px;">
                             <table class="table table-hover align-middle m-0">
@@ -614,7 +614,7 @@ add_shortcode('agent_dashboard_v4', function () {
                             </table>
                         </div>
                     <?php else: ?>
-                        <p style="color:#666;margin-top:12px">لم يتم العثور على طلبات صيانة مرتبطة بهذه العقارات.</p>
+                        <p style="color:var(--ms-muted, #6B7280);margin-top:12px">لم يتم العثور على طلبات صيانة مرتبطة بهذه العقارات.</p>
                     <?php endif; ?>
                 </div>
             </div>
@@ -623,12 +623,12 @@ add_shortcode('agent_dashboard_v4', function () {
                 <div class="ms-card">
                     <h3>فواتير الاشتراك والباقة</h3>
                     <?php $agent_renewal_cancelled = (bool) get_user_meta($user->ID, 'ms_agent_renewal_cancelled', true); $agent_renewal_nonce = wp_create_nonce('ms_agent_renewal_action'); ?>
-                    <div class="ms-renewal-control" data-renewal-state="<?php echo $agent_renewal_cancelled ? 'cancelled' : 'active'; ?>" style="margin:16px 0;padding:14px 16px;border:1px solid #e2e8f0;border-radius:12px;background:#f8fafc;display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap;"><div><strong>التجديد التلقائي</strong><p style="margin:5px 0 0;color:#64748b;font-size:13px;"><?php echo $agent_renewal_cancelled ? 'تم إلغاء التجديد. يبقى اشتراكك فعالًا حتى تاريخ انتهائه.' : 'التجديد مفعّل. يمكنك إلغاؤه مع بقاء اشتراكك فعالًا حتى تاريخ الانتهاء.'; ?></p><span class="ms-renewal-status" style="font-weight:700;color:<?php echo $agent_renewal_cancelled ? '#b91c1c' : '#15803d'; ?>;">الحالة: <?php echo $agent_renewal_cancelled ? 'ملغى' : 'مفعّل'; ?></span></div><button type="button" class="ms-renewal-toggle" data-renewal-action="<?php echo $agent_renewal_cancelled ? 'restore' : 'cancel'; ?>" data-renewal-nonce="<?php echo esc_attr($agent_renewal_nonce); ?>" style="border:1px solid <?php echo $agent_renewal_cancelled ? '#16a34a' : '#dc2626'; ?>;background:#fff;color:<?php echo $agent_renewal_cancelled ? '#15803d' : '#b91c1c'; ?>;padding:9px 14px;border-radius:8px;cursor:pointer;"><?php echo $agent_renewal_cancelled ? 'إعادة تفعيل التجديد' : 'إلغاء التجديد التلقائي'; ?></button></div>
+                    <div class="ms-renewal-control" data-renewal-state="<?php echo $agent_renewal_cancelled ? 'cancelled' : 'active'; ?>" style="margin:16px 0;padding:14px 16px;border:1px solid var(--ms-border, #ECE3D4);border-radius:12px;background:var(--ms-surface-alt, #FAF6EF);display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap;"><div><strong>التجديد التلقائي</strong><p style="margin:5px 0 0;color:var(--ms-muted, #6B7280);font-size:13px;"><?php echo $agent_renewal_cancelled ? 'تم إلغاء التجديد. يبقى اشتراكك فعالًا حتى تاريخ انتهائه.' : 'التجديد مفعّل. يمكنك إلغاؤه مع بقاء اشتراكك فعالًا حتى تاريخ الانتهاء.'; ?></p><span class="ms-renewal-status" style="font-weight:700;color:<?php echo $agent_renewal_cancelled ? 'var(--ms-danger, #B42318)' : 'var(--ms-success, #15803D)'; ?>;">الحالة: <?php echo $agent_renewal_cancelled ? 'ملغى' : 'مفعّل'; ?></span></div><button type="button" class="ms-renewal-toggle" data-renewal-action="<?php echo $agent_renewal_cancelled ? 'restore' : 'cancel'; ?>" data-renewal-nonce="<?php echo esc_attr($agent_renewal_nonce); ?>" style="border:1px solid <?php echo $agent_renewal_cancelled ? 'var(--ms-success, #15803D)' : 'var(--ms-danger, #B42318)'; ?>;background:#fff;color:<?php echo $agent_renewal_cancelled ? 'var(--ms-success, #15803D)' : 'var(--ms-danger, #B42318)'; ?>;padding:9px 14px;border-radius:8px;cursor:pointer;"><?php echo $agent_renewal_cancelled ? 'إعادة تفعيل التجديد' : 'إلغاء التجديد التلقائي'; ?></button></div>
                     <?php if(!empty($agent_invoices)): ?>
 
                         <div class="ms-invoice-subtabs" style="margin-top:18px;display:flex;gap:8px;flex-wrap:wrap;">
-                            <button class="ms-invoice-subtab active" data-subtab="invoices-property" style="padding:10px 20px;border-radius:999px;border:1px solid #e5e7eb;background:#2563eb;color:#fff;cursor:pointer;font-weight:600;">فواتير العقار (رسوم)</button>
-                            <button class="ms-invoice-subtab" data-subtab="invoices-building" style="display:none;padding:10px 20px;border-radius:999px;border:1px solid #e5e7eb;background:#fff;color:#0f172a;cursor:pointer;font-weight:600;">فواتير البناء والصيانة</button>
+                            <button class="ms-invoice-subtab active" data-subtab="invoices-property" style="padding:10px 20px;border-radius:999px;border:1px solid var(--ms-border, #ECE3D4);background:var(--ms-accent, #D4AF37);color: var(--ms-primary, #0D1B2A);cursor:pointer;font-weight:600;">فواتير العقار (رسوم)</button>
+                            <button class="ms-invoice-subtab" data-subtab="invoices-building" style="display:none;padding:10px 20px;border-radius:999px;border:1px solid var(--ms-border, #ECE3D4);background:#fff;color:var(--ms-primary, #0D1B2A);cursor:pointer;font-weight:600;">فواتير البناء والصيانة</button>
                         </div>
                         <div class="ms-invoice-subpanel active" id="invoices-property" style="margin-top:16px;">
                             <div style="margin-top:14px;display:flex;gap:10px;flex-wrap:wrap;">
@@ -660,13 +660,13 @@ add_shortcode('agent_dashboard_v4', function () {
                                             $status = isset($invoice->status) ? strtolower(trim($invoice->status)) : 'unknown';
                                             $status_label = '';
                                             if ($status === 'paid') {
-                                                $status_label = '<span style="color:#10b981;font-weight:600">مدفوع</span>';
+                                                $status_label = '<span style="color:var(--ms-success, #15803D);font-weight:600">مدفوع</span>';
                                             } elseif ($status === 'canceled') {
-                                                $status_label = '<span style="color:#ef4444;font-weight:600">ملغي</span>';
+                                                $status_label = '<span style="color:var(--ms-danger, #B42318);font-weight:600">ملغي</span>';
                                             } elseif ($status === 'pending') {
                                                 $status_label = 'معلقة';
                                             } elseif ($status === 'overdue') {
-                                                $status_label = '<span style="color:#f59e0b;font-weight:600">متأخرة</span>';
+                                                $status_label = '<span style="color:var(--ms-warning, #B45309);font-weight:600">متأخرة</span>';
                                             } else {
                                                 $status_label = esc_html($status);
                                             }
@@ -681,7 +681,7 @@ add_shortcode('agent_dashboard_v4', function () {
                                                 <?php if ($status === 'pending'): ?>
                                                     <button class="ms-pay-now-btn button button-secondary" data-invoice-id="<?php echo intval($invoice->id ?? 0); ?>" data-nonce="<?php echo wp_create_nonce('ms_pay_invoice_' . intval($invoice->id ?? 0)); ?>" style="padding:6px 12px;">ادفع الآن</button>
                                                 <?php elseif ($status === 'paid'): ?>
-                                                    <span style="color:#10b981;font-size:12px;">✓ تم الدفع</span>
+                                                    <span style="color:var(--ms-success, #15803D);font-size:12px;">✓ تم الدفع</span>
                                                 <?php endif; ?>
                                             </td>
                                         </tr>
@@ -689,7 +689,7 @@ add_shortcode('agent_dashboard_v4', function () {
                                 </tbody>
                             </table>
                         <?php else: ?>
-                            <p style="color:#666;margin-top:12px">لا توجد فواتير رسوم وسيط حالياً.</p>
+                            <p style="color:var(--ms-muted, #6B7280);margin-top:12px">لا توجد فواتير رسوم وسيط حالياً.</p>
                                                 <?php endif; ?>
                     </div>
                     </div>
@@ -713,13 +713,13 @@ add_shortcode('agent_dashboard_v4', function () {
                                                 $status = isset($invoice->status) ? strtolower(trim($invoice->status)) : 'unknown';
                                                 $status_label = '';
                                                 if ($status === 'paid') {
-                                                    $status_label = '<span style="color:#10b981;font-weight:600">مدفوع</span>';
+                                                    $status_label = '<span style="color:var(--ms-success, #15803D);font-weight:600">مدفوع</span>';
                                                 } elseif ($status === 'canceled') {
-                                                    $status_label = '<span style="color:#ef4444;font-weight:600">ملغي</span>';
+                                                    $status_label = '<span style="color:var(--ms-danger, #B42318);font-weight:600">ملغي</span>';
                                                 } elseif ($status === 'pending') {
                                                     $status_label = 'معلقة';
                                                 } elseif ($status === 'overdue') {
-                                                    $status_label = '<span style="color:#f59e0b;font-weight:600">متأخرة</span>';
+                                                    $status_label = '<span style="color:var(--ms-warning, #B45309);font-weight:600">متأخرة</span>';
                                                 } else {
                                                     $status_label = esc_html($status);
                                                 }
@@ -734,7 +734,7 @@ add_shortcode('agent_dashboard_v4', function () {
                                                     <?php if ($status === 'pending'): ?>
                                                         <button class="ms-pay-now-btn button button-secondary" data-invoice-id="<?php echo intval($invoice->id ?? 0); ?>" data-nonce="<?php echo wp_create_nonce('ms_pay_invoice_' . intval($invoice->id ?? 0)); ?>" style="padding:6px 12px;">ادفع الآن</button>
                                                     <?php elseif ($status === 'paid'): ?>
-                                                        <span style="color:#10b981;font-size:12px;">✓ تم الدفع</span>
+                                                        <span style="color:var(--ms-success, #15803D);font-size:12px;">✓ تم الدفع</span>
                                                     <?php endif; ?>
                                                 </td>
                                             </tr>
@@ -743,11 +743,11 @@ add_shortcode('agent_dashboard_v4', function () {
                                 </table>
                             </div>
                         <?php else: ?>
-                            <p style="color:#666;margin-top:12px">لا توجد فواتير بناء وصيانة حالياً.</p>
+                            <p style="color:var(--ms-muted, #6B7280);margin-top:12px">لا توجد فواتير بناء وصيانة حالياً.</p>
                         <?php endif; ?>
                     </div>
                 <?php else: ?>
-                    <p style="color:#666;margin-top:12px">لا توجد فواتير حالياً.</p>
+                    <p style="color:var(--ms-muted, #6B7280);margin-top:12px">لا توجد فواتير حالياً.</p>
                 <?php endif; ?>
                 </div>
             </div>
@@ -782,23 +782,23 @@ add_shortcode('agent_dashboard_v4', function () {
                     ?>
 
                     <?php if (!$discussion_building_id): ?>
-                        <p style="color:#666;margin-top:8px">لم يتم العثور على معرف مبنى صالح مرتبط بخصائص الوسيط. لا يمكن تحميل مواضيع المناقشات.</p>
+                        <p style="color:var(--ms-muted, #6B7280);margin-top:8px">لم يتم العثور على معرف مبنى صالح مرتبط بخصائص الوسيط. لا يمكن تحميل مواضيع المناقشات.</p>
                     <?php else: ?>
                         <div id="agent-discussions" data-building-id="<?php echo intval($discussion_building_id); ?>">
                             
                             <div class="ms-discussions-layout" style="display:flex;gap:12px;align-items:flex-start;">
-                                <div class="ms-discussions-list" style="width:36%;min-width:220px;border-right:1px solid #eee;padding-right:12px;">
+                                <div class="ms-discussions-list" style="width:36%;min-width:220px;border-right:1px solid var(--ms-border, #ECE3D4);padding-right:12px;">
                                     <h4 style="margin-top:0">المواضيع</h4>
                                     <ul class="ms-discussions-list-ul" style="list-style:none;padding:0;margin:0;max-height:420px;overflow:auto;"></ul>
                                 </div>
                                 <div class="ms-discussion-detail" style="flex:1;min-width:320px;">
-                                    <div class="ms-discussion-empty" style="color:#666">اختر موضوعاً لعرض التفاصيل</div>
-                                    <div class="ms-discussion-messages" style="margin-top:12px;max-height:360px;overflow:auto;border:1px solid #f3f4f6;padding:12px;background:#fff;"></div>
+                                    <div class="ms-discussion-empty" style="color:var(--ms-muted, #6B7280)">اختر موضوعاً لعرض التفاصيل</div>
+                                    <div class="ms-discussion-messages" style="margin-top:12px;max-height:360px;overflow:auto;border:1px solid var(--ms-surface-alt, #FAF6EF);padding:12px;background:#fff;"></div>
 
                                     <form class="ms-discussion-reply-form" style="margin-top:12px;display:none;">
-                                        <textarea name="reply" rows="4" style="width:100%;padding:8px;border:1px solid #ddd;border-radius:4px;"></textarea>
+                                        <textarea name="reply" rows="4" style="width:100%;padding:8px;border:1px solid var(--ms-border, #ECE3D4);border-radius:4px;"></textarea>
                                         <div style="margin-top:8px;text-align:left;">
-                                            <button type="submit" class="ms-discussion-reply-submit" style="padding:8px 12px;background:#2563eb;color:#fff;border:none;border-radius:4px;">إرسال الرد</button>
+                                            <button type="submit" class="ms-discussion-reply-submit" style="padding:8px 12px;background:var(--ms-accent, #D4AF37);color: var(--ms-primary, #0D1B2A);border:none;border-radius:4px;">إرسال الرد</button>
                                         </div>
                                     </form>
                                 </div>
@@ -822,7 +822,7 @@ add_shortcode('agent_dashboard_v4', function () {
                         <input type="hidden" name="action" value="ms_update_profile">
                         
                         <div style="display:flex;align-items:center;gap:20px;margin-bottom:24px;">
-                            <div style="width:100px;height:100px;border-radius:50%;overflow:hidden;background:#f3f4f6;display:flex;align-items:center;justify-content:center;">
+                            <div style="width:100px;height:100px;border-radius:50%;overflow:hidden;background:var(--ms-surface-alt, #FAF6EF);display:flex;align-items:center;justify-content:center;">
                                 <?php 
                                 $avatar_url = get_avatar_url($user->ID, array('size' => 100));
                                 if ($avatar_url) : ?>
@@ -833,8 +833,8 @@ add_shortcode('agent_dashboard_v4', function () {
                             </div>
                             <div>
                                 <div style="font-weight:700;font-size:18px;"><?php echo esc_html($user->display_name); ?></div>
-                                <div style="color:#6b7280;"><?php echo esc_html($user->user_email); ?></div>
-                                <button type="button" id="ms-change-avatar-btn" style="margin-top:8px;padding:6px 12px;background:#2563eb;color:#fff;border:none;border-radius:6px;cursor:pointer;font-size:13px;">تغيير الصورة</button>
+                                <div style="color:var(--ms-muted, #6B7280);"><?php echo esc_html($user->user_email); ?></div>
+                                <button type="button" id="ms-change-avatar-btn" style="margin-top:8px;padding:6px 12px;background:var(--ms-accent, #D4AF37);color: var(--ms-primary, #0D1B2A);border:none;border-radius:6px;cursor:pointer;font-size:13px;">تغيير الصورة</button>
                                 <input type="file" name="avatar" id="ms-avatar-input" accept="image/*" style="display:none;">
                             </div>
                         </div>
@@ -842,37 +842,37 @@ add_shortcode('agent_dashboard_v4', function () {
                         <div style="display:grid;grid-template-columns:repeat(2,1fr);gap:20px;">
                             <div>
                                 <label style="display:block;margin-bottom:8px;font-weight:600;">الاسم الأول</label>
-                                <input type="text" name="first_name" value="<?php echo esc_attr($user->first_name); ?>" style="width:100%;padding:10px;border:1px solid #d1d5db;border-radius:8px;">
+                                <input type="text" name="first_name" value="<?php echo esc_attr($user->first_name); ?>" style="width:100%;padding:10px;border:1px solid var(--ms-border-strong, #DCCFB8);border-radius:8px;">
                             </div>
                             <div>
                                 <label style="display:block;margin-bottom:8px;font-weight:600;">اسم العائلة</label>
-                                <input type="text" name="last_name" value="<?php echo esc_attr($user->last_name); ?>" style="width:100%;padding:10px;border:1px solid #d1d5db;border-radius:8px;">
+                                <input type="text" name="last_name" value="<?php echo esc_attr($user->last_name); ?>" style="width:100%;padding:10px;border:1px solid var(--ms-border-strong, #DCCFB8);border-radius:8px;">
                             </div>
                             <div>
                                 <label style="display:block;margin-bottom:8px;font-weight:600;">الاسم المعروض</label>
-                                <input type="text" name="display_name" value="<?php echo esc_attr($user->display_name); ?>" style="width:100%;padding:10px;border:1px solid #d1d5db;border-radius:8px;">
+                                <input type="text" name="display_name" value="<?php echo esc_attr($user->display_name); ?>" style="width:100%;padding:10px;border:1px solid var(--ms-border-strong, #DCCFB8);border-radius:8px;">
                             </div>
                             <div>
                                 <label style="display:block;margin-bottom:8px;font-weight:600;">البريد الإلكتروني</label>
-                                <input type="email" name="email" value="<?php echo esc_attr($user->user_email); ?>" style="width:100%;padding:10px;border:1px solid #d1d5db;border-radius:8px;">
+                                <input type="email" name="email" value="<?php echo esc_attr($user->user_email); ?>" style="width:100%;padding:10px;border:1px solid var(--ms-border-strong, #DCCFB8);border-radius:8px;">
                             </div>
                             <div>
                                 <label style="display:block;margin-bottom:8px;font-weight:600;">رقم الهاتف</label>
-                                <input type="tel" name="phone" value="<?php echo esc_attr(get_user_meta($user->ID, 'billing_phone', true)); ?>" style="width:100%;padding:10px;border:1px solid #d1d5db;border-radius:8px;">
+                                <input type="tel" name="phone" value="<?php echo esc_attr(get_user_meta($user->ID, 'billing_phone', true)); ?>" style="width:100%;padding:10px;border:1px solid var(--ms-border-strong, #DCCFB8);border-radius:8px;">
                             </div>
                             <div>
                                 <label style="display:block;margin-bottom:8px;font-weight:600;">العنوان</label>
-                                <input type="text" name="address" value="<?php echo esc_attr(get_user_meta($user->ID, 'billing_address_1', true)); ?>" style="width:100%;padding:10px;border:1px solid #d1d5db;border-radius:8px;">
+                                <input type="text" name="address" value="<?php echo esc_attr(get_user_meta($user->ID, 'billing_address_1', true)); ?>" style="width:100%;padding:10px;border:1px solid var(--ms-border-strong, #DCCFB8);border-radius:8px;">
                             </div>
                         </div>
 
                         <div style="margin-top:20px;">
                             <label style="display:block;margin-bottom:8px;font-weight:600;">نبذة عني</label>
-                            <textarea name="description" rows="4" style="width:100%;padding:10px;border:1px solid #d1d5db;border-radius:8px;"><?php echo esc_textarea($user->description); ?></textarea>
+                            <textarea name="description" rows="4" style="width:100%;padding:10px;border:1px solid var(--ms-border-strong, #DCCFB8);border-radius:8px;"><?php echo esc_textarea($user->description); ?></textarea>
                         </div>
 
                         <div style="margin-top:24px;">
-                            <button type="submit" style="padding:12px 24px;background:#2563eb;color:#fff;border:none;border-radius:8px;cursor:pointer;font-weight:600;">حفظ التغييرات</button>
+                            <button type="submit" style="padding:12px 24px;background:var(--ms-accent, #D4AF37);color: var(--ms-primary, #0D1B2A);border:none;border-radius:8px;cursor:pointer;font-weight:600;">حفظ التغييرات</button>
                         </div>
                     </form>
                 </div>

@@ -229,6 +229,10 @@ class MS_Monitoring_Analytics {
         
         foreach ($this->metrics as $type => $metrics) {
             $this->metrics[$type] = array_filter($metrics, function($metric) use ($cutoff_time) {
+                // بعض المقاييس تُخزَّن بدون timestamp — كانت تُطلق تحذير PHP في كل طلب
+                if (!is_array($metric) || empty($metric['timestamp'])) {
+                    return false;
+                }
                 return strtotime($metric['timestamp']) > $cutoff_time;
             });
         }

@@ -159,7 +159,7 @@ function ms_houzez_get_revenue_report() {
         
         <div style="margin-top: 20px;">
             <button class="button" onclick="ms_export_report('revenue', 'csv')">تصدير CSV</button>
-            <button class="button" onclick="ms_export_report('revenue', 'excel')">تصدير Excel</button>
+            <button class="button" onclick="ms_export_report('revenue', 'pdf')">تصدير PDF</button>
         </div>
     </div>
     <?php
@@ -210,7 +210,7 @@ function ms_houzez_get_expenses_report() {
         
         <div style="margin-top: 20px;">
             <button class="button" onclick="ms_export_report('expenses', 'csv')">تصدير CSV</button>
-            <button class="button" onclick="ms_export_report('expenses', 'excel')">تصدير Excel</button>
+            <button class="button" onclick="ms_export_report('expenses', 'pdf')">تصدير PDF</button>
         </div>
     </div>
     <?php
@@ -253,6 +253,7 @@ function ms_houzez_get_occupancy_report() {
         
         <div style="margin-top: 20px;">
             <button class="button" onclick="ms_export_report('occupancy', 'csv')">تصدير CSV</button>
+            <button class="button" onclick="ms_export_report('occupancy', 'pdf')">تصدير PDF</button>
         </div>
     </div>
     <?php
@@ -307,7 +308,7 @@ function ms_houzez_get_collection_report() {
         
         <div style="margin-top: 20px;">
             <button class="button" onclick="ms_export_report('collection', 'csv')">تصدير CSV</button>
-            <button class="button" onclick="ms_export_report('collection', 'excel')">تصدير Excel</button>
+            <button class="button" onclick="ms_export_report('collection', 'pdf')">تصدير PDF</button>
         </div>
     </div>
     <?php
@@ -357,6 +358,7 @@ function ms_houzez_get_maintenance_report() {
         
         <div style="margin-top: 20px;">
             <button class="button" onclick="ms_export_report('maintenance', 'csv')">تصدير CSV</button>
+            <button class="button" onclick="ms_export_report('maintenance', 'pdf')">تصدير PDF</button>
         </div>
     </div>
     <?php
@@ -364,54 +366,85 @@ function ms_houzez_get_maintenance_report() {
 }
 
 // Export report function
-add_action('wp_ajax_ms_export_report', 'ms_houzez_ajax_export_report');
+// كان مسجلاً على نفس action (ms_export_report) المستخدم في صفحة التقارير الرئيسية ←
+// الـ handler الأول كان يرفض nonce الثاني فيتعطل التصدير في الصفحتين. أصبح له اسم مستقل.
+add_action('wp_ajax_ms_houzez_export_report', 'ms_houzez_ajax_export_report');
+
+function ms_houzez_report_sources() {
+    return array(
+        'revenue'     => array('ms_houzez_get_revenue_report', 'تقرير الإيرادات'),
+        'expenses'    => array('ms_houzez_get_expenses_report', 'تقرير المصروفات'),
+        'occupancy'   => array('ms_houzez_get_occupancy_report', 'تقرير الإشغال'),
+        'collection'  => array('ms_houzez_get_collection_report', 'تقرير التحصيل'),
+        'maintenance' => array('ms_houzez_get_maintenance_report', 'تقرير الصيانة'),
+    );
+}
+
+/**
+ * يستخرج صفوف الجداول من HTML التقرير — بدل ملف CSV القديم الذي كان يحتوي العناوين فقط بدون أي بيانات.
+ */
+function ms_houzez_html_to_rows($html) {
+    $rows = array();
+    if (!class_exists('DOMDocument')) {
+        return $rows;
+    }
+    $doc = new DOMDocument();
+    libxml_use_internal_errors(true);
+    $doc->loadHTML('<?xml encoding="UTF-8"><div>' . $html . '</div>');
+    libxml_clear_errors();
+
+    foreach ($doc->getElementsByTagName('tr') as $tr) {
+        $line = array();
+        foreach ($tr->childNodes as $cell) {
+            if (in_array($cell->nodeName, array('td', 'th'), true)) {
+                $line[] = trim(preg_replace('/\s+/u', ' ', $cell->textContent));
+            }
+        }
+        if (!empty($line)) {
+            $rows[] = $line;
+        }
+    }
+    return $rows;
+}
 
 function ms_houzez_ajax_export_report() {
     check_ajax_referer('ms_houzez_reports_nonce', 'security');
-    
+
     if (!current_user_can('manage_options')) {
-        wp_send_json_error(['message' => 'غير مصرح']);
+        wp_send_json_error(array('message' => 'غير مصرح'), 403);
     }
-    
-    $report_type = isset($_POST['report_type']) ? sanitize_text_field($_POST['report_type']) : '';
-    $format = isset($_POST['format']) ? sanitize_text_field($_POST['format']) : 'csv';
-    
-    // Generate CSV
-    $filename = 'mostaager-' . $report_type . '-report-' . date('Y-m-d') . '.csv';
-    
-    header('Content-Type: text/csv');
-    header('Content-Disposition: attachment; filename="' . $filename . '"');
-    
-    $output = fopen('php://output', 'w');
-    
-    // Add BOM for UTF-8
-    fprintf($output, chr(0xEF) . chr(0xBB) . chr(0xBF));
-    
-    // Write headers
-    fputcsv($output, ['التقرير', $report_type, 'التاريخ', date('Y-m-d H:i:s')]);
-    
-    // Write data based on report type
-    switch ($report_type) {
-        case 'revenue':
-            fputcsv($output, ['الشهر', 'المدفوع', 'المعلق', 'الإجمالي']);
-            // Add data...
-            break;
-        case 'expenses':
-            fputcsv($output, ['النوع', 'العدد', 'الإجمالي']);
-            break;
-        case 'occupancy':
-            fputcsv($output, ['الحالة', 'العدد', 'النسبة']);
-            break;
-        case 'collection':
-            fputcsv($output, ['إجمالي الفواتير', 'إجمالي المبلغ', 'المبلغ المحصل', 'نسبة التحصيل']);
-            break;
-        case 'maintenance':
-            fputcsv($output, ['الحالة', 'العدد', 'التكلفة']);
-            break;
+
+    $report_type = isset($_POST['report_type']) ? sanitize_key(wp_unslash($_POST['report_type'])) : '';
+    $format      = isset($_POST['format']) ? sanitize_key(wp_unslash($_POST['format'])) : 'csv';
+    $sources     = ms_houzez_report_sources();
+
+    if (!isset($sources[$report_type]) || !function_exists($sources[$report_type][0])) {
+        wp_send_json_error(array('message' => 'نوع تقرير غير معروف'), 400);
     }
-    
-    fclose($output);
-    exit;
+
+    list($callback, $title) = $sources[$report_type];
+    $html = call_user_func($callback);
+
+    if ($format === 'pdf') {
+        $result = MS_PDF::export_html($html, $title, array('تاريخ التصدير' => wp_date('Y-m-d H:i')));
+    } else {
+        $rows = ms_houzez_html_to_rows($html);
+        $out  = fopen('php://temp', 'w+');
+        fwrite($out, "\xEF\xBB\xBF");
+        fputcsv($out, array($title, wp_date('Y-m-d H:i')));
+        foreach ($rows as $row) {
+            fputcsv($out, $row);
+        }
+        rewind($out);
+        $content = stream_get_contents($out);
+        fclose($out);
+        $result = MS_PDF::store($content, 'mostaager-' . $report_type . '-' . wp_date('Y-m-d') . '.csv', 'text/csv; charset=UTF-8');
+    }
+
+    if (empty($result['success'])) {
+        wp_send_json_error(array('message' => $result['error'] ?? 'تعذّر التصدير'), 500);
+    }
+    wp_send_json_success($result);
 }
 
 // Add export script to admin
@@ -425,26 +458,21 @@ function ms_houzez_add_export_script() {
     <script>
     function ms_export_report(reportType, format) {
         var formData = new FormData();
-        formData.append('action', 'ms_export_report');
+        formData.append('action', 'ms_houzez_export_report');
         formData.append('report_type', reportType);
         formData.append('format', format);
-        formData.append('security', '<?php echo wp_create_nonce('ms_houzez_reports_nonce'); ?>');
-        
-        fetch(ajaxurl, {
-            method: 'POST',
-            body: formData
-        })
-        .then(response => response.blob())
-        .then(blob => {
-            var url = window.URL.createObjectURL(blob);
-            var a = document.createElement('a');
-            a.href = url;
-            a.download = 'mostaager-' + reportType + '-report-' + new Date().toISOString().slice(0,10) + '.csv';
-            document.body.appendChild(a);
-            a.click();
-            window.URL.revokeObjectURL(url);
-            document.body.removeChild(a);
-        });
+        formData.append('security', '<?php echo esc_js(wp_create_nonce('ms_houzez_reports_nonce')); ?>');
+
+        fetch(ajaxurl, { method: 'POST', body: formData, credentials: 'same-origin' })
+            .then(function (r) { return r.json(); })
+            .then(function (res) {
+                if (res && res.success && res.data.download_url) {
+                    window.location.href = res.data.download_url;
+                } else {
+                    alert((res && res.data && res.data.message) || 'تعذّر التصدير');
+                }
+            })
+            .catch(function () { alert('حدث خطأ في الاتصال'); });
     }
     </script>
     <?php

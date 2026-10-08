@@ -194,9 +194,6 @@ class MS_Additional_Integrations {
         
         // Process payment based on method
         switch ($payment_method) {
-            case 'telr':
-                $result = $this->process_telr_payment($invoice, $amount);
-                break;
             case 'stripe':
                 $result = $this->process_stripe_payment($invoice, $amount);
                 break;
@@ -231,14 +228,7 @@ class MS_Additional_Integrations {
         }
     }
     
-    /**
-     * Process Telr payment
-     */
-    private function process_telr_payment($invoice, $amount) {
-        // Placeholder for Telr integration
-        return array('success' => false, 'error' => 'تكامل Telr يتطلب إعداد API');
-    }
-    
+        
     /**
      * Process Stripe payment
      */

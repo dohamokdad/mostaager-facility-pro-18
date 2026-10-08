@@ -20,10 +20,10 @@ class MS_Houzez_Integration {
         add_filter('posts_where', array($this, 'add_mostaager_to_search'));
         
         // Add Mostaager data to property listings
-        add_filter('houzez_property_meta_output', array($this, 'add_mostaager_meta_to_output'));
+        // houzez_property_meta_output غير موجود في Houzez 4.3.5 — تم حذف التسجيل الميت
         
         // Integration with Houzez user dashboard
-        add_action('houzez_user_dashboard_widgets', array($this, 'add_mostaager_dashboard_widgets'));
+        // houzez_user_dashboard_widgets غير موجود في Houzez 4.3.5 — تم حذف التسجيل الميت
     }
     
     /**

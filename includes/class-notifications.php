@@ -621,3 +621,11 @@ class MS_Multi_Channel_Notifications {
         return ob_get_clean();
     }
 }
+
+// الكلاس لم يكن يُنشأ أبداً، فكانت نقاط AJAX الخاصة به (إحصائيات/قوالب/جدولة)
+// غير مسجّلة ويرد admin-ajax عليها بـ 400.
+if (!defined('WP_INSTALLING') || !WP_INSTALLING) {
+    if (class_exists('MS_Multi_Channel_Notifications') && !isset($GLOBALS['ms_notifications_instance'])) {
+        $GLOBALS['ms_notifications_instance'] = new MS_Multi_Channel_Notifications();
+    }
+}

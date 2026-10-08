@@ -3,7 +3,7 @@ Contributors: Doha Mokdad
 Tags: mostaager, facility, management, houzez, wordpress, import, automation, monitoring
 Requires at least: 7.0.1
 Tested up to: 7.0.1
-Stable tag: 18.0.0
+Stable tag: 18.19.0
 Requires PHP: 8.3.30
 License: GPLv2 or later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html

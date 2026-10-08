@@ -14,9 +14,13 @@ class MS_Houzez_Building_Integration {
         // Only initialize if on the frontend
         if (!is_admin()) {
             // Check if Houzez hook exists, otherwise use a generic hook
-            if (has_action('houzez_property_after_content')) {
-                add_action('houzez_property_after_content', array($this, 'add_facilities_section'));
-                add_action('houzez_property_after_content', array($this, 'add_maintenance_section'));
+            // houzez_property_after_content غير موجود في Houzez — البديل houzez_single_listing
+            if (get_template() === 'houzez') {
+                $self = $this;
+                add_action('houzez_single_listing', function () use ($self) {
+                    $self->add_facilities_section(get_the_ID());
+                    $self->add_maintenance_section(get_the_ID());
+                });
             } else {
                 // Fallback to the_content filter
                 add_filter('the_content', array($this, 'modify_content'), 20);

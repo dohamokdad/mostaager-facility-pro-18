@@ -130,9 +130,27 @@ function ms_process_mostaager_order_status($order_id) {
         return;
     }
 
-    // Wallet top-ups are credited for approved orders.
-    if (function_exists('ms_add_user_wallet_balance')) {
-        ms_add_user_wallet_balance($user_id, floatval($order->get_total()), 'Order approved');
+    // شحن المحفظة: يُقيَّد فقط لطلبات الشحن الموسومة، ومرة واحدة لكل طلب.
+    // الكود القديم كان يقيّد إجمالي **أي** طلب ووكومرس، ويقيّده مرتين لأن الطلب
+    // يمر بـ processing ثم completed.
+    if ($order->get_meta('mostaager_wallet_recharge_type') !== 'wallet_recharge') {
+        return;
+    }
+    if ($order->get_meta('_ms_wallet_credited')) {
+        return;
+    }
+
+    $amount = floatval($order->get_meta('mostaager_wallet_recharge_amount'));
+    if ($amount <= 0) {
+        $amount = floatval($order->get_total());
+    }
+    $target_user = absint($order->get_meta('mostaager_wallet_recharge_user_id')) ?: $user_id;
+
+    if ($amount > 0 && function_exists('ms_add_user_wallet_balance')) {
+        ms_add_user_wallet_balance($target_user, $amount, 'شحن محفظة - طلب #' . $order->get_id());
+        $order->update_meta_data('_ms_wallet_credited', current_time('mysql'));
+        $order->save();
+        do_action('ms_wallet_topup_credited', $target_user, $amount, $order->get_id());
     }
 }
 

@@ -7,8 +7,9 @@ class MFP_Houzez_Search_Filter
 {
     public static function init()
     {
-        add_action('houzez_search_form_fields', array(__CLASS__, 'add_vacant_units_field'));
-        add_filter('houzez_search_query_args', array(__CLASS__, 'filter_by_vacancy'), 10, 2);
+        // houzez_search_form_fields و houzez_search_query_args غير موجودين في Houzez.
+        // البديل الحقيقي لتعديل استعلام العقارات هو houzez20_property_filter (framework/functions/property_functions.php).
+        add_filter('houzez20_property_filter', array(__CLASS__, 'filter_by_vacancy'), 10, 1);
         add_filter('pre_get_posts', array(__CLASS__, 'apply_vacancy_filter'));
     }
 

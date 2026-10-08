@@ -7,7 +7,7 @@ class MFP_Houzez_Map_Status
 {
     public static function init()
     {
-        add_filter('houzez_map_marker_data', array(__CLASS__, 'add_building_status_to_marker'), 10, 2);
+        // houzez_map_marker_data غير موجود في Houzez — حالة الوحدة تُعرض عبر wp_footer أدناه
         add_action('wp_footer', array(__CLASS__, 'inject_map_status_script'));
     }
 

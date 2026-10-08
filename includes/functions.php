@@ -36,10 +36,12 @@ function ms_user_has_role($user_id = 0, $role = '')
 
     $roles = array_map('sanitize_key', (array) $user->roles);
     $role_aliases = array(
-        'agent' => array('agent', 'houzez_agent', 'houzez-agent'),
+        // أدوار Houzez 4.x الحقيقية: houzez_owner / houzez_agent / houzez_agency /
+        // houzez_manager / houzez_buyer (لا يوجد houzez_building_manager ولا houzez_tenant)
+        'agent' => array('agent', 'houzez_agent', 'houzez_agency', 'houzez-agent'),
         'owner' => array('owner', 'property_owner', 'houzez_owner', 'houzez-owner'),
         'tenant' => array('tenant', 'ms_tenant', 'rent', 'houzez_tenant'),
-        'building_manager' => array('building_manager', 'building-manager', 'houzez_building_manager'),
+        'building_manager' => array('building_manager', 'building-manager', 'houzez_manager', 'houzez_building_manager'),
     );
     $accepted = isset($role_aliases[$role]) ? $role_aliases[$role] : array($role);
     return (bool) array_intersect($accepted, $roles) || user_can($user, 'manage_options');
@@ -125,17 +127,27 @@ function ms_login_redirect_by_role($redirect_to, $requested_redirect_to, $user)
     // owners must always land on their dedicated dashboard.
     $roles = array_map('sanitize_key', (array) $user->roles);
     $owner_role_aliases = array('owner', 'property_owner', 'houzez_owner', 'real_estate_owner');
+    // روابط الصفحات الفعلية (من جسر Houzez) بدل slugs ثابتة، مع الاحتياط القديم
+    $url = function ($role, $fallback) {
+        if (class_exists('MS_Houzez_Dashboard_Bridge')) {
+            $u = MS_Houzez_Dashboard_Bridge::page_url($role);
+            if ($u) {
+                return $u;
+            }
+        }
+        return home_url($fallback);
+    };
     if (ms_user_has_role($user->ID, 'owner') || array_intersect($owner_role_aliases, $roles)) {
-        return home_url('/owner-dashboard/');
+        return $url('owner', '/owner-dashboard/');
     }
     if (ms_user_has_role($user->ID, 'tenant')) {
-        return home_url('/rent-dashboard/');
+        return $url('tenant', '/rent-dashboard/');
     }
     if (ms_user_has_role($user->ID, 'agent')) {
-        return home_url('/agent-dashboard/');
+        return $url('agent', '/agent-dashboard/');
     }
     if (ms_user_has_role($user->ID, 'building_manager')) {
-        return home_url('/building-dashboard/');
+        return $url('building_manager', '/building-dashboard/');
     }
 
     return $redirect_to;
@@ -147,6 +159,12 @@ add_filter('login_redirect', 'ms_login_redirect_by_role', 999, 3);
 // Enforce the owner destination when that generic page is requested.
 add_action('template_redirect', function () {
     if (!is_user_logged_in() || !function_exists('ms_user_has_role')) {
+        return;
+    }
+    // مع جسر Houzez: لوحات مستأجر أصبحت داخل لوحة Houzez نفسها، فلا نمنع
+    // المستخدم من صفحات Houzez (الملف الشخصي، الرسائل...). الجسر يوجّه المستأجر
+    // من صفحة Houzez الرئيسية فقط.
+    if (class_exists('MS_Houzez_Dashboard_Bridge') && MS_Houzez_Dashboard_Bridge::houzez_active()) {
         return;
     }
     $user_id = get_current_user_id();
@@ -783,7 +801,7 @@ if (!function_exists('mostaager_generate_invoices_from_expense')) {
             ms_update_building_wallet_target($building_id, $amount);
         }
 
-        error_log("Mostaager: Generated $generated invoices for Expense ID $expense_id, Building ID $building_id");
+        if (defined('WP_DEBUG') && WP_DEBUG) { error_log("Mostaager: Generated $generated invoices for Expense ID $expense_id, Building ID $building_id"); }
         return $generated;
     }
 }
@@ -1994,15 +2012,6 @@ function ms_create_subscription_package_invoice($agent_id, $amount, $plan_name, 
     return intval($wpdb->insert_id);
 }
 
-function ms_get_telr_credentials()
-{
-    $settings = get_option('woocommerce_mostaager_telr_settings', []);
-    return [
-        'merchant_id' => isset($settings['merchant_id']) ? $settings['merchant_id'] : '',
-        'auth_key' => isset($settings['auth_key']) ? $settings['auth_key'] : '',
-        'test_mode' => isset($settings['test_mode']) ? $settings['test_mode'] : 'yes',
-    ];
-}
 
 function ms_get_maintenance_requests($args = array())
 {
@@ -2200,86 +2209,8 @@ function ms_distribute_maintenance_invoices($maintenance_id, $building_id, $tota
     return $created;
 }
 
-function ms_build_telr_payload($order)
-{
-    $creds = ms_get_telr_credentials();
-    if (empty($creds['merchant_id']) || empty($creds['auth_key'])) {
-        return false;
-    }
 
-    return array(
-        'ivp_method' => 'create',
-        'ivp_store' => $creds['merchant_id'],
-        'ivp_authkey' => $creds['auth_key'],
-        'ivp_cart' => 'order-' . $order->get_id(),
-        'ivp_test' => $creds['test_mode'] === 'yes' ? 1 : 0,
-        'ivp_amount' => number_format($order->get_total(), 2, '.', ''),
-        'ivp_currency' => $order->get_currency(),
-        'return_auth' => $order->get_checkout_order_received_url(),
-        'return_decl' => $order->get_checkout_order_received_url(),
-        'return_can' => wc_get_cart_url(),
-        'bill_fname' => $order->get_billing_first_name(),
-        'bill_lname' => $order->get_billing_last_name(),
-        'bill_addr1' => $order->get_billing_address_1(),
-        'bill_city' => $order->get_billing_city(),
-        'bill_country' => $order->get_billing_country(),
-        'bill_email' => $order->get_billing_email(),
-    );
-}
 
-function ms_request_telr_payment_url($order)
-{
-    $payload = ms_build_telr_payload($order);
-    if (!$payload) {
-        return false;
-    }
-
-    $request = wp_remote_post('https://secure.telr.com/gateway/order.json', array(
-        'method' => 'POST',
-        'body' => wp_json_encode($payload),
-        'headers' => array(
-            'Content-Type' => 'application/json',
-        ),
-        'timeout' => 30,
-    ));
-
-    if (is_wp_error($request)) {
-        error_log('[Mostaager Telr] create order request failed: ' . $request->get_error_message());
-        return false;
-    }
-
-    $body = json_decode(wp_remote_retrieve_body($request), true);
-    if (!empty($body['order']['url'])) {
-        return $body['order']['url'];
-    }
-
-    error_log('[Mostaager Telr] create order response missing order.url: ' . wp_json_encode($body));
-    return false;
-}
-
-function ms_get_mostaager_telr_gateway()
-{
-    if (!function_exists('WC') || !class_exists('WC_Payment_Gateway')) {
-        return false;
-    }
-
-    $gateways = WC()->payment_gateways();
-    if (!is_object($gateways) || !method_exists($gateways, 'payment_gateways')) {
-        return false;
-    }
-
-    $all_gateways = $gateways->payment_gateways();
-    if (empty($all_gateways['mostaager_telr'])) {
-        return false;
-    }
-
-    $gateway = $all_gateways['mostaager_telr'];
-    if (empty($gateway->enabled) || $gateway->enabled !== 'yes') {
-        return false;
-    }
-
-    return $gateway;
-}
 
 function ms_get_woo_payment_setup_message()
 {
@@ -2340,6 +2271,14 @@ function ms_create_woo_order_for_invoice($invoice_id)
     if (!$invoice || !isset($invoice->amount) || !isset($invoice->user_id)) {
         return false;
     }
+    // حماية من الدفع المزدوج: فاتورة مسددة أو ملغاة لا تُنشئ طلب دفع جديداً
+    $invoice_status = strtolower((string) ($invoice->status ?? ''));
+    if (in_array($invoice_status, array('paid', 'cancelled', 'canceled'), true)) {
+        return new WP_Error(
+            'invoice_not_payable',
+            $invoice_status === 'paid' ? 'هذه الفاتورة مسددة بالفعل.' : 'هذه الفاتورة ملغاة.'
+        );
+    }
     if (!empty($invoice->wc_order_id) && function_exists('wc_get_order')) {
         $existing_order = wc_get_order(absint($invoice->wc_order_id));
         if ($existing_order && method_exists($existing_order, 'get_checkout_payment_url')) {
@@ -2397,29 +2336,8 @@ function ms_create_woo_order_for_invoice($invoice_id)
         }
     }
 
-    $available_gateways = array();
-    if (function_exists('WC') && class_exists('WC_Payment_Gateways')) {
-        $payment_gateways = WC()->payment_gateways;
-        if (is_object($payment_gateways) && method_exists($payment_gateways, 'get_available_payment_gateways')) {
-            $available_gateways = $payment_gateways->get_available_payment_gateways();
-        }
-    }
-
-    $use_direct_telr = (count($available_gateways) === 1 && isset($available_gateways['mostaager_telr'])) ||
-                       (count($available_gateways) === 0);
-
-    if ($use_direct_telr) {
-        $telr_gateway = ms_get_mostaager_telr_gateway();
-        if ($telr_gateway && method_exists($telr_gateway, 'process_payment')) {
-            $order->set_payment_method('mostaager_telr');
-            $order->set_payment_method_title('Telr Payment');
-            $order->save();
-            $result = $telr_gateway->process_payment($order->get_id());
-            if (!empty($result['result']) && $result['result'] === 'success' && !empty($result['redirect'])) {
-                return $result['redirect'];
-            }
-        }
-    }
+    // الدفع كله عبر WooCommerce: نرجّع رابط صفحة دفع الطلب، والبوابة يختارها
+    // المستخدم من بوابات WooCommerce المفعّلة (لا بوابة مدمجة داخل الإضافة).
 
     $payment_url = $order->get_checkout_payment_url(true);
     if (!empty($payment_url)) {
@@ -2478,10 +2396,18 @@ function ms_create_woo_order_for_wallet_recharge($user_id, $amount)
     }
 
     $user_id = absint($user_id);
-    $amount = floatval($amount);
-    if (!$user_id || $amount <= 0) {
-        error_log('Wallet recharge failed: Invalid user_id or amount - user_id=' . $user_id . ', amount=' . $amount);
-        return false;
+    $amount = round(floatval($amount), 2);
+    if (!$user_id) {
+        return new WP_Error('invalid_user', 'مستخدم غير صالح.');
+    }
+    // حدود الشحن في مكان واحد تسري على كل نقاط الدخول (لوحات، shortcode، REST، موبايل)
+    if (function_exists('ms_validate_topup_amount')) {
+        $valid = ms_validate_topup_amount($amount);
+        if (is_wp_error($valid)) {
+            return $valid;
+        }
+    } elseif ($amount <= 0) {
+        return new WP_Error('invalid_amount', 'المبلغ غير صالح.');
     }
 
     try {
@@ -2523,29 +2449,8 @@ function ms_create_woo_order_for_wallet_recharge($user_id, $amount)
     $order->update_status('pending', 'Wallet recharge order created by Mostaager');
     $order->save();
 
-    $available_gateways = array();
-    if (function_exists('WC') && class_exists('WC_Payment_Gateways')) {
-        $payment_gateways = WC()->payment_gateways;
-        if (is_object($payment_gateways) && method_exists($payment_gateways, 'get_available_payment_gateways')) {
-            $available_gateways = $payment_gateways->get_available_payment_gateways();
-        }
-    }
-
-    $use_direct_telr = (count($available_gateways) === 1 && isset($available_gateways['mostaager_telr'])) ||
-                       (count($available_gateways) === 0);
-
-    if ($use_direct_telr) {
-        $telr_gateway = ms_get_mostaager_telr_gateway();
-        if ($telr_gateway && method_exists($telr_gateway, 'process_payment')) {
-            $order->set_payment_method('mostaager_telr');
-            $order->set_payment_method_title('Telr Payment');
-            $order->save();
-            $result = $telr_gateway->process_payment($order->get_id());
-            if (!empty($result['result']) && $result['result'] === 'success' && !empty($result['redirect'])) {
-                return $result['redirect'];
-            }
-        }
-    }
+    // الدفع كله عبر WooCommerce: نرجّع رابط صفحة دفع الطلب، والبوابة يختارها
+    // المستخدم من بوابات WooCommerce المفعّلة (لا بوابة مدمجة داخل الإضافة).
 
     $payment_url = $order->get_checkout_payment_url(true);
     if (!empty($payment_url)) {
@@ -3042,36 +2947,12 @@ function ms_get_user_whatsapp_phone($user_id)
     return '';
 }
 
-/**
- * Change area unit from sqft to m2 for Egyptian market
+/*
+ * ملاحظة Houzez: houzez_area_unit و houzez_property_size_unit و houzez_property_size
+ * غير موجودة في Houzez 4.3.5، فكان تحويل المساحة إلى م² كوداً ميتاً.
+ * الوحدة تُضبط من Theme Options ← Measurement Unit، أو من حقل
+ * fave_property_size_prefix لكل عقار.
  */
-add_filter('houzez_area_unit', 'ms_change_area_unit_to_m2');
-add_filter('houzez_property_size_unit', 'ms_change_area_unit_to_m2');
-
-function ms_change_area_unit_to_m2($unit) {
-    return 'm²';
-}
-
-/**
- * Convert sqft to m2 for property display
- */
-add_filter('houzez_property_size', 'ms_convert_sqft_to_m2', 10, 2);
-
-function ms_convert_sqft_to_m2($size, $post_id = 0) {
-    if (empty($size)) {
-        return $size;
-    }
-    
-    // If already in m2 format, return as is
-    if (is_numeric($size) && $size < 1000) {
-        return $size;
-    }
-    
-    // Convert sqft to m2 (1 sqft = 0.092903 m2)
-    $size_in_m2 = floatval($size) * 0.092903;
-    
-    return round($size_in_m2, 2);
-}
 
 // ============================================================
 // نظام الوسيط العقاري - Agent System
@@ -3426,42 +3307,10 @@ function ms_save_property_agent_for_owner($post_id, $post, $update) {
  * مزامنة الوحدة مع العقار
  */
 function ms_sync_unit_with_property($property_id, $agent_id) {
-    global $wpdb;
-    $unit_table = $wpdb->prefix . 'ms_units';
-    
-    // التحقق من وجود الجدول
-    $table_exists = $wpdb->get_var("SHOW TABLES LIKE '$unit_table'");
-    if (!$table_exists) {
-        return;
-    }
-    
-    // التحقق من وجود وحدة مرتبطة بالعقار
-    $existing_unit = $wpdb->get_row($wpdb->prepare(
-        "SELECT * FROM $unit_table WHERE id = %d",
-        $property_id
-    ));
-    
-    if ($existing_unit) {
-        // تحديث الوحدة الموجودة
-        $wpdb->update($unit_table, 
-            array('agent_id' => $agent_id),
-            array('id' => $property_id),
-            array('%d'),
-            array('%d')
-        );
-    } else {
-        // إنشاء وحدة جديدة
-        $wpdb->insert($unit_table,
-            array(
-                'id' => $property_id,
-                'building_id' => get_post_meta($property_id, 'ms_building_id', true),
-                'owner_id' => get_post_field('post_author', $property_id),
-                'agent_id' => $agent_id,
-                'status' => 'available'
-            ),
-            array('%d', '%d', '%d', '%d', '%s')
-        );
-    }
+    // الكود القديم كان يبحث عن الوحدة بـ WHERE id = $property_id، أي يعامل رقم منشور
+    // العقار كأنه رقم صف الوحدة — فيعدّل وحدة لا علاقة لها بالعقار، أو ينشئ وحدة خاطئة.
+    // الآن الوحدة تُحلّ من الربط المعتمد، ولا تُنشأ وحدة تلقائياً.
+    return ms_sync_property_unit_fields($property_id, array('agent_id' => absint($agent_id)));
 }
 
 // ============================================================

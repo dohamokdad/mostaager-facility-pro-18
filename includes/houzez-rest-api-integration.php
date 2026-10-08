@@ -113,13 +113,18 @@ function ms_houzez_register_unified_routes() {
     register_rest_route('mostager/v1', '/docs', [
         'methods' => 'GET',
         'callback' => 'ms_houzez_api_docs',
-        'permission_callback' => '__return_true',
+        // كانت مفتوحة للعموم وتكشف بنية المسارات والأدوار
+        'permission_callback' => function () {
+            return current_user_can('manage_options');
+        },
     ]);
 }
 
 // Permission callback
 function ms_houzez_api_permission() {
-    return current_user_can('read');
+    // مصادقة فقط — التفويض على مستوى الكائن يتم داخل كل handler
+    // عبر ms_houzez_can_access_building() / فحص ملكية المورد
+    return is_user_logged_in() && current_user_can('read');
 }
 
 function ms_houzez_can_access_building($building_id) {
@@ -129,9 +134,17 @@ function ms_houzez_can_access_building($building_id) {
     }
 
     $user_id = get_current_user_id();
-    return current_user_can('manage_options')
-        || (function_exists('ms_current_user_manages_building')
-            && ms_current_user_manages_building($user_id, $building_id));
+    if (current_user_can('manage_options')) {
+        return true;
+    }
+    // كانت تسمح لمدير المبنى فقط، فيحصل المالك والمستأجر على 403 على
+    // /units و /maintenance و /discussions. الطبقة الموحّدة تغطي الأدوار الأربعة.
+    if (function_exists('ms_user_can_access_building')) {
+        return ms_user_can_access_building($user_id, $building_id);
+    }
+
+    return function_exists('ms_current_user_manages_building')
+        && ms_current_user_manages_building($user_id, $building_id);
 }
 
 function ms_houzez_rest_create_invoice($request) {
@@ -167,6 +180,9 @@ function ms_houzez_rest_topup_wallet($request) {
     }
 
     $payment_url = ms_create_woo_order_for_wallet_recharge($target_user_id, $amount);
+    if (is_wp_error($payment_url)) {
+        return new WP_Error($payment_url->get_error_code(), $payment_url->get_error_message(), array('status' => 422));
+    }
     return $payment_url
         ? rest_ensure_response(array('success' => true, 'payment_url' => $payment_url))
         : new WP_Error('topup_failed', 'تعذر إنشاء طلب التعبئة', array('status' => 500));

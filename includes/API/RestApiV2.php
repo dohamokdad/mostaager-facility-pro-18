@@ -214,6 +214,9 @@ class RestApiV2
         }
 
         $payment_url = ms_create_woo_order_for_invoice($invoice_id);
+        if (is_wp_error($payment_url)) {
+            return self::api_response(false, $payment_url->get_error_message(), 409);
+        }
         if (!$payment_url) {
             return self::api_response(false, 'Unable to create payment order', 500);
         }

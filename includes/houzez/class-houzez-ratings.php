@@ -7,8 +7,11 @@ class MFP_Houzez_Ratings
 {
     public static function init()
     {
-        add_action('houzez_single_property_after_description', array(__CLASS__, 'render_property_ratings'));
-        add_filter('houzez_property_rating', array(__CLASS__, 'get_property_average_rating'), 10, 2);
+        // houzez_single_property_after_description و houzez_property_rating غير موجودين في Houzez.
+        // houzez_single_listing موجود فعلاً في single-property.php.
+        add_action('houzez_single_listing', function () {
+            self::render_property_ratings(get_the_ID());
+        });
     }
 
     public static function render_property_ratings($post_id)

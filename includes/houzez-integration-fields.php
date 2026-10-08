@@ -94,6 +94,9 @@ function ms_houzez_save_unit_fields($post_id, $post) {
 
 // Helper function to get building ID from property post
 function ms_houzez_get_property_building_id($property_id) {
+    if (function_exists('ms_property_building_id')) {
+        return ms_property_building_id($property_id);
+    }
     return intval(get_post_meta($property_id, 'ms_building_id', true)) ?: intval(get_post_meta($property_id, '_ms_building_id', true)) ?: intval(get_post_meta($property_id, 'building_id', true));
 }
 
@@ -114,6 +117,16 @@ function ms_houzez_sync_property_to_unit($post_id, $post) {
     if ($post->post_type !== 'property') {
         return;
     }
+    // الحفظ التلقائي والمراجعات كانت تشغّل المزامنة وتكتب صفوفاً مكررة
+    if ((defined('DOING_AUTOSAVE') && DOING_AUTOSAVE) || wp_is_post_revision($post_id) || $post->post_status === 'auto-draft') {
+        return;
+    }
+    // مرة واحدة لكل طلب
+    static $done = array();
+    if (isset($done[$post_id])) {
+        return;
+    }
+    $done[$post_id] = true;
 
     $building_id = ms_houzez_get_property_building_id($post_id);
     if (!$building_id) {

@@ -20,9 +20,14 @@ if (!defined('MOSTAAGER_PLUGIN_URL')) {
  * Register PWA manifest
  */
 add_action('wp_head', function () {
+    // الملف غير موجود في الإضافة — كان ينتج 404 في كل صفحة
+    if (!file_exists(MOSTAAGER_ENTERPRISE_PATH . 'assets/manifest.json')) {
+        echo '<meta name="theme-color" content="#0D1B2A">' . PHP_EOL;
+        return;
+    }
     $manifest_url = MOSTAAGER_PLUGIN_URL . 'assets/manifest.json';
     echo '<link rel="manifest" href="' . esc_url($manifest_url) . '">' . PHP_EOL;
-    echo '<meta name="theme-color" content="#2563eb">' . PHP_EOL;
+    echo '<meta name="theme-color" content="#0D1B2A">' . PHP_EOL;
     echo '<meta name="mobile-web-app-capable" content="yes">' . PHP_EOL;
     echo '<meta name="apple-mobile-web-app-capable" content="yes">' . PHP_EOL;
     echo '<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">' . PHP_EOL;
@@ -32,8 +37,12 @@ add_action('wp_head', function () {
  * Register service worker
  */
 add_action('wp_footer', function () {
+    // service-worker.js غير موجود في الإضافة — كان يسجّل عامل خدمة فاشل (404) مع كل تحميل
+    if (!file_exists(MOSTAAGER_ENTERPRISE_PATH . 'assets/js/service-worker.js')) {
+        return;
+    }
     if (is_user_logged_in()) {
-        $sw_url = MOSTAGER_PLUGIN_URL . 'assets/js/service-worker.js';
+        $sw_url = MOSTAAGER_ENTERPRISE_URL . 'assets/js/service-worker.js';
         ?>
         <script>
         if ('serviceWorker' in navigator) {

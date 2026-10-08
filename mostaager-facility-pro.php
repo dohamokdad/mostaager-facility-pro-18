@@ -2,8 +2,8 @@
 /*
 Plugin Name: Mostaager Facility PRO
 Plugin URI:  https://ejar-egy.com
-Description: نظام إدارة المرافق المتكامل لقالب Houzez — يتيح للناطور إنشاء طلبات صيانة وتوزيع تكاليفها على الشقق وتحصيل المبالغ عبر فواتير إلكترونية وإدارة محفظة المبنى. يدعم الدفع عبر WooCommerce مع بوابة Telr. يتضمن نظام استيراد متقدم، تقارير تحليلية، أتمتة ذكية، ومراقبة في الوقت الفعلي.
-Version:     18.0.0
+Description: نظام إدارة المرافق المتكامل لقالب Houzez — وحدات ومستأجرون وعقود وفواتير وصيانة ومحفظة. المدفوعات عبر WooCommerce بأي بوابة مفعّلة.
+Version:     18.19.0
 Author:      Doha Mokdad
 Text Domain: mostaager-facility
 */
@@ -15,7 +15,7 @@ if (!defined('ABSPATH')) {
 // Define plugin constants
 define('MOSTAAGER_ENTERPRISE_PATH', plugin_dir_path(__FILE__));
 define('MOSTAAGER_ENTERPRISE_URL', plugin_dir_url(__FILE__));
-define('MOSTAAGER_ENTERPRISE_VERSION', '18.0.0');
+define('MOSTAAGER_ENTERPRISE_VERSION', '18.19.0');
 
 if (!defined('MS_PLUGIN_PATH')) {
     define('MS_PLUGIN_PATH', MOSTAAGER_ENTERPRISE_PATH);
@@ -40,8 +40,7 @@ if (!defined('WP_DEBUG_DISPLAY')) {
     define('WP_DEBUG_DISPLAY', false);
 }
 
-// Disable vendor autoload completely - TCPDF causes too many issues
-// The PDF functionality will be handled without autoload
+// PDF: TCPDF is loaded lazily by MS_PDF::load() only when a PDF is generated.
 
 // Load everything in plugins_loaded to avoid unexpected output during activation
 add_action('plugins_loaded', function() {
@@ -50,6 +49,11 @@ add_action('plugins_loaded', function() {
         return;
     }
 
+    // Shared access-control helpers (used by AJAX handlers, PDF, reports)
+    require_once MOSTAAGER_ENTERPRISE_PATH . 'includes/ms-access-control.php';
+    // PDF engine (lazy TCPDF loader + secure export storage)
+    require_once MOSTAAGER_ENTERPRISE_PATH . 'includes/class-ms-pdf.php';
+
     // Load core bootstrap first
     if (file_exists(MOSTAAGER_ENTERPRISE_PATH . 'core/bootstrap.php')) {
         require_once MOSTAAGER_ENTERPRISE_PATH . 'core/bootstrap.php';
@@ -57,11 +61,9 @@ add_action('plugins_loaded', function() {
 
     // Load enhancement classes (with file existence checks)
     $enhancement_classes = array(
-        'includes/class-dashboard-charts.php',
         'includes/class-invoice-pdf.php',
         'includes/class-maintenance-api.php',
         'includes/class-whatsapp-integration.php',
-        'includes/telr-integration.php',
         'mostaager-facility-pro-add-on.php',
         'admin/dashboard.php',
         'includes/class-validator.php',
@@ -98,6 +100,11 @@ register_deactivation_hook(__FILE__, 'ms_cleanup_on_deactivate');
 
 function ms_run_installer()
 {
+    // عند التفعيل يكون plugins_loaded قد انتهى، فملفات التنصيب لم تُحمّل بعد
+    // وكانت الجداول لا تُنشأ على أي تنصيب جديد. نحمّلها هنا عند الحاجة.
+    if (!function_exists('ms_create_tables') && file_exists(MOSTAAGER_ENTERPRISE_PATH . 'core/install.php')) {
+        require_once MOSTAAGER_ENTERPRISE_PATH . 'core/install.php';
+    }
     if (!function_exists('ms_create_tables')) {
         return;
     }

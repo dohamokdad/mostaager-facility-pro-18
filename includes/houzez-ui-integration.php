@@ -128,7 +128,11 @@ function ms_houzey_enqueue_fonts() {
     }
     
     // Use Cairo font (Arabic) and Poppins (English) like Houzez
-    wp_enqueue_style('ms-google-fonts', 'https://fonts.googleapis.com/css2?family=Cairo:wght@400;500;600;700&family=Poppins:wght@400;500;600;700&display=swap', [], null);
+    // عائلة واحدة لكل رابط (روابط css2 متعددة العائلات تكسر WP-Optimize Minify)
+    if (apply_filters('ms_load_brand_fonts', true)) {
+        wp_enqueue_style('ms-brand-font-cairo', 'https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;700;800&display=swap', array(), null);
+        wp_enqueue_style('ms-brand-font-tajawal', 'https://fonts.googleapis.com/css2?family=Tajawal:wght@400;500;700&display=swap', array(), null);
+    }
 }
 
 // Add Houzez-style buttons to Mostaager

@@ -174,7 +174,7 @@
 .ms-header-button-primary:hover {
     background: #1d4ed8;
     transform: translateY(-2px);
-    box-shadow: 0 4px 12px rgba(37, 99, 235, 0.3);
+    box-shadow: 0 4px 12px rgba(212, 175, 55, 0.3);
 }
 
 .ms-header-button-secondary {
@@ -243,7 +243,7 @@
     align-items: center;
     justify-content: center;
     font-size: 1.5rem;
-    background: linear-gradient(135deg, rgba(37, 99, 235, 0.1), rgba(96, 165, 250, 0.1));
+    background: linear-gradient(135deg, rgba(212, 175, 55, 0.1), rgba(96, 165, 250, 0.1));
     color: var(--ms-primary-color);
 }
 
@@ -421,7 +421,7 @@
 }
 
 .ms-activity-icon.property {
-    background: rgba(37, 99, 235, 0.1);
+    background: rgba(212, 175, 55, 0.1);
     color: var(--ms-primary-color);
 }
 
@@ -487,7 +487,7 @@
     align-items: center;
     justify-content: center;
     font-size: 1.5rem;
-    background: linear-gradient(135deg, rgba(37, 99, 235, 0.1), rgba(96, 165, 250, 0.1));
+    background: linear-gradient(135deg, rgba(212, 175, 55, 0.1), rgba(96, 165, 250, 0.1));
     color: var(--ms-primary-color);
     transition: all var(--ms-transition-speed) ease;
 }

@@ -568,15 +568,28 @@ class MS_Advanced_Analytics {
      */
     public function export_analytics() {
         check_ajax_referer('ms_export_analytics', 'nonce');
-        
-        $format = sanitize_text_field($_POST['format']);
-        $data = json_decode(stripslashes($_POST['data']), true);
-        
+
+        // كان يكفي أن تملك الـ nonce — أُضيف فحص الدور (لوحة التحليلات تظهر للأدمن ومدير المبنى فقط)
+        $uid = get_current_user_id();
+        $allowed = current_user_can('manage_options')
+            || (function_exists('ms_user_has_role') && ms_user_has_role($uid, 'building_manager'));
+        if (!$uid || !$allowed) {
+            wp_send_json_error(array('message' => 'غير مصرح'), 403);
+        }
+
+        $format = isset($_POST['format']) ? sanitize_key(wp_unslash($_POST['format'])) : 'json';
+        $data   = isset($_POST['data']) ? json_decode(wp_unslash($_POST['data']), true) : null;
+        if (!is_array($data)) {
+            wp_send_json_error(array('message' => 'لا توجد بيانات للتصدير'), 400);
+        }
+
         $result = $this->export_analytics_data($data, $format);
-        
+        if (empty($result['success'])) {
+            wp_send_json_error(array('message' => $result['error'] ?? 'تعذّر التصدير'), 500);
+        }
         wp_send_json_success($result);
     }
-    
+
     /**
      * Export analytics data
      */
@@ -592,62 +605,50 @@ class MS_Advanced_Analytics {
                 return array('success' => false, 'error' => 'صيغة التصدير غير مدعومة');
         }
     }
-    
+
     /**
-     * Export analytics to CSV
+     * Export analytics to CSV — تخزين محمي بدل uploads العام
      */
     private function export_analytics_to_csv($data) {
-        $filename = 'analytics_export_' . date('Y-m-d') . '.csv';
-        $filepath = wp_upload_dir()['path'] . '/' . $filename;
-        
-        $file = fopen($filepath, 'w');
-        
+        $out = fopen('php://temp', 'w+');
+        fwrite($out, "\xEF\xBB\xBF");
         foreach ($data as $section => $section_data) {
-            if (is_array($section_data)) {
-                fputcsv($file, array($section));
-                foreach ($section_data as $key => $value) {
-                    if (is_array($value)) {
-                        fputcsv($file, array($key, json_encode($value)));
-                    } else {
-                        fputcsv($file, array($key, $value));
-                    }
-                }
-                fputcsv($file, array()); // Empty line separator
+            if (!is_array($section_data)) {
+                continue;
             }
+            fputcsv($out, array(MS_PDF::label($section)));
+            foreach ($section_data as $key => $value) {
+                fputcsv($out, array(MS_PDF::label($key), is_array($value) ? wp_json_encode($value) : $value));
+            }
+            fputcsv($out, array());
         }
-        
-        fclose($file);
-        
-        return array(
-            'success' => true,
-            'download_url' => wp_upload_dir()['url'] . '/' . $filename,
-            'filename' => $filename
-        );
+        rewind($out);
+        $content = stream_get_contents($out);
+        fclose($out);
+
+        return MS_PDF::store($content, 'analytics-' . wp_date('Y-m-d') . '.csv', 'text/csv; charset=UTF-8');
     }
-    
+
     /**
      * Export analytics to JSON
      */
     private function export_analytics_to_json($data) {
-        $filename = 'analytics_export_' . date('Y-m-d') . '.json';
-        $filepath = wp_upload_dir()['path'] . '/' . $filename;
-        
-        file_put_contents($filepath, json_encode($data, JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE));
-        
-        return array(
-            'success' => true,
-            'download_url' => wp_upload_dir()['url'] . '/' . $filename,
-            'filename' => $filename
+        return MS_PDF::store(
+            wp_json_encode($data, JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE),
+            'analytics-' . wp_date('Y-m-d') . '.json',
+            'application/json; charset=UTF-8'
         );
     }
-    
+
     /**
      * Export analytics to PDF
      */
     private function export_analytics_to_pdf($data) {
-        return array('success' => false, 'error' => 'تصدير PDF يتطلب مكتبة TCPDF');
+        return MS_PDF::export_report($data, 'تقرير التحليلات', array(
+            'تاريخ التصدير' => wp_date('Y-m-d H:i'),
+        ));
     }
-    
+
     /**
      * Helper functions
      */
