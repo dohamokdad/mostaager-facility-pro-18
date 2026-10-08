@@ -2,6 +2,7 @@
 function qs(s,r){return (r||document).querySelector(s)}
 function addQuickActions(){
  var content=qs('.ms-dashboard .ms-content');
+ if(content&&qs('.ms-page-header .ms-dashboard-actions',content))return; // header already has quick actions
  if(!content||qs('.ms-building-quick-actions',content))return;
  var selector=qs('#ms-building-selector');
  var id=selector&&selector.value?selector.value:'';
@@ -26,7 +27,7 @@ function addDataWarning(){
  }
 }
 function bindFacilityFilters(){
- document.querySelectorAll('.ms-facility-filter').forEach(function(btn){if(btn.dataset.bound)return;btn.dataset.bound='1';btn.addEventListener('click',function(){var status=btn.dataset.facilityStatus;document.querySelectorAll('.ms-facility-filter').forEach(function(b){b.style.background=b===btn?'#2563eb':'#fff';b.style.color=b===btn?'#fff':'#334155';b.classList.toggle('active',b===btn)});document.querySelectorAll('.ms-facility-row').forEach(function(row){row.style.display=status==='all'||row.dataset.facilityStatus===status?'':'none'})})})
+ document.querySelectorAll('.ms-facility-filter').forEach(function(btn){if(btn.dataset.bound)return;btn.dataset.bound='1';btn.addEventListener('click',function(){var status=btn.dataset.facilityStatus;document.querySelectorAll('.ms-facility-filter').forEach(function(b){b.style.background=b===btn?'var(--ms-accent, #D4AF37)':'#fff';b.style.color=b===btn?'#fff':'var(--ms-text, #1E2B3A)';b.classList.toggle('active',b===btn)});document.querySelectorAll('.ms-facility-row').forEach(function(row){row.style.display=status==='all'||row.dataset.facilityStatus===status?'':'none'})})})
 }
 function markActive(){
  var hash=(location.hash||'#overview').replace('#','').split('&')[0]||'overview';

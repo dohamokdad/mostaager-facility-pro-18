@@ -24,13 +24,13 @@ final class MS_Houzez_Mostaager_Adapter
     public static function sync_property($post_id, $post = null, $update = false)
     {
         $post_id = absint($post_id);
-        if (!$post_id || wp_is_post_revision($post_id) || wp_is_post_autosave($post_id)) return;
         if (!$post) $post = get_post($post_id);
-        if (!$post || $post->post_type !== self::PROPERTY_POST_TYPE) return;
-        if (!current_user_can('edit_post', $post_id)) return;
+        // الحارس الموحّد لحفظ العقار
+        if (!function_exists('ms_property_save_guard') || !ms_property_save_guard($post_id, $post, 'houzez_adapter')) return;
 
-        $building_id = absint(self::first_meta($post_id, array('ms_building_id', 'building_id')));
-        $unit_id = absint(self::first_meta($post_id, array('ms_unit_id', 'unit_id')));
+        // مصدر واحد لقراءة الربط بدل قائمة مفاتيح خاصة بكل ملف
+        $building_id = ms_property_building_id($post_id);
+        $unit_id = ms_property_unit_id($post_id);
         $unit_number = sanitize_text_field(self::first_meta($post_id, array('ms_unit_number', 'fave_property_id')));
 
         global $wpdb;
@@ -49,8 +49,8 @@ final class MS_Houzez_Mostaager_Adapter
         }
 
         update_post_meta($post_id, self::PROPERTY_META_PROPERTY_ID, $post_id);
-        if ($building_id) update_post_meta($post_id, self::PROPERTY_META_BUILDING_ID, $building_id);
-        if ($unit_id) update_post_meta($post_id, self::PROPERTY_META_UNIT_ID, $unit_id);
+        if ($building_id) ms_link_property_building($post_id, $building_id);
+        if ($unit_id) ms_link_property_unit($post_id, $unit_id);
 
         $contract_id = absint(self::first_meta($post_id, array('ms_contract_id', 'ms_property_contract_id', 'lease_id')));
         if ($contract_id) update_post_meta($post_id, self::PROPERTY_META_CONTRACT_ID, $contract_id);

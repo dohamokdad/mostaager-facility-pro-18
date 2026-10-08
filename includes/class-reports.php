@@ -473,83 +473,82 @@ class MS_Advanced_Reports {
         if (!current_user_can('manage_options')) {
             wp_send_json_error(array('message' => 'ليس لديك الصلاحية'), 403);
         }
-        
-        $report_type = sanitize_text_field($_POST['report_type']);
-        $format = sanitize_text_field($_POST['format']);
-        $data = json_decode(stripslashes($_POST['data']), true);
-        
+
+        $report_type = isset($_POST['report_type']) ? sanitize_key(wp_unslash($_POST['report_type'])) : '';
+        $format      = isset($_POST['format']) ? sanitize_key(wp_unslash($_POST['format'])) : '';
+        $data        = isset($_POST['data']) ? json_decode(wp_unslash($_POST['data']), true) : null;
+
+        if (!is_array($data) || empty($data)) {
+            wp_send_json_error(array('message' => 'لا توجد بيانات للتصدير. أنشئ التقرير أولاً.'), 400);
+        }
+
         $result = $this->export_data($data, $format, $report_type);
-        
+
+        if (empty($result['success'])) {
+            wp_send_json_error(array('message' => $result['error'] ?? 'تعذّر التصدير'), 500);
+        }
         wp_send_json_success($result);
     }
-    
+
     /**
-     * Export data
+     * Export data — CSV و PDF فقط (خيار Excel كان معطلاً ويرجع خطأ دائماً فحُذف).
      */
     private function export_data($data, $format, $report_type) {
         switch ($format) {
             case 'csv':
                 return $this->export_to_csv($data, $report_type);
-            case 'excel':
-                return $this->export_to_excel($data, $report_type);
             case 'pdf':
                 return $this->export_to_pdf($data, $report_type);
             default:
                 return array('success' => false, 'error' => 'صيغة التصدير غير مدعومة');
         }
     }
-    
+
+    private function report_title($report_type) {
+        return $this->report_types[$report_type]['name'] ?? 'تقرير';
+    }
+
     /**
-     * Export to CSV
+     * Export to CSV — يُحفظ في مجلد محمي برابط مؤقت (كان يُكتب في uploads العام باسم متوقع).
      */
     private function export_to_csv($data, $report_type) {
-        $filename = $report_type . '_report_' . date('Y-m-d') . '.csv';
-        $filepath = wp_upload_dir()['path'] . '/' . $filename;
-        
-        $file = fopen($filepath, 'w');
-        
-        if (isset($data['requests'])) {
-            fputcsv($file, array_keys((array)$data['requests'][0]));
-            foreach ($data['requests'] as $row) {
-                fputcsv($file, (array)$row);
-            }
-        } elseif (isset($data['invoices'])) {
-            fputcsv($file, array_keys((array)$data['invoices'][0]));
-            foreach ($data['invoices'] as $row) {
-                fputcsv($file, (array)$row);
-            }
-        } else {
-            fputcsv($file, array_keys($data[0]));
-            foreach ($data as $row) {
-                fputcsv($file, $row);
-            }
+        $rows = $data['requests'] ?? ($data['invoices'] ?? $data);
+        $rows = array_values(array_filter((array) $rows, function ($r) {
+            return is_array($r) || is_object($r);
+        }));
+        if (empty($rows)) {
+            return array('success' => false, 'error' => 'لا توجد صفوف قابلة للتصدير.');
         }
-        
-        fclose($file);
-        
-        return array(
-            'success' => true,
-            'download_url' => wp_upload_dir()['url'] . '/' . $filename,
-            'filename' => $filename
-        );
+
+        $out = fopen('php://temp', 'w+');
+        fwrite($out, "\xEF\xBB\xBF"); // BOM ليفتح Excel العربية بشكل صحيح
+        $headers = array_keys((array) $rows[0]);
+        fputcsv($out, array_map(array('MS_PDF', 'label'), $headers));
+        foreach ($rows as $row) {
+            $row  = (array) $row;
+            $line = array();
+            foreach ($headers as $h) {
+                $v      = $row[$h] ?? '';
+                $line[] = is_scalar($v) ? $v : wp_json_encode($v);
+            }
+            fputcsv($out, $line);
+        }
+        rewind($out);
+        $content = stream_get_contents($out);
+        fclose($out);
+
+        return MS_PDF::store($content, sanitize_file_name($report_type . '-' . wp_date('Y-m-d') . '.csv'), 'text/csv; charset=UTF-8');
     }
-    
-    /**
-     * Export to Excel
-     */
-    private function export_to_excel($data, $report_type) {
-        // This would use a library like PhpSpreadsheet
-        return array('success' => false, 'error' => 'تصدير Excel يتطلب مكتبة PhpSpreadsheet');
-    }
-    
+
     /**
      * Export to PDF
      */
     private function export_to_pdf($data, $report_type) {
-        // This would use a library like TCPDF or DomPDF
-        return array('success' => false, 'error' => 'تصدير PDF يتطلب مكتبة TCPDF');
+        return MS_PDF::export_report($data, $this->report_title($report_type), array(
+            'تاريخ التصدير' => wp_date('Y-m-d H:i'),
+        ));
     }
-    
+
     /**
      * Schedule report
      */

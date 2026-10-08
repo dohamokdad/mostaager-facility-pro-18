@@ -14,9 +14,19 @@ define('MS_WALLET_CURRENCY_META', 'ms_wallet_currency');
 
 // Get user wallet balance
 if (!function_exists('ms_get_wallet_balance')) {
+    /**
+     * مصدر واحد للرصيد: جدول ms_user_wallet.
+     * كان هناك مخزنان (ميتا المستخدم + الجدول) فيختلف الرصيد المعروض عن
+     * الرصيد المخصوم، وهذا يعني دفعاً من رصيد غير موجود أو العكس.
+     * الميتا تبقى كنسخة عرض فقط.
+     */
     function ms_get_wallet_balance($user_id) {
-        $balance = get_user_meta($user_id, MS_WALLET_BALANCE_META, true);
-        return floatval($balance ?: 0);
+        if (function_exists('ms_get_user_wallet_balance')) {
+            $balance = floatval(ms_get_user_wallet_balance($user_id));
+            update_user_meta($user_id, MS_WALLET_BALANCE_META, $balance);
+            return $balance;
+        }
+        return floatval(get_user_meta($user_id, MS_WALLET_BALANCE_META, true) ?: 0);
     }
 }
 
@@ -30,19 +40,24 @@ if (!function_exists('ms_set_wallet_balance')) {
 // Add to wallet balance
 if (!function_exists('ms_add_to_wallet')) {
     function ms_add_to_wallet($user_id, $amount, $description = '', $type = 'credit') {
+        $amount = floatval($amount);
         $current_balance = ms_get_wallet_balance($user_id);
-        $new_balance = $current_balance + floatval($amount);
-        
-        if ($new_balance < 0) {
-            return false; // Prevent negative balance
+
+        if ($current_balance + $amount < 0) {
+            return false; // لا رصيد سالب
         }
-        
-        ms_set_wallet_balance($user_id, $new_balance);
-        
-        // Record transaction
-        ms_record_wallet_transaction($user_id, $amount, $type, $description);
-        
-        return $new_balance;
+
+        // كل حركة تُكتب في جدول المحفظة (مع سجل الحركات)، والميتا تتحدّث كمرآة
+        if ($amount >= 0 && function_exists('ms_add_user_wallet_balance')) {
+            ms_add_user_wallet_balance($user_id, $amount, $description);
+        } elseif ($amount < 0 && function_exists('ms_deduct_user_wallet_balance')) {
+            ms_deduct_user_wallet_balance($user_id, abs($amount), $description);
+        } else {
+            ms_set_wallet_balance($user_id, $current_balance + $amount);
+            ms_record_wallet_transaction($user_id, $amount, $type, $description);
+        }
+
+        return ms_get_wallet_balance($user_id);
     }
 }
 
@@ -252,11 +267,16 @@ function ms_add_wallet_gateway($gateways) {
                 
                 if (ms_get_wallet_balance($user_id) < $amount) {
                     wc_add_notice('رصيد المحفظة غير كافٍ', 'error');
-                    return;
+                    return array('result' => 'failure');
                 }
-                
-                ms_deduct_from_wallet($user_id, $amount, 'دفع طلب #' . $order_id);
-                
+
+                // الخصم أولاً: إن فشل لا يُعتمد الدفع (كان الطلب يُعتمد حتى لو لم يُخصم شيء)
+                $deducted = ms_deduct_from_wallet($user_id, $amount, 'دفع طلب #' . $order_id);
+                if ($deducted === false) {
+                    wc_add_notice('تعذّر الخصم من المحفظة', 'error');
+                    return array('result' => 'failure');
+                }
+
                 $order->payment_complete();
                 $order->add_order_note('تم الدفع باستخدام محفظة Mostaager');
                 
@@ -320,60 +340,33 @@ function ms_process_wallet_topup() {
     if (!isset($_POST['ms_wallet_topup_submit'])) {
         return;
     }
-    
-    if (!isset($_POST['ms_wallet_topup_nonce']) || !wp_verify_nonce($_POST['ms_wallet_topup_nonce'], 'ms_wallet_topup')) {
+    if (!isset($_POST['ms_wallet_topup_nonce']) || !wp_verify_nonce(sanitize_text_field(wp_unslash($_POST['ms_wallet_topup_nonce'])), 'ms_wallet_topup')) {
         return;
     }
-    
     if (!is_user_logged_in()) {
         return;
     }
-    
-    $amount = floatval($_POST['topup_amount']);
+
+    $amount = floatval($_POST['topup_amount'] ?? 0);
     if ($amount <= 0) {
         return;
     }
-    
-    $user_id = get_current_user_id();
-    
-    // Create WooCommerce product for top-up
-    if (class_exists('WC_Product_Simple')) {
-        $product = new WC_Product_Simple();
-        $product->set_name('شحن محفظة - ' . number_format_i18n($amount, 2));
-        $product->set_price($amount);
-        $product->set_virtual(true);
-        $product_id = $product->save();
-        
-        // Add to cart and redirect to checkout
-        WC()->cart->empty_cart();
-        WC()->cart->add_to_cart($product_id);
-        
-        // Store user ID in session for post-payment processing
-        WC()->session->set('ms_wallet_topup_user_id', $user_id);
-        WC()->session->set('ms_wallet_topup_amount', $amount);
-        
-        wp_redirect(wc_get_checkout_url());
+
+    // مسار واحد لكل عمليات الشحن: طلب ووكومرس موسوم بميتا الشحن، بدل إنشاء
+    // منتج جديد في كل مرة وتخزين المبلغ في جلسة قد تضيع.
+    if (!function_exists('ms_create_woo_order_for_wallet_recharge')) {
+        return;
+    }
+    $payment_url = ms_create_woo_order_for_wallet_recharge(get_current_user_id(), $amount);
+    if (is_wp_error($payment_url)) {
+        set_transient('ms_wallet_topup_error_' . get_current_user_id(), $payment_url->get_error_message(), 60);
+        return;
+    }
+    if (is_string($payment_url) && $payment_url !== '') {
+        wp_safe_redirect($payment_url);
         exit;
     }
 }
 
-// Process wallet top-up after WooCommerce payment
-// Payment completion receives the order id; it must never participate in the
-// payment-gateway filter because its return value is not a gateway list.
-add_action('woocommerce_payment_complete', 'ms_process_wallet_topup_after_payment', 999, 1);
-
-function ms_process_wallet_topup_after_payment($order_id) {
-    if (!WC()->session) {
-        return;
-    }
-    
-    $user_id = WC()->session->get('ms_wallet_topup_user_id');
-    $amount = WC()->session->get('ms_wallet_topup_amount');
-    
-    if ($user_id && $amount) {
-        ms_add_to_wallet($user_id, $amount, 'شحن محفظة عبر WooCommerce');
-        
-        WC()->session->__unset('ms_wallet_topup_user_id');
-        WC()->session->__unset('ms_wallet_topup_amount');
-    }
-}
+// قيد الشحن يتم في includes/actions.php اعتماداً على ميتا الطلب (لا على الجلسة)،
+// مع علامة _ms_wallet_credited لمنع القيد المزدوج.

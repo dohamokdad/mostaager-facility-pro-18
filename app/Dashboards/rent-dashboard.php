@@ -6,11 +6,11 @@ add_shortcode('rent_dashboard_v4', function () {
         ob_start();
         ?>
         <div style="max-width:400px;margin:50px auto;padding:40px;background:#fff;border-radius:16px;box-shadow:0 4px 20px rgba(0,0,0,0.1);">
-            <h2 style="text-align:center;margin-bottom:30px;color:#0f172a;">تسجيل الدخول</h2>
+            <h2 style="text-align:center;margin-bottom:30px;color:var(--ms-primary, #0D1B2A);">تسجيل الدخول</h2>
             <?php
             $args = array(
                 'echo' => true,
-                'redirect' => (is_ssl() ? 'https://' : 'http://') . $_SERVER['HTTP_HOST'] . $_SERVER['REQUEST_URI'],
+                'redirect' => esc_url_raw(home_url(add_query_arg(array()))),
                 'form_id' => 'ms-loginform',
                 'label_username' => 'البريد الإلكتروني',
                 'label_password' => 'كلمة المرور',
@@ -27,7 +27,7 @@ add_shortcode('rent_dashboard_v4', function () {
             wp_login_form($args);
             ?>
             <p style="text-align:center;margin-top:20px;">
-                <a href="<?php echo wp_lostpassword_url(); ?>" style="color:#2563eb;text-decoration:none;">نسيت كلمة المرور؟</a>
+                <a href="<?php echo wp_lostpassword_url(); ?>" style="color:var(--ms-primary, #0D1B2A);text-decoration:none;">نسيت كلمة المرور؟</a>
             </p>
         </div>
         <?php
@@ -82,7 +82,7 @@ add_shortcode('rent_dashboard_v4', function () {
     $pending_count = function_exists('ms_get_invoices_count_by_user_and_status') ? ms_get_invoices_count_by_user_and_status($user->ID, 'pending') : 0;
     $overdue_count = function_exists('ms_get_user_overdue_count') ? ms_get_user_overdue_count($user->ID) : 0;
     $next_due = function_exists('ms_get_latest_due_invoice') ? ms_get_latest_due_invoice($user->ID) : null;
-    $rent_streak = function_exists('ms_get_rent_streak_badge') ? ms_get_rent_streak_badge($user->ID) : array('label' => 'غير متوفر', 'streak' => 0, 'color' => '#64748b');
+    $rent_streak = function_exists('ms_get_rent_streak_badge') ? ms_get_rent_streak_badge($user->ID) : array('label' => 'غير متوفر', 'streak' => 0, 'color' => 'var(--ms-muted, #6B7280)');
     $notifications = function_exists('ms_get_notifications_by_user') ? ms_get_notifications_by_user($user->ID, 20) : array();
     $unread_notifications_count = function_exists('ms_get_unread_notifications_count') ? ms_get_unread_notifications_count($user->ID) : 0;
 
@@ -279,26 +279,38 @@ add_shortcode('rent_dashboard_v4', function () {
 
         <main class="ms-content">
 
+            <div class="ms-owner-top ms-page-header">
+                <div>
+                    <p class="ms-eyebrow">بوابة المستأجر</p>
+                    <h1>مرحباً، <?php echo esc_html($user->display_name); ?></h1>
+                    <p class="ms-page-subtitle">تابع إيجارك وفواتيرك وطلبات الصيانة من مكان واحد.</p>
+                </div>
+                <div class="ms-dashboard-actions" role="group" aria-label="إجراءات سريعة">
+                    <button type="button" class="ms-action-button ms-action-button-primary" data-tab-target="invoices">دفع الفواتير</button>
+                    <button type="button" class="ms-action-button" data-tab-target="maintenance">طلب صيانة</button>
+                    <button type="button" class="ms-action-button" data-tab-target="wallet">المحفظة</button>
+                </div>
+            </div>
+
             <div class="ms-tab-content active" id="overview">
-                <h1>مرحباً، <?php echo esc_html($user->display_name); ?></h1>
                 <div class="ms-card ms-tenant-home-card" style="margin:16px 0;">
                     <h3 style="margin-top:0;">العقار المستأجر</h3>
                     <div class="ms-grid" style="margin-top:12px;">
-                        <div><span style="display:block;color:#64748b;font-size:13px;">اسم العقار / الوحدة</span><strong><?php echo esc_html($tenant_property_name); ?></strong></div>
-                        <div><span style="display:block;color:#64748b;font-size:13px;">المبنى</span><strong><?php echo esc_html($tenant_building_name); ?></strong></div>
-                        <div><span style="display:block;color:#64748b;font-size:13px;">رقم الوحدة</span><strong><?php echo esc_html($tenant_unit_label); ?></strong></div>
+                        <div><span style="display:block;color:var(--ms-muted, #6B7280);font-size:13px;">اسم العقار / الوحدة</span><strong><?php echo esc_html($tenant_property_name); ?></strong></div>
+                        <div><span style="display:block;color:var(--ms-muted, #6B7280);font-size:13px;">المبنى</span><strong><?php echo esc_html($tenant_building_name); ?></strong></div>
+                        <div><span style="display:block;color:var(--ms-muted, #6B7280);font-size:13px;">رقم الوحدة</span><strong><?php echo esc_html($tenant_unit_label); ?></strong></div>
                     </div>
                 </div>
                 <div class="ms-grid">
                     <div class="ms-card"><h3>الإيجار القادم</h3><div id="ms-next-rent" class="ms-number"><?php echo $next_due ? 'ج.م ' . number_format_i18n($next_due->amount, 2) : '—'; ?></div>
-                        <div style="margin-top:8px;font-size:13px;color:#666">تاريخ الاستحقاق: <span id="ms-next-due-date"><?php echo $next_due ? esc_html($next_due->due_date) : '—'; ?></span></div>
+                        <div style="margin-top:8px;font-size:13px;color:var(--ms-muted, #6B7280)">تاريخ الاستحقاق: <span id="ms-next-due-date"><?php echo $next_due ? esc_html($next_due->due_date) : '—'; ?></span></div>
                     </div>
                     <div class="ms-card"><h3>رصيد المحفظة</h3><div id="ms-rent-wallet" class="ms-number"><?php echo 'ج.م ' . number_format_i18n($wallet, 2); ?></div></div>
                     <div class="ms-card"><h3>عدد الفواتير</h3><div id="ms-rent-invoices" class="ms-number"><?php echo intval(count($invoices)); ?></div>
-                        <div style="margin-top:8px;font-size:13px;color:#666">فواتير الإيجار: <span id="ms-rent-count"><?php echo intval(count($rent_invoices)); ?></span></div>
-                        <div style="margin-top:8px;font-size:13px;color:#666">فواتير الصيانة: <span id="ms-maintenance-count"><?php echo intval(count($maintenance_invoices)); ?></span></div>
-                        <div style="margin-top:8px;font-size:13px;color:#666">معلقة: <span id="ms-rent-pending"><?php echo intval($pending_count); ?></span></div>
-                        <div style="margin-top:8px;font-size:13px;color:#666">متأخرة: <span id="ms-rent-overdue"><?php echo intval($overdue_count); ?></span></div>
+                        <div style="margin-top:8px;font-size:13px;color:var(--ms-muted, #6B7280)">فواتير الإيجار: <span id="ms-rent-count"><?php echo intval(count($rent_invoices)); ?></span></div>
+                        <div style="margin-top:8px;font-size:13px;color:var(--ms-muted, #6B7280)">فواتير الصيانة: <span id="ms-maintenance-count"><?php echo intval(count($maintenance_invoices)); ?></span></div>
+                        <div style="margin-top:8px;font-size:13px;color:var(--ms-muted, #6B7280)">معلقة: <span id="ms-rent-pending"><?php echo intval($pending_count); ?></span></div>
+                        <div style="margin-top:8px;font-size:13px;color:var(--ms-muted, #6B7280)">متأخرة: <span id="ms-rent-overdue"><?php echo intval($overdue_count); ?></span></div>
                     </div>
                 </div>
                 <?php echo do_shortcode('[rent_streak_badge]'); ?>
@@ -307,14 +319,14 @@ add_shortcode('rent_dashboard_v4', function () {
                         <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:14px;">
                             <h3 style="margin:0;">الإشعارات الأخيرة</h3>
                             <?php if ($unread_notifications_count > 0) : ?>
-                                <span style="background:#ef4444;color:#fff;padding:3px 10px;border-radius:999px;font-size:0.78rem;font-weight:700;"><?php echo intval($unread_notifications_count); ?> غير مقروء</span>
+                                <span style="background:var(--ms-danger, #B42318);color:#fff;padding:3px 10px;border-radius:999px;font-size:0.78rem;font-weight:700;"><?php echo intval($unread_notifications_count); ?> غير مقروء</span>
                             <?php endif; ?>
                         </div>
                         <div style="display:flex;flex-direction:column;gap:10px;">
                             <?php foreach (array_slice($notifications, 0, 5) as $note) : ?>
-                                <div style="padding:14px 16px;border-radius:12px;background:<?php echo !empty($note->is_read) ? '#f9fafb' : '#eff6ff'; ?>;border:1px solid <?php echo !empty($note->is_read) ? '#e5e7eb' : '#bfdbfe'; ?>;">
-                                    <div style="font-size:14px;color:#111;line-height:1.6;"><?php echo esc_html($note->message ?? ''); ?></div>
-                                    <div style="margin-top:6px;font-size:12px;color:#6b7280;"><?php echo esc_html(date_i18n('Y-m-d H:i', strtotime($note->created_at ?? $note->created_on ?? ''))); ?></div>
+                                <div style="padding:14px 16px;border-radius:12px;background:<?php echo !empty($note->is_read) ? 'var(--ms-surface-alt, #FAF6EF)' : 'var(--ms-accent-soft, #F8F0D8)'; ?>;border:1px solid <?php echo !empty($note->is_read) ? 'var(--ms-border, #ECE3D4)' : 'var(--ms-accent-line, #E9D69B)'; ?>;">
+                                    <div style="font-size:14px;color:var(--ms-primary, #0D1B2A);line-height:1.6;"><?php echo esc_html($note->message ?? ''); ?></div>
+                                    <div style="margin-top:6px;font-size:12px;color:var(--ms-muted, #6B7280);"><?php echo esc_html(date_i18n('Y-m-d H:i', strtotime($note->created_at ?? $note->created_on ?? ''))); ?></div>
                                 </div>
                             <?php endforeach; ?>
                         </div>
@@ -327,8 +339,8 @@ add_shortcode('rent_dashboard_v4', function () {
                     <h3>فواتيري</h3>
                     <?php if(!empty($invoices)): ?>
                         <div class="ms-invoice-subtabs" style="margin-top:18px;display:flex;gap:8px;flex-wrap:wrap;">
-                            <button class="ms-invoice-subtab active" data-subtab="invoices-property" style="padding:10px 20px;border-radius:999px;border:1px solid #e5e7eb;background:#2563eb;color:#fff;cursor:pointer;font-weight:600;">فواتير العقار (إيجار)</button>
-                            <button class="ms-invoice-subtab" data-subtab="invoices-building" style="padding:10px 20px;border-radius:999px;border:1px solid #e5e7eb;background:#fff;color:#0f172a;cursor:pointer;font-weight:600;">فواتير البناء والصيانة</button>
+                            <button class="ms-invoice-subtab active" data-subtab="invoices-property" style="padding:10px 20px;border-radius:999px;border:1px solid var(--ms-border, #ECE3D4);background:var(--ms-accent, #D4AF37);color: var(--ms-primary, #0D1B2A);cursor:pointer;font-weight:600;">فواتير العقار (إيجار)</button>
+                            <button class="ms-invoice-subtab" data-subtab="invoices-building" style="padding:10px 20px;border-radius:999px;border:1px solid var(--ms-border, #ECE3D4);background:#fff;color:var(--ms-primary, #0D1B2A);cursor:pointer;font-weight:600;">فواتير البناء والصيانة</button>
                         </div>
                         <div class="ms-invoice-subpanel active" id="invoices-property" style="margin-top:16px;">
                             <?php if (!empty($invoice_groups['property'])): ?>
@@ -351,10 +363,7 @@ add_shortcode('rent_dashboard_v4', function () {
                                                 $description = isset($inv->description) ? $inv->description : (isset($inv->invoice_type) ? $inv->invoice_type : 'فاتورة');
                                                 $building_name = '—';
                                                 if (isset($inv->building_id) && $inv->building_id) {
-                                                    $building_post = get_post($inv->building_id);
-                                                    if ($building_post) {
-                                                        $building_name = $building_post->post_title;
-                                                    }
+                                                    $building_name = ms_building_display_name($inv->building_id) ?: '—';
                                                 } elseif (isset($inv->property_id) && $inv->property_id) {
                                                     $property_post = get_post($inv->property_id);
                                                     if ($property_post) {
@@ -369,13 +378,13 @@ add_shortcode('rent_dashboard_v4', function () {
                                                 $is_canceled = $status === 'canceled';
                                                 $status_label = '';
                                                 if ($is_paid) {
-                                                    $status_label = '<span style="color:#10b981;font-weight:600">مدفوع</span>';
+                                                    $status_label = '<span style="color:var(--ms-success, #15803D);font-weight:600">مدفوع</span>';
                                                 } elseif ($is_canceled) {
-                                                    $status_label = '<span style="color:#ef4444;font-weight:600">ملغي</span>';
+                                                    $status_label = '<span style="color:var(--ms-danger, #B42318);font-weight:600">ملغي</span>';
                                                 } elseif ($status === 'pending') {
                                                     $status_label = 'معلقة';
                                                 } elseif ($status === 'overdue') {
-                                                    $status_label = '<span style="color:#f59e0b;font-weight:600">متأخرة</span>';
+                                                    $status_label = '<span style="color:var(--ms-warning, #B45309);font-weight:600">متأخرة</span>';
                                                 } else {
                                                     $status_label = esc_html($status);
                                                 }
@@ -390,11 +399,14 @@ add_shortcode('rent_dashboard_v4', function () {
                                                 <td style="padding: 12px;"><?php echo esc_html($created_at); ?></td>
                                                 <td style="padding: 12px;">
                                                     <?php if (!$is_paid && (!isset($inv->source) || $inv->source !== 'legacy')): ?>
-                                                        <button class="ms-pay-now-btn" data-invoice-id="<?php echo intval($inv->id); ?>" data-nonce="<?php echo wp_create_nonce('ms_pay_invoice_' . $inv->id); ?>" style="padding: 6px 12px; background: #2563eb; color: white; border: none; border-radius: 4px; cursor: pointer;">ادفع الآن</button>
+                                                        <button class="ms-pay-now-btn" data-invoice-id="<?php echo intval($inv->id); ?>" data-nonce="<?php echo wp_create_nonce('ms_pay_invoice_' . $inv->id); ?>" style="padding: 6px 12px; background: var(--ms-accent, #D4AF37); color: var(--ms-primary, #0D1B2A); border: none; border-radius: 4px; cursor: pointer;">ادفع الآن</button>
                                                     <?php elseif ($is_paid): ?>
-                                                        <span style="color: #10b981; font-size: 12px;">✓ تم الدفع</span>
+                                                        <span style="color: var(--ms-success, #15803D); font-size: 12px;">✓ تم الدفع</span>
                                                     <?php else: ?>
-                                                        <span style="color: #6b7280;">غير متاح للمدفوعات القديمة</span>
+                                                        <span style="color: var(--ms-muted, #6B7280);">غير متاح للمدفوعات القديمة</span>
+                                                    <?php endif; ?>
+                                                    <?php if (!isset($inv->source) || $inv->source !== 'legacy'): ?>
+                                                        <a href="<?php echo esc_url(ms_invoice_pdf_url($inv->id)); ?>" class="ms-invoice-pdf-link" style="display:inline-block;margin-top:6px;font-size:12px;color:var(--ms-primary, #0D1B2A);text-decoration:underline;">تحميل PDF</a>
                                                     <?php endif; ?>
                                                 </td>
                                             </tr>
@@ -426,10 +438,7 @@ add_shortcode('rent_dashboard_v4', function () {
                                                 $description = isset($inv->description) ? $inv->description : (isset($inv->invoice_type) ? $inv->invoice_type : 'فاتورة');
                                                 $building_name = '—';
                                                 if (isset($inv->building_id) && $inv->building_id) {
-                                                    $building_post = get_post($inv->building_id);
-                                                    if ($building_post) {
-                                                        $building_name = $building_post->post_title;
-                                                    }
+                                                    $building_name = ms_building_display_name($inv->building_id) ?: '—';
                                                 } elseif (isset($inv->property_id) && $inv->property_id) {
                                                     $property_post = get_post($inv->property_id);
                                                     if ($property_post) {
@@ -444,13 +453,13 @@ add_shortcode('rent_dashboard_v4', function () {
                                                 $is_canceled = $status === 'canceled';
                                                 $status_label = '';
                                                 if ($is_paid) {
-                                                    $status_label = '<span style="color:#10b981;font-weight:600">مدفوع</span>';
+                                                    $status_label = '<span style="color:var(--ms-success, #15803D);font-weight:600">مدفوع</span>';
                                                 } elseif ($is_canceled) {
-                                                    $status_label = '<span style="color:#ef4444;font-weight:600">ملغي</span>';
+                                                    $status_label = '<span style="color:var(--ms-danger, #B42318);font-weight:600">ملغي</span>';
                                                 } elseif ($status === 'pending') {
                                                     $status_label = 'معلقة';
                                                 } elseif ($status === 'overdue') {
-                                                    $status_label = '<span style="color:#f59e0b;font-weight:600">متأخرة</span>';
+                                                    $status_label = '<span style="color:var(--ms-warning, #B45309);font-weight:600">متأخرة</span>';
                                                 } else {
                                                     $status_label = esc_html($status);
                                                 }
@@ -465,11 +474,14 @@ add_shortcode('rent_dashboard_v4', function () {
                                                 <td style="padding: 12px;"><?php echo esc_html($created_at); ?></td>
                                                 <td style="padding: 12px;">
                                                     <?php if (!$is_paid && (!isset($inv->source) || $inv->source !== 'legacy')): ?>
-                                                        <button class="ms-pay-now-btn" data-invoice-id="<?php echo intval($inv->id); ?>" data-nonce="<?php echo wp_create_nonce('ms_pay_invoice_' . $inv->id); ?>" style="padding: 6px 12px; background: #2563eb; color: white; border: none; border-radius: 4px; cursor: pointer;">ادفع الآن</button>
+                                                        <button class="ms-pay-now-btn" data-invoice-id="<?php echo intval($inv->id); ?>" data-nonce="<?php echo wp_create_nonce('ms_pay_invoice_' . $inv->id); ?>" style="padding: 6px 12px; background: var(--ms-accent, #D4AF37); color: var(--ms-primary, #0D1B2A); border: none; border-radius: 4px; cursor: pointer;">ادفع الآن</button>
                                                     <?php elseif ($is_paid): ?>
-                                                        <span style="color: #10b981; font-size: 12px;">✓ تم الدفع</span>
+                                                        <span style="color: var(--ms-success, #15803D); font-size: 12px;">✓ تم الدفع</span>
                                                     <?php else: ?>
-                                                        <span style="color: #6b7280;">غير متاح للمدفوعات القديمة</span>
+                                                        <span style="color: var(--ms-muted, #6B7280);">غير متاح للمدفوعات القديمة</span>
+                                                    <?php endif; ?>
+                                                    <?php if (!isset($inv->source) || $inv->source !== 'legacy'): ?>
+                                                        <a href="<?php echo esc_url(ms_invoice_pdf_url($inv->id)); ?>" class="ms-invoice-pdf-link" style="display:inline-block;margin-top:6px;font-size:12px;color:var(--ms-primary, #0D1B2A);text-decoration:underline;">تحميل PDF</a>
                                                     <?php endif; ?>
                                                 </td>
                                             </tr>
@@ -498,13 +510,13 @@ add_shortcode('rent_dashboard_v4', function () {
                         <div style="overflow-x:auto;margin-top:10px;">
                             <table class="ms-tenant-maintenance-table" style="width:100%;border-collapse:collapse;min-width:760px;">
                                 <thead>
-                                    <tr style="background:#f3f4f6;">
-                                        <th style="padding:12px;text-align:right;border-bottom:2px solid #e5e7eb;">العنوان</th>
-                                        <th style="padding:12px;text-align:right;border-bottom:2px solid #e5e7eb;">الحالة</th>
-                                        <th style="padding:12px;text-align:right;border-bottom:2px solid #e5e7eb;">الأولوية</th>
-                                        <th style="padding:12px;text-align:right;border-bottom:2px solid #e5e7eb;">التكلفة</th>
-                                        <th style="padding:12px;text-align:right;border-bottom:2px solid #e5e7eb;">التاريخ</th>
-                                        <th style="padding:12px;text-align:right;border-bottom:2px solid #e5e7eb;">الإجراء</th>
+                                    <tr style="background:var(--ms-surface-alt, #FAF6EF);">
+                                        <th style="padding:12px;text-align:right;border-bottom:2px solid var(--ms-border, #ECE3D4);">العنوان</th>
+                                        <th style="padding:12px;text-align:right;border-bottom:2px solid var(--ms-border, #ECE3D4);">الحالة</th>
+                                        <th style="padding:12px;text-align:right;border-bottom:2px solid var(--ms-border, #ECE3D4);">الأولوية</th>
+                                        <th style="padding:12px;text-align:right;border-bottom:2px solid var(--ms-border, #ECE3D4);">التكلفة</th>
+                                        <th style="padding:12px;text-align:right;border-bottom:2px solid var(--ms-border, #ECE3D4);">التاريخ</th>
+                                        <th style="padding:12px;text-align:right;border-bottom:2px solid var(--ms-border, #ECE3D4);">الإجراء</th>
                                     </tr>
                                 </thead>
                                 <tbody>
@@ -516,7 +528,7 @@ add_shortcode('rent_dashboard_v4', function () {
                                         $maintenance_invoice = is_object($r->payable_invoice ?? null) ? $r->payable_invoice : null;
                                         $invoice_status = strtolower((string) ($maintenance_invoice->status ?? ''));
                                         ?>
-                                        <tr class="ms-tenant-maintenance-row" data-status="<?php echo esc_attr($status_group); ?>" style="border-bottom:1px solid #e5e7eb;">
+                                        <tr class="ms-tenant-maintenance-row" data-status="<?php echo esc_attr($status_group); ?>" style="border-bottom:1px solid var(--ms-border, #ECE3D4);">
                                             <td style="padding:12px;"><?php echo esc_html($r->title ?? 'بدون عنوان'); ?></td>
                                             <td style="padding:12px;"><span class="ms-maintenance-status ms-status-<?php echo esc_attr($status_group); ?>"><?php echo esc_html($status_labels[$status_group]); ?></span></td>
                                             <td style="padding:12px;"><?php echo esc_html($r->priority ?? 'متوسط'); ?></td>
@@ -528,7 +540,7 @@ add_shortcode('rent_dashboard_v4', function () {
                                                 <?php elseif ($maintenance_invoice && $invoice_status === 'paid') : ?>
                                                     <span class="ms-maintenance-paid">مدفوعة</span>
                                                 <?php else : ?>
-                                                    <span style="color:#94a3b8;">—</span>
+                                                    <span style="color:var(--ms-muted, #6B7280);">—</span>
                                                 <?php endif; ?>
                                             </td>
                                         </tr>
@@ -548,7 +560,7 @@ add_shortcode('rent_dashboard_v4', function () {
                 <div class="ms-card"><h3>محفظتي</h3>
                     <div style="margin-top:8px;font-size:16px;font-weight:700">الرصيد: <?php echo 'ج.م ' . number_format_i18n($wallet,2); ?></div>
                     <div style="margin-top:16px;">
-                        <button id="ms-recharge-wallet-btn" style="padding:12px 24px;background:#2563eb;color:#fff;border:0;border-radius:8px;cursor:pointer;font-size:14px;font-weight:600;">شحن المحفظة</button>
+                        <button id="ms-recharge-wallet-btn" style="padding:12px 24px;background:var(--ms-accent, #D4AF37);color: var(--ms-primary, #0D1B2A);border:0;border-radius:8px;cursor:pointer;font-size:14px;font-weight:600;">شحن المحفظة</button>
                     </div>
                     <?php if (!empty($tenant_wallet_transactions)) : ?>
                         <div class="ms-table-wrap" style="margin-top:12px;">
@@ -594,9 +606,9 @@ add_shortcode('rent_dashboard_v4', function () {
                         // Check if tenant has an active lease
                         if ($tenant_unit_id) {
                             ?>
-                            <div style="margin-top:20px;padding:20px;background:#f0f9ff;border:1px solid #bfdbfe;border-radius:12px;">
+                            <div style="margin-top:20px;padding:20px;background:var(--ms-accent-soft, #F8F0D8);border:1px solid var(--ms-accent-line, #E9D69B);border-radius:12px;">
                                 <h4 style="margin-top:0;margin-bottom:12px;">دفع تأمين الأمانة</h4>
-                                <p style="margin-bottom:16px;color:#475569;">يجب دفع تأمين أمانة يعادل إيجار شهرين قبل بدء عقد الإيجار. هذا المبلغ سيُجمد في المحفظة وسيُرجع لك عند انتهاء العقد بعد فحص العقار.</p>
+                                <p style="margin-bottom:16px;color:var(--ms-text, #1E2B3A);">يجب دفع تأمين أمانة يعادل إيجار شهرين قبل بدء عقد الإيجار. هذا المبلغ سيُجمد في المحفظة وسيُرجع لك عند انتهاء العقد بعد فحص العقار.</p>
                                 
                                 <?php
                                 // Calculate deposit amount (2 months rent)
@@ -608,9 +620,9 @@ add_shortcode('rent_dashboard_v4', function () {
                                 
                                 if ($deposit_amount > 0) {
                                     ?>
-                                    <div style="margin-bottom:16px;padding:16px;background:#fff;border-radius:8px;border:1px solid #e5e7eb;">
-                                        <div style="font-size:14px;color:#6b7280;margin-bottom:4px;">مبلغ التأمين المطلوب</div>
-                                        <div style="font-size:24px;font-weight:700;color:#0f172a;">ج.م <?php echo number_format_i18n($deposit_amount, 2); ?></div>
+                                    <div style="margin-bottom:16px;padding:16px;background:#fff;border-radius:8px;border:1px solid var(--ms-border, #ECE3D4);">
+                                        <div style="font-size:14px;color:var(--ms-muted, #6B7280);margin-bottom:4px;">مبلغ التأمين المطلوب</div>
+                                        <div style="font-size:24px;font-weight:700;color:var(--ms-primary, #0D1B2A);">ج.م <?php echo number_format_i18n($deposit_amount, 2); ?></div>
                                     </div>
                                     
                                     <?php if ($wallet >= $deposit_amount) : ?>
@@ -620,21 +632,21 @@ add_shortcode('rent_dashboard_v4', function () {
                                             <input type="hidden" name="unit_id" value="<?php echo intval($tenant_unit_id); ?>">
                                             <input type="hidden" name="building_id" value="<?php echo intval($tenant_building_id); ?>">
                                             <input type="hidden" name="amount" value="<?php echo floatval($deposit_amount); ?>">
-                                            <button type="submit" style="padding:12px 24px;background:#10b981;color:#fff;border:0;border-radius:8px;cursor:pointer;font-size:14px;font-weight:600;">دفع التأمين الآن</button>
+                                            <button type="submit" style="padding:12px 24px;background:var(--ms-success, #15803D);color:#fff;border:0;border-radius:8px;cursor:pointer;font-size:14px;font-weight:600;">دفع التأمين الآن</button>
                                         </form>
                                     <?php else : ?>
-                                        <div style="margin-top:16px;padding:12px;background:#fef3c7;border:1px solid #f59e0b;border-radius:8px;">
-                                            <p style="margin:0;color:#92400e;">رصيد محفظتك غير كافٍ. يرجى شحن المحفظة أولاً.</p>
-                                            <p style="margin:8px 0 0 0;color:#92400e;">الرصيد الحالي: ج.م <?php echo number_format_i18n($wallet, 2); ?></p>
+                                        <div style="margin-top:16px;padding:12px;background:var(--ms-warning-soft, #FEF3C7);border:1px solid var(--ms-warning, #B45309);border-radius:8px;">
+                                            <p style="margin:0;color:var(--ms-warning, #B45309);">رصيد محفظتك غير كافٍ. يرجى شحن المحفظة أولاً.</p>
+                                            <p style="margin:8px 0 0 0;color:var(--ms-warning, #B45309);">الرصيد الحالي: ج.م <?php echo number_format_i18n($wallet, 2); ?></p>
                                         </div>
                                     <?php endif; ?>
                                 <?php } else { ?>
-                                    <p style="color:#6b7280;">لم يتم تحديد مبلغ الإيجار الشهري بعد.</p>
+                                    <p style="color:var(--ms-muted, #6B7280);">لم يتم تحديد مبلغ الإيجار الشهري بعد.</p>
                                 <?php } ?>
                             </div>
                             <?php
                         } else {
-                            echo '<p style="color:#6b7280;">لم يتم العثور على وحدة مرتبطة بحسابك.</p>';
+                            echo '<p style="color:var(--ms-muted, #6B7280);">لم يتم العثور على وحدة مرتبطة بحسابك.</p>';
                         }
                     } else {
                         // Display existing deposit status
@@ -644,60 +656,60 @@ add_shortcode('rent_dashboard_v4', function () {
                             'released' => 'مُطلقة',
                         );
                         $status_colors = array(
-                            'pending' => '#f59e0b',
-                            'frozen' => '#3b82f6',
-                            'released' => '#10b981',
+                            'pending' => 'var(--ms-warning, #B45309)',
+                            'frozen' => 'var(--ms-gold-deep, #8B6B18)',
+                            'released' => 'var(--ms-success, #15803D)',
                         );
                         $status_label = isset($status_labels[$security_deposit->status]) ? $status_labels[$security_deposit->status] : $security_deposit->status;
-                        $status_color = isset($status_colors[$security_deposit->status]) ? $status_colors[$security_deposit->status] : '#6b7280';
+                        $status_color = isset($status_colors[$security_deposit->status]) ? $status_colors[$security_deposit->status] : 'var(--ms-muted, #6B7280)';
                         ?>
                         <div style="margin-top:20px;">
                             <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:12px;margin-bottom:20px;">
-                                <div style="padding:16px;background:#f8fafc;border-radius:8px;border:1px solid #e2e8f0;">
-                                    <div style="font-size:13px;color:#64748b;margin-bottom:4px;">مبلغ التأمين</div>
-                                    <div style="font-size:20px;font-weight:700;color:#0f172a;">ج.م <?php echo number_format_i18n($security_deposit->amount, 2); ?></div>
+                                <div style="padding:16px;background:var(--ms-surface-alt, #FAF6EF);border-radius:8px;border:1px solid var(--ms-border, #ECE3D4);">
+                                    <div style="font-size:13px;color:var(--ms-muted, #6B7280);margin-bottom:4px;">مبلغ التأمين</div>
+                                    <div style="font-size:20px;font-weight:700;color:var(--ms-primary, #0D1B2A);">ج.م <?php echo number_format_i18n($security_deposit->amount, 2); ?></div>
                                 </div>
-                                <div style="padding:16px;background:#f8fafc;border-radius:8px;border:1px solid #e2e8f0;">
-                                    <div style="font-size:13px;color:#64748b;margin-bottom:4px;">الحالة</div>
+                                <div style="padding:16px;background:var(--ms-surface-alt, #FAF6EF);border-radius:8px;border:1px solid var(--ms-border, #ECE3D4);">
+                                    <div style="font-size:13px;color:var(--ms-muted, #6B7280);margin-bottom:4px;">الحالة</div>
                                     <div style="font-size:20px;font-weight:700;color:<?php echo $status_color; ?>;"><?php echo $status_label; ?></div>
                                 </div>
                                 <?php if ($security_deposit->status === 'frozen') : ?>
-                                    <div style="padding:16px;background:#eff6ff;border-radius:8px;border:1px solid #bfdbfe;">
-                                        <div style="font-size:13px;color:#64748b;margin-bottom:4px;">تاريخ التجميد</div>
-                                        <div style="font-size:16px;font-weight:600;color:#1e40af;"><?php echo esc_html($security_deposit->frozen_at); ?></div>
+                                    <div style="padding:16px;background:var(--ms-accent-soft, #F8F0D8);border-radius:8px;border:1px solid var(--ms-accent-line, #E9D69B);">
+                                        <div style="font-size:13px;color:var(--ms-muted, #6B7280);margin-bottom:4px;">تاريخ التجميد</div>
+                                        <div style="font-size:16px;font-weight:600;color:var(--ms-primary, #0D1B2A);"><?php echo esc_html($security_deposit->frozen_at); ?></div>
                                     </div>
                                 <?php endif; ?>
                                 <?php if ($security_deposit->status === 'released') : ?>
-                                    <div style="padding:16px;background:#f0fdf4;border-radius:8px;border:1px solid #bbf7d0;">
-                                        <div style="font-size:13px;color:#64748b;margin-bottom:4px;">تاريخ الإطلاق</div>
-                                        <div style="font-size:16px;font-weight:600;color:#166534;"><?php echo esc_html($security_deposit->released_at); ?></div>
+                                    <div style="padding:16px;background:var(--ms-success-soft, #E8F5EC);border-radius:8px;border:1px solid var(--ms-success-soft, #E8F5EC);">
+                                        <div style="font-size:13px;color:var(--ms-muted, #6B7280);margin-bottom:4px;">تاريخ الإطلاق</div>
+                                        <div style="font-size:16px;font-weight:600;color:var(--ms-success, #15803D);"><?php echo esc_html($security_deposit->released_at); ?></div>
                                     </div>
                                 <?php endif; ?>
                             </div>
                             
                             <?php if ($security_deposit->status === 'released' && $security_deposit->deduction_amount > 0) : ?>
-                                <div style="margin-top:20px;padding:16px;background:#fef2f2;border:1px solid #fecaca;border-radius:8px;">
-                                    <h4 style="margin-top:0;margin-bottom:12px;color:#991b1b;">الخصومات من التأمين</h4>
+                                <div style="margin-top:20px;padding:16px;background:var(--ms-danger-soft, #FDECEA);border:1px solid #fecaca;border-radius:8px;">
+                                    <h4 style="margin-top:0;margin-bottom:12px;color:var(--ms-danger, #B42318);">الخصومات من التأمين</h4>
                                     <div style="margin-bottom:8px;">
-                                        <span style="color:#6b7280;">المبلغ المخصوم:</span>
-                                        <strong style="color:#991b1b;"> ج.م <?php echo number_format_i18n($security_deposit->deduction_amount, 2); ?></strong>
+                                        <span style="color:var(--ms-muted, #6B7280);">المبلغ المخصوم:</span>
+                                        <strong style="color:var(--ms-danger, #B42318);"> ج.م <?php echo number_format_i18n($security_deposit->deduction_amount, 2); ?></strong>
                                     </div>
                                     <?php if ($security_deposit->deduction_reason) : ?>
                                         <div style="margin-bottom:8px;">
-                                            <span style="color:#6b7280;">السبب:</span>
+                                            <span style="color:var(--ms-muted, #6B7280);">السبب:</span>
                                             <span style="color:#7f1d1d;"><?php echo esc_html($security_deposit->deduction_reason); ?></span>
                                         </div>
                                     <?php endif; ?>
                                     <div style="margin-bottom:8px;">
-                                        <span style="color:#6b7280;">المبلغ المُرجع:</span>
-                                        <strong style="color:#166534;"> ج.م <?php echo number_format_i18n($security_deposit->amount - $security_deposit->deduction_amount, 2); ?></strong>
+                                        <span style="color:var(--ms-muted, #6B7280);">المبلغ المُرجع:</span>
+                                        <strong style="color:var(--ms-success, #15803D);"> ج.م <?php echo number_format_i18n($security_deposit->amount - $security_deposit->deduction_amount, 2); ?></strong>
                                     </div>
                                 </div>
                             <?php endif; ?>
                             
                             <?php if ($security_deposit->status === 'frozen') : ?>
-                                <div style="margin-top:20px;padding:16px;background:#f0fdf4;border:1px solid #bbf7d0;border-radius:8px;">
-                                    <p style="margin:0;color:#166534;">✓ تأمين الأمانة مجمد في محفظتك. سيتم إطلاقه عند انتهاء عقد الإيجار بعد فحص العقار من قبل المالك.</p>
+                                <div style="margin-top:20px;padding:16px;background:var(--ms-success-soft, #E8F5EC);border:1px solid var(--ms-success-soft, #E8F5EC);border-radius:8px;">
+                                    <p style="margin:0;color:var(--ms-success, #15803D);">✓ تأمين الأمانة مجمد في محفظتك. سيتم إطلاقه عند انتهاء عقد الإيجار بعد فحص العقار من قبل المالك.</p>
                                 </div>
                             <?php endif; ?>
                         </div>
@@ -740,30 +752,30 @@ add_shortcode('rent_dashboard_v4', function () {
                     }
                     
                     if (!$tenant_building_id): ?>
-                        <p style="color:#666;margin-top:8px">لم يتم العثور على معرف مبنى صالح مرتبط بوحدتك. لا يمكن تحميل مواضيع المناقشات.</p>
+                        <p style="color:var(--ms-muted, #6B7280);margin-top:8px">لم يتم العثور على معرف مبنى صالح مرتبط بوحدتك. لا يمكن تحميل مواضيع المناقشات.</p>
                     <?php else: ?>
-                        <div style="margin-bottom:16px;padding:12px;background:#f8fafc;border-radius:8px;border:1px solid #e2e8f0;">
-                            <div style="font-size:13px;color:#64748b;">المبنى:</div>
-                            <div style="font-size:16px;font-weight:600;color:#0f172a;"><?php echo esc_html($building_name ?: 'غير محدد'); ?></div>
+                        <div style="margin-bottom:16px;padding:12px;background:var(--ms-surface-alt, #FAF6EF);border-radius:8px;border:1px solid var(--ms-border, #ECE3D4);">
+                            <div style="font-size:13px;color:var(--ms-muted, #6B7280);">المبنى:</div>
+                            <div style="font-size:16px;font-weight:600;color:var(--ms-primary, #0D1B2A);"><?php echo esc_html($building_name ?: 'غير محدد'); ?></div>
                             <?php if ($apartment_name): ?>
                                 <div style="font-size:13px;color:#647487;margin-top:8px;">الشقة:</div>
-                                <div style="font-size:16px;font-weight:600;color:#0f172a;"><?php echo esc_html($apartment_name); ?></div>
+                                <div style="font-size:16px;font-weight:600;color:var(--ms-primary, #0D1B2A);"><?php echo esc_html($apartment_name); ?></div>
                             <?php endif; ?>
                         </div>
                         <div id="tenant-discussions" data-building-id="<?php echo intval($tenant_building_id); ?>">
                             <div class="ms-discussions-layout" style="display:flex;gap:12px;align-items:flex-start;">
-                                <div class="ms-discussions-list" style="width:36%;min-width:220px;border-right:1px solid #eee;padding-right:12px;">
+                                <div class="ms-discussions-list" style="width:36%;min-width:220px;border-right:1px solid var(--ms-border, #ECE3D4);padding-right:12px;">
                                     <h4 style="margin-top:0">المواضيع</h4>
                                     <ul class="ms-discussions-list-ul" style="list-style:none;padding:0;margin:0;max-height:420px;overflow:auto;"></ul>
                                 </div>
                                 <div class="ms-discussion-detail" style="flex:1;min-width:320px;">
-                                    <div class="ms-discussion-empty" style="color:#666">اختر موضوعاً لعرض التفاصيل</div>
-                                    <div class="ms-discussion-messages" style="margin-top:12px;max-height:360px;overflow:auto;border:1px solid #f3f4f6;padding:12px;background:#fff;"></div>
+                                    <div class="ms-discussion-empty" style="color:var(--ms-muted, #6B7280)">اختر موضوعاً لعرض التفاصيل</div>
+                                    <div class="ms-discussion-messages" style="margin-top:12px;max-height:360px;overflow:auto;border:1px solid var(--ms-surface-alt, #FAF6EF);padding:12px;background:#fff;"></div>
 
                                     <form class="ms-discussion-reply-form" style="margin-top:12px;display:none;">
-                                        <textarea name="reply" rows="4" style="width:100%;padding:8px;border:1px solid #ddd;border-radius:4px;"></textarea>
+                                        <textarea name="reply" rows="4" style="width:100%;padding:8px;border:1px solid var(--ms-border, #ECE3D4);border-radius:4px;"></textarea>
                                         <div style="margin-top:8px;text-align:left;">
-                                            <button type="submit" class="ms-discussion-reply-submit" style="padding:8px 12px;background:#2563eb;color:#fff;border:none;border-radius:4px;">إرسال الرد</button>
+                                            <button type="submit" class="ms-discussion-reply-submit" style="padding:8px 12px;background:var(--ms-accent, #D4AF37);color: var(--ms-primary, #0D1B2A);border:none;border-radius:4px;">إرسال الرد</button>
                                         </div>
                                     </form>
                                 </div>
@@ -783,7 +795,7 @@ add_shortcode('rent_dashboard_v4', function () {
                         <input type="hidden" name="action" value="ms_update_profile">
                         
                         <div style="display:flex;align-items:center;gap:20px;margin-bottom:24px;">
-                            <div style="width:100px;height:100px;border-radius:50%;overflow:hidden;background:#f3f4f6;display:flex;align-items:center;justify-content:center;">
+                            <div style="width:100px;height:100px;border-radius:50%;overflow:hidden;background:var(--ms-surface-alt, #FAF6EF);display:flex;align-items:center;justify-content:center;">
                                 <?php 
                                 $avatar_url = get_avatar_url($user->ID, array('size' => 100));
                                 if ($avatar_url) : ?>
@@ -794,8 +806,8 @@ add_shortcode('rent_dashboard_v4', function () {
                             </div>
                             <div>
                                 <div style="font-weight:700;font-size:18px;"><?php echo esc_html($user->display_name); ?></div>
-                                <div style="color:#6b7280;"><?php echo esc_html($user->user_email); ?></div>
-                                <button type="button" id="ms-change-avatar-btn" style="margin-top:8px;padding:6px 12px;background:#2563eb;color:#fff;border:none;border-radius:6px;cursor:pointer;font-size:13px;">تغيير الصورة</button>
+                                <div style="color:var(--ms-muted, #6B7280);"><?php echo esc_html($user->user_email); ?></div>
+                                <button type="button" id="ms-change-avatar-btn" style="margin-top:8px;padding:6px 12px;background:var(--ms-accent, #D4AF37);color: var(--ms-primary, #0D1B2A);border:none;border-radius:6px;cursor:pointer;font-size:13px;">تغيير الصورة</button>
                                 <input type="file" name="avatar" id="ms-avatar-input" accept="image/*" style="display:none;">
                             </div>
                         </div>
@@ -803,37 +815,37 @@ add_shortcode('rent_dashboard_v4', function () {
                         <div style="display:grid;grid-template-columns:repeat(2,1fr);gap:20px;">
                             <div>
                                 <label style="display:block;margin-bottom:8px;font-weight:600;">الاسم الأول</label>
-                                <input type="text" name="first_name" value="<?php echo esc_attr($user->first_name); ?>" style="width:100%;padding:10px;border:1px solid #d1d5db;border-radius:8px;">
+                                <input type="text" name="first_name" value="<?php echo esc_attr($user->first_name); ?>" style="width:100%;padding:10px;border:1px solid var(--ms-border-strong, #DCCFB8);border-radius:8px;">
                             </div>
                             <div>
                                 <label style="display:block;margin-bottom:8px;font-weight:600;">اسم العائلة</label>
-                                <input type="text" name="last_name" value="<?php echo esc_attr($user->last_name); ?>" style="width:100%;padding:10px;border:1px solid #d1d5db;border-radius:8px;">
+                                <input type="text" name="last_name" value="<?php echo esc_attr($user->last_name); ?>" style="width:100%;padding:10px;border:1px solid var(--ms-border-strong, #DCCFB8);border-radius:8px;">
                             </div>
                             <div>
                                 <label style="display:block;margin-bottom:8px;font-weight:600;">الاسم المعروض</label>
-                                <input type="text" name="display_name" value="<?php echo esc_attr($user->display_name); ?>" style="width:100%;padding:10px;border:1px solid #d1d5db;border-radius:8px;">
+                                <input type="text" name="display_name" value="<?php echo esc_attr($user->display_name); ?>" style="width:100%;padding:10px;border:1px solid var(--ms-border-strong, #DCCFB8);border-radius:8px;">
                             </div>
                             <div>
                                 <label style="display:block;margin-bottom:8px;font-weight:600;">البريد الإلكتروني</label>
-                                <input type="email" name="email" value="<?php echo esc_attr($user->user_email); ?>" style="width:100%;padding:10px;border:1px solid #d1d5db;border-radius:8px;">
+                                <input type="email" name="email" value="<?php echo esc_attr($user->user_email); ?>" style="width:100%;padding:10px;border:1px solid var(--ms-border-strong, #DCCFB8);border-radius:8px;">
                             </div>
                             <div>
                                 <label style="display:block;margin-bottom:8px;font-weight:600;">رقم الهاتف</label>
-                                <input type="tel" name="phone" value="<?php echo esc_attr(get_user_meta($user->ID, 'billing_phone', true)); ?>" style="width:100%;padding:10px;border:1px solid #d1d5db;border-radius:8px;">
+                                <input type="tel" name="phone" value="<?php echo esc_attr(get_user_meta($user->ID, 'billing_phone', true)); ?>" style="width:100%;padding:10px;border:1px solid var(--ms-border-strong, #DCCFB8);border-radius:8px;">
                             </div>
                             <div>
                                 <label style="display:block;margin-bottom:8px;font-weight:600;">العنوان</label>
-                                <input type="text" name="address" value="<?php echo esc_attr(get_user_meta($user->ID, 'billing_address_1', true)); ?>" style="width:100%;padding:10px;border:1px solid #d1d5db;border-radius:8px;">
+                                <input type="text" name="address" value="<?php echo esc_attr(get_user_meta($user->ID, 'billing_address_1', true)); ?>" style="width:100%;padding:10px;border:1px solid var(--ms-border-strong, #DCCFB8);border-radius:8px;">
                             </div>
                         </div>
 
                         <div style="margin-top:20px;">
                             <label style="display:block;margin-bottom:8px;font-weight:600;">نبذة عني</label>
-                            <textarea name="description" rows="4" style="width:100%;padding:10px;border:1px solid #d1d5db;border-radius:8px;"><?php echo esc_textarea($user->description); ?></textarea>
+                            <textarea name="description" rows="4" style="width:100%;padding:10px;border:1px solid var(--ms-border-strong, #DCCFB8);border-radius:8px;"><?php echo esc_textarea($user->description); ?></textarea>
                         </div>
 
                         <div style="margin-top:24px;">
-                            <button type="submit" style="padding:12px 24px;background:#2563eb;color:#fff;border:none;border-radius:8px;cursor:pointer;font-weight:600;">حفظ التغييرات</button>
+                            <button type="submit" style="padding:12px 24px;background:var(--ms-accent, #D4AF37);color: var(--ms-primary, #0D1B2A);border:none;border-radius:8px;cursor:pointer;font-weight:600;">حفظ التغييرات</button>
                         </div>
                     </form>
                 </div>
@@ -856,9 +868,9 @@ add_shortcode('rent_dashboard_v4', function () {
                 // Update active tab styling
                 subtabs.forEach(function(t) {
                     t.style.background = '#fff';
-                    t.style.color = '#0f172a';
+                    t.style.color = 'var(--ms-primary, #0D1B2A)';
                 });
-                this.style.background = '#2563eb';
+                this.style.background = 'var(--ms-accent, #D4AF37)';
                 this.style.color = '#fff';
                 
                 // Show/hide panels
@@ -878,43 +890,44 @@ add_shortcode('rent_dashboard_v4', function () {
         var rechargeBtn = document.getElementById('ms-recharge-wallet-btn');
         if (rechargeBtn) {
             rechargeBtn.addEventListener('click', function() {
+                if (MSUX.isBusy(rechargeBtn)) return;
                 var amount = prompt('يرجى إدخال مبلغ الشحن (ج.م):');
-                if (amount && !isNaN(parseFloat(amount)) && parseFloat(amount) > 0) {
-                    if (typeof MostaagerAjax !== 'undefined' && MostaagerAjax.ajax_url) {
-                        var formData = new FormData();
-                        formData.append('action', 'ms_create_wallet_recharge');
-                        formData.append('amount', amount);
-                        formData.append('security', MostaagerAjax.nonce);
-
-                        fetch(MostaagerAjax.ajax_url, {
-                            method: 'POST',
-                            credentials: 'same-origin',
-                            body: formData
-                        })
-                        .then(function(response) { return response.json(); })
-                        .then(function(data) {
-                            if (data.success && data.data && data.data.payment_url) {
-                                window.location.href = data.data.payment_url;
-                            } else {
-                                var errorMsg = 'حدث خطأ في معالجة الطلب';
-                                if (data.data && typeof data.data === 'string') {
-                                    errorMsg = data.data;
-                                } else if (data.data && data.data.message) {
-                                    errorMsg = data.data.message;
-                                } else if (data.data) {
-                                    errorMsg = JSON.stringify(data.data);
-                                }
-                                alert(errorMsg);
-                            }
-                        })
-                        .catch(function(error) {
-                            console.error('Error:', error);
-                            alert('حدث خطأ في الاتصال: ' + error.message);
-                        });
-                    } else {
-                        alert('نظام الدفع غير متاح حالياً');
-                    }
+                if (amount === null) return; // المستخدم ألغى
+                // يقبل الأرقام العربية (٠-٩) والفواصل
+                amount = String(amount).replace(/[٠-٩]/g, function (d) { return String('٠١٢٣٤٥٦٧٨٩'.indexOf(d)); }).replace(/[,\s]/g, '');
+                if (isNaN(parseFloat(amount)) || parseFloat(amount) <= 0) {
+                    alert('يرجى إدخال مبلغ صحيح أكبر من صفر.');
+                    return;
                 }
+                if (typeof MostaagerAjax === 'undefined' || !MostaagerAjax.ajax_url) {
+                    alert('نظام الدفع غير متاح حالياً');
+                    return;
+                }
+                var done = MSUX.busy(rechargeBtn, true, 'جاري التحويل للدفع...');
+                var formData = new FormData();
+                formData.append('action', 'ms_create_wallet_recharge');
+                formData.append('amount', amount);
+                formData.append('security', MostaagerAjax.nonce);
+
+                fetch(MostaagerAjax.ajax_url, {
+                    method: 'POST',
+                    credentials: 'same-origin',
+                    body: formData
+                })
+                .then(MSUX.json)
+                .then(function(data) {
+                    if (data && data.success && data.data && data.data.payment_url) {
+                        window.location.href = data.data.payment_url; // يبقى الزر معطلاً أثناء التحويل
+                    } else {
+                        done();
+                        alert(MSUX.error(data, 'حدث خطأ في معالجة الطلب'));
+                    }
+                })
+                .catch(function(error) {
+                    console.error('Error:', error);
+                    done();
+                    alert('تعذّر الاتصال بالخادم. تحقق من الإنترنت وحاول مرة أخرى.');
+                });
             });
         }
 
@@ -923,26 +936,35 @@ add_shortcode('rent_dashboard_v4', function () {
         if (depositForm) {
             depositForm.addEventListener('submit', function(e) {
                 e.preventDefault();
-                
+                var submitBtn = depositForm.querySelector('[type="submit"], button');
+                if (MSUX.isBusy(submitBtn)) return;
+
                 var formData = new FormData(this);
-                
-                fetch('<?php echo admin_url('admin-ajax.php'); ?>', {
+                var done = MSUX.busy(submitBtn, true, 'جاري الدفع...');
+
+                fetch('<?php echo esc_js(admin_url('admin-ajax.php')); ?>', {
                     method: 'POST',
                     body: formData,
                     credentials: 'same-origin'
                 })
-                .then(function(response) { return response.json(); })
+                .then(MSUX.json)
                 .then(function(data) {
-                    if (data.success) {
-                        alert(data.data.message || 'تم دفع التأمين بنجاح');
+                    if (data && data.success) {
+                        if (data.data && data.data.payment_url) {
+                            window.location.href = data.data.payment_url;
+                            return;
+                        }
+                        alert((data.data && data.data.message) || 'تم دفع التأمين بنجاح');
                         location.reload();
                     } else {
-                        alert(data.data && data.data.message ? data.data.message : 'حدث خطأ في معالجة الطلب');
+                        done();
+                        alert(MSUX.error(data, 'حدث خطأ في معالجة الطلب'));
                     }
                 })
                 .catch(function(error) {
                     console.error('Error:', error);
-                    alert('حدث خطأ في الاتصال');
+                    done();
+                    alert('تعذّر الاتصال بالخادم. تحقق من الإنترنت وحاول مرة أخرى.');
                 });
             });
         }

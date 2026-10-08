@@ -98,7 +98,8 @@ if (!defined('ABSPATH')) {
         
         <div class="ms-control-group">
             <button class="ms-btn ms-btn-primary" id="ms-refresh-analytics">تحديث البيانات</button>
-            <button class="ms-btn ms-btn-secondary" id="ms-export-analytics">تصدير البيانات</button>
+            <button class="ms-btn ms-btn-secondary" id="ms-export-analytics" data-format="json">تصدير البيانات</button>
+            <button class="ms-btn ms-btn-secondary" id="ms-export-analytics-pdf" data-format="pdf">تصدير PDF</button>
         </div>
     </div>
     
@@ -179,7 +180,7 @@ if (!defined('ABSPATH')) {
 <style>
 .ms-analytics-dashboard {
     padding: 20px;
-    background: #f8fafc;
+    background: var(--ms-surface-alt, #FAF6EF);
     border-radius: 12px;
     margin: 20px 0;
 }
@@ -190,13 +191,13 @@ if (!defined('ABSPATH')) {
 }
 
 .ms-dashboard-header h2 {
-    color: #1e293b;
+    color: var(--ms-primary, #0D1B2A);
     font-size: 28px;
     margin-bottom: 10px;
 }
 
 .ms-dashboard-header p {
-    color: #64748b;
+    color: var(--ms-muted, #6B7280);
     font-size: 16px;
 }
 
@@ -229,26 +230,26 @@ if (!defined('ABSPATH')) {
     display: flex;
     align-items: center;
     justify-content: center;
-    background: #f1f5f9;
+    background: var(--ms-surface-alt, #FAF6EF);
     border-radius: 50%;
 }
 
 .ms-metric-info h3 {
-    color: #1e293b;
+    color: var(--ms-primary, #0D1B2A);
     font-size: 14px;
     margin: 0 0 5px 0;
     font-weight: 600;
 }
 
 .ms-metric-value {
-    color: #3b82f6;
+    color: var(--ms-primary, #0D1B2A);
     font-size: 24px;
     font-weight: 700;
     margin: 5px 0;
 }
 
 .ms-metric-trend {
-    color: #64748b;
+    color: var(--ms-muted, #6B7280);
     font-size: 12px;
     margin: 0;
 }
@@ -267,14 +268,14 @@ if (!defined('ABSPATH')) {
 }
 
 .ms-control-group label {
-    color: #475569;
+    color: var(--ms-text, #1E2B3A);
     font-size: 14px;
     font-weight: 600;
 }
 
 .ms-control-group select {
     padding: 10px 15px;
-    border: 2px solid #e2e8f0;
+    border: 2px solid var(--ms-border, #ECE3D4);
     border-radius: 8px;
     font-size: 14px;
     min-width: 150px;
@@ -291,21 +292,21 @@ if (!defined('ABSPATH')) {
 }
 
 .ms-btn-primary {
-    background: #3b82f6;
-    color: white;
+    background: var(--ms-accent, #D4AF37);
+    color: var(--ms-primary, #0D1B2A);
 }
 
 .ms-btn-primary:hover {
-    background: #2563eb;
+    background: var(--ms-accent, #D4AF37);
 }
 
 .ms-btn-secondary {
-    background: #64748b;
+    background: var(--ms-muted, #6B7280);
     color: white;
 }
 
 .ms-btn-secondary:hover {
-    background: #475569;
+    background: var(--ms-text, #1E2B3A);
 }
 
 .ms-charts-section {
@@ -323,7 +324,7 @@ if (!defined('ABSPATH')) {
 }
 
 .ms-chart-container h3 {
-    color: #1e293b;
+    color: var(--ms-primary, #0D1B2A);
     font-size: 18px;
     margin-bottom: 20px;
 }
@@ -337,7 +338,7 @@ if (!defined('ABSPATH')) {
 }
 
 .ms-predictions-section h3 {
-    color: #1e293b;
+    color: var(--ms-primary, #0D1B2A);
     font-size: 20px;
     margin-bottom: 20px;
 }
@@ -349,33 +350,33 @@ if (!defined('ABSPATH')) {
 }
 
 .ms-prediction-card {
-    background: #f8fafc;
+    background: var(--ms-surface-alt, #FAF6EF);
     padding: 20px;
     border-radius: 8px;
-    border-left: 4px solid #3b82f6;
+    border-left: 4px solid var(--ms-accent, #D4AF37);
 }
 
 .ms-prediction-card h4 {
-    color: #1e293b;
+    color: var(--ms-primary, #0D1B2A);
     font-size: 16px;
     margin: 0 0 10px 0;
 }
 
 .ms-prediction-value {
-    color: #3b82f6;
+    color: var(--ms-primary, #0D1B2A);
     font-size: 24px;
     font-weight: 700;
     margin: 10px 0;
 }
 
 .ms-prediction-confidence {
-    color: #64748b;
+    color: var(--ms-muted, #6B7280);
     font-size: 12px;
     margin: 5px 0;
 }
 
 .ms-prediction-trend {
-    color: #10b981;
+    color: var(--ms-success, #15803D);
     font-size: 12px;
     margin: 5px 0;
 }
@@ -388,7 +389,7 @@ if (!defined('ABSPATH')) {
 }
 
 .ms-detailed-analysis h3 {
-    color: #1e293b;
+    color: var(--ms-primary, #0D1B2A);
     font-size: 20px;
     margin-bottom: 20px;
 }
@@ -397,7 +398,7 @@ if (!defined('ABSPATH')) {
     display: flex;
     gap: 10px;
     margin-bottom: 20px;
-    border-bottom: 2px solid #e2e8f0;
+    border-bottom: 2px solid var(--ms-border, #ECE3D4);
     padding-bottom: 10px;
 }
 
@@ -405,7 +406,7 @@ if (!defined('ABSPATH')) {
     padding: 10px 20px;
     background: transparent;
     border: none;
-    color: #64748b;
+    color: var(--ms-muted, #6B7280);
     font-size: 14px;
     font-weight: 600;
     cursor: pointer;
@@ -413,8 +414,8 @@ if (!defined('ABSPATH')) {
 }
 
 .ms-analysis-tab.active {
-    color: #3b82f6;
-    border-bottom: 2px solid #3b82f6;
+    color: var(--ms-primary, #0D1B2A);
+    border-bottom: 2px solid var(--ms-accent, #D4AF37);
 }
 
 .ms-analysis-content {
@@ -445,6 +446,7 @@ if (!defined('ABSPATH')) {
 </style>
 
 <script>
+window.ajaxurl = window.ajaxurl || '<?php echo esc_js(admin_url('admin-ajax.php')); ?>';
 (function($) {
     'use strict';
     
@@ -471,8 +473,8 @@ if (!defined('ABSPATH')) {
                 AnalyticsDashboard.loadAnalyticsData();
             });
             
-            $('#ms-export-analytics').on('click', function() {
-                AnalyticsDashboard.exportAnalytics();
+            $('#ms-export-analytics, #ms-export-analytics-pdf').on('click', function() {
+                AnalyticsDashboard.exportAnalytics($(this).data('format') || 'json');
             });
         },
         
@@ -563,7 +565,7 @@ if (!defined('ABSPATH')) {
         },
         
         updateMetrics: function(metrics) {
-            $('#ms-total-revenue').text(metrics.total_revenue.toLocaleString() + ' ر.س');
+            $('#ms-total-revenue').text(Number(metrics.total_revenue || 0).toLocaleString('en-US', {minimumFractionDigits: 2, maximumFractionDigits: 2}) + ' ج.م');
             $('#ms-total-maintenance').text(metrics.total_maintenance);
             $('#ms-occupancy-rate').text(metrics.occupancy_rate + '%');
             $('#ms-user-activity').text(metrics.user_activity);
@@ -673,11 +675,11 @@ if (!defined('ABSPATH')) {
             }
         },
         
-        exportAnalytics: function() {
+        exportAnalytics: function(format) {
             const data = {
                 action: 'ms_export_analytics',
                 nonce: '<?php echo esc_js(wp_create_nonce('ms_export_analytics')); ?>',
-                format: 'json',
+                format: format || 'json',
                 data: JSON.stringify(this.getCurrentAnalyticsData())
             };
             
@@ -686,10 +688,10 @@ if (!defined('ABSPATH')) {
                 type: 'POST',
                 data: data,
                 success: function(response) {
-                    if (response.success) {
+                    if (response.success && response.data.download_url) {
                         window.location.href = response.data.download_url;
                     } else {
-                        alert('حدث خطأ أثناء التصدير');
+                        alert((response.data && response.data.message) || 'حدث خطأ أثناء التصدير');
                     }
                 },
                 error: function() {

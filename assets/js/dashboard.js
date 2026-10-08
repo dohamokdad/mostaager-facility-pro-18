@@ -492,6 +492,9 @@ if (typeof MostaagerAjax !== 'undefined') {
             return;
         }
 
+        if (payBtn.disabled) {
+            return;
+        }
         payBtn.disabled = true;
         payBtn.textContent = 'جاري المعالجة...';
 
@@ -507,12 +510,11 @@ if (typeof MostaagerAjax !== 'undefined') {
                 invoice_id: invoiceId,
                 security: nonce
             })
-        }).then(response => response.json()).then(json => {
+        }).then(response => (window.MSUX ? MSUX.json(response) : response.json())).then(json => {
             if (json && json.success && json.data && json.data.payment_url) {
                 window.location.href = json.data.payment_url;
             } else {
-                const message = json && json.data && json.data.message ? json.data.message : (json && json.data ? json.data : 'فشل معالجة الدفع.');
-                alert(message);
+                alert(window.MSUX ? MSUX.error(json, 'فشل معالجة الدفع.') : 'فشل معالجة الدفع.');
                 payBtn.disabled = false;
                 payBtn.textContent = 'ادفع الآن';
             }
@@ -571,21 +573,21 @@ if (typeof MostaagerAjax !== 'undefined') {
                     const actionsCell = actionBtn.closest('td');
                     if (statusCell) {
                         statusCell.innerHTML = isCancel
-                            ? '<span style="color:#ef4444;font-weight:600">ملغي</span>'
-                            : '<span style="color:#10b981;font-weight:600">مدفوع ✓</span>';
+                            ? '<span style="color:var(--ms-danger, #B42318);font-weight:600">ملغي</span>'
+                            : '<span style="color:var(--ms-success, #15803D);font-weight:600">مدفوع ✓</span>';
                     }
+                    // استبدل الزر نفسه فقط — لا تمسح بقية أزرار الخلية (مثل تحميل PDF)
+                    const done = document.createElement('span');
+                    done.style.cssText = 'font-weight:600;color:' + (isCancel ? 'var(--ms-danger, #B42318)' : 'var(--ms-success, #15803D)');
+                    done.textContent = isCancel ? 'ملغي' : 'مدفوع ✓';
+                    actionBtn.replaceWith(done);
                     if (actionsCell) {
-                        actionsCell.innerHTML = isCancel
-                            ? '<span style="color:#ef4444;font-weight:600">ملغي</span>'
-                            : '<span style="color:#10b981;font-weight:600">مدفوع</span>';
+                        actionsCell.querySelectorAll('.ms-mark-paid-btn, .ms-cancel-invoice-btn').forEach(function (b) { b.remove(); });
                     }
                 }
                 alert(isCancel ? 'تم إلغاء الفاتورة بنجاح.' : 'تم وضع الفاتورة كمدفوعة بنجاح.');
             } else {
-                const message = json && json.data
-                    ? (typeof json.data === 'string' ? json.data : (json.data.message || json.data.error || 'فشل تنفيذ الإجراء.'))
-                    : 'فشل تنفيذ الإجراء.';
-                alert(message);
+                alert(window.MSUX ? MSUX.error(json, 'فشل تنفيذ الإجراء.') : 'فشل تنفيذ الإجراء.');
                 actionBtn.disabled = false;
                 actionBtn.textContent = originalText;
             }
@@ -629,7 +631,7 @@ if (typeof MostaagerAjax !== 'undefined') {
                 mode: mode,
                 security: MostaagerAjax.nonce
             })
-        }).then(response => response.json()).then(json => {
+        }).then(response => (window.MSUX ? MSUX.json(response) : response.json())).then(json => {
             if (json && json.success && json.data && json.data.payment_url) {
                 window.location.href = json.data.payment_url;
                 return;
@@ -734,10 +736,10 @@ if (typeof MostaagerAjax !== 'undefined') {
         container.querySelectorAll('.ms-invoice-subtab').forEach(function (b) {
             b.classList.remove('active');
             b.style.background = '#fff';
-            b.style.color = '#0f172a';
+            b.style.color = 'var(--ms-primary, #0D1B2A)';
         });
         subtabBtn.classList.add('active');
-        subtabBtn.style.background = '#2563eb';
+        subtabBtn.style.background = 'var(--ms-accent, #D4AF37)';
         subtabBtn.style.color = '#fff';
         container.querySelectorAll('.ms-invoice-subpanel').forEach(function (p) {
             p.style.display = 'none';
@@ -855,7 +857,7 @@ if (typeof MostaagerAjax !== 'undefined') {
                     }
                     if (linkWrapper) {
                         const existingLink = linkWrapper.querySelector('.agent-contract-link');
-                        const linkHtml = '<div class="agent-contract-link" style="margin-bottom:8px;"><a href="' + encodeURI(json.data.url) + '" target="_blank" style="color:#2563eb;text-decoration:underline;">' + (contractType === 'sale' ? '📄 عرض عقد البيع' : '📄 عرض عقد الإيجار') + '</a></div>';
+                        const linkHtml = '<div class="agent-contract-link" style="margin-bottom:8px;"><a href="' + encodeURI(json.data.url) + '" target="_blank" style="color:var(--ms-primary, #0D1B2A);text-decoration:underline;">' + (contractType === 'sale' ? '📄 عرض عقد البيع' : '📄 عرض عقد الإيجار') + '</a></div>';
                         if (existingLink) {
                             existingLink.outerHTML = linkHtml;
                         } else {
@@ -949,7 +951,7 @@ document.addEventListener('DOMContentLoaded', function(){
                 if(nextDueDateEl) nextDueDateEl.textContent = d.next_due ? d.next_due : '—';
                 if(nextRentEl && typeof d.next_due_amount !== 'undefined') nextRentEl.textContent = d.next_due_amount ? 'ج.م ' + Number(d.next_due_amount).toFixed(2) : '—';
                 if(rentStreakCard && d.rent_streak) {
-                    rentStreakCard.style.borderLeftColor = d.rent_streak.color || '#64748b';
+                    rentStreakCard.style.borderLeftColor = d.rent_streak.color || 'var(--ms-muted, #6B7280)';
                     const msNumberEl = rentStreakCard.querySelector('.ms-number');
                     if (msNumberEl) msNumberEl.textContent = Number(d.rent_streak.streak).toFixed(0) + ' شهر';
                     const msLabelEl = rentStreakCard.querySelector('p');
@@ -995,14 +997,14 @@ document.addEventListener('DOMContentLoaded', function(){
                 let statusControlHtml = '';
                 if (row.source && row.source === 'legacy') {
                     // show a read-only label for legacy rows
-                    statusControlHtml = `<div style="padding:6px 8px;border:1px solid #eee;border-radius:6px;background:#fafafa;color:#666;text-align:center;">${statusLabel}</div>`;
+                    statusControlHtml = `<div style="padding:6px 8px;border:1px solid var(--ms-border, #ECE3D4);border-radius:6px;background:#fafafa;color:var(--ms-muted, #6B7280);text-align:center;">${statusLabel}</div>`;
                 } else {
-                    const statusSelect = `<select class="ms-maintenance-status-select" data-id="${row.id}" style="width:100%;padding:8px;border:1px solid #ddd;border-radius:6px">` +
+                    const statusSelect = `<select class="ms-maintenance-status-select" data-id="${row.id}" style="width:100%;padding:8px;border:1px solid var(--ms-border, #ECE3D4);border-radius:6px">` +
                         ['open', 'in_progress', 'completed', 'closed'].map(status => `
                             <option value="${status}" ${status === currentStatus ? 'selected' : ''}>${statusLabels[status]}</option>
                         `).join('') +
                         `</select>`;
-                    const actionBtn = `<button class="ms-update-maintenance-status" data-id="${row.id}" style="margin-top:8px;padding:8px 12px;background:#2563eb;color:#fff;border:none;border-radius:6px;cursor:pointer" ${currentStatus === 'closed' ? 'disabled' : ''}>تحديث</button>`;
+                    const actionBtn = `<button class="ms-update-maintenance-status" data-id="${row.id}" style="margin-top:8px;padding:8px 12px;background:var(--ms-accent, #D4AF37);color: var(--ms-primary, #0D1B2A);border:none;border-radius:6px;cursor:pointer" ${currentStatus === 'closed' ? 'disabled' : ''}>تحديث</button>`;
                     statusControlHtml = statusSelect + actionBtn;
                 }
                 tr.innerHTML = `
@@ -1096,14 +1098,14 @@ document.addEventListener('DOMContentLoaded', function(){
                     const messageEl = document.getElementById('ms-transfer-request-message');
                     if (json.success) {
                         if (messageEl) {
-                            messageEl.style.color = '#10b981';
+                            messageEl.style.color = 'var(--ms-success, #15803D)';
                             messageEl.textContent = json.data.message || 'تم إرسال طلب التحويل بنجاح.';
                             messageEl.style.display = 'block';
                         }
                         transferForm.reset();
                     } else {
                         if (messageEl) {
-                            messageEl.style.color = '#ef4444';
+                            messageEl.style.color = 'var(--ms-danger, #B42318)';
                             messageEl.textContent = (json.data && json.data.message) ? json.data.message : 'فشل إرسال طلب التحويل.';
                             messageEl.style.display = 'block';
                         } else {
@@ -1191,7 +1193,7 @@ document.addEventListener('DOMContentLoaded', function(){
                 function renderDiscussionList(container, topics) {
                     container.innerHTML = '';
                     if (!topics || topics.length === 0) {
-                        container.innerHTML = '<li style="padding:12px;color:#666">لا توجد مواضيع.</li>';
+                        container.innerHTML = '<li style="padding:12px;color:var(--ms-muted, #6B7280)">لا توجد مواضيع.</li>';
                         return;
                     }
                     topics.forEach(t => {
@@ -1200,7 +1202,7 @@ document.addEventListener('DOMContentLoaded', function(){
                         li.style.borderBottom = '1px solid #f3f4f6';
                         li.style.cursor = 'pointer';
                         li.dataset.discussionId = t.id || t.ID || t.post_id || '';
-                        li.innerHTML = `<div style="font-weight:600">${t.title || t.post_title || 'بدون عنوان'}</div><div style="font-size:12px;color:#666;margin-top:6px">${t.excerpt || t.excerpt || (t.created_at||'')}</div>`;
+                        li.innerHTML = `<div style="font-weight:600">${t.title || t.post_title || 'بدون عنوان'}</div><div style="font-size:12px;color:var(--ms-muted, #6B7280);margin-top:6px">${t.excerpt || t.excerpt || (t.created_at||'')}</div>`;
                         container.appendChild(li);
                     });
                 }
@@ -1208,14 +1210,14 @@ document.addEventListener('DOMContentLoaded', function(){
                 function renderDiscussionMessages(wrapper, replies) {
                     wrapper.innerHTML = '';
                     if (!replies || replies.length === 0) {
-                        wrapper.innerHTML = '<div style="color:#666">لا توجد ردود حتى الآن.</div>';
+                        wrapper.innerHTML = '<div style="color:var(--ms-muted, #6B7280)">لا توجد ردود حتى الآن.</div>';
                         return;
                     }
                     replies.forEach(r => {
                         const div = document.createElement('div');
                         div.style.padding = '8px';
                         div.style.borderBottom = '1px solid #f3f4f6';
-                        div.innerHTML = `<div style="font-size:13px;color:#111"><strong>${r.author_name || r.author || 'مستخدم'}</strong> — <span style="font-size:12px;color:#666">${r.created_at || ''}</span></div><div style="margin-top:6px">${r.content || r.comment || ''}</div>`;
+                        div.innerHTML = `<div style="font-size:13px;color:var(--ms-primary, #0D1B2A)"><strong>${r.author_name || r.author || 'مستخدم'}</strong> — <span style="font-size:12px;color:var(--ms-muted, #6B7280)">${r.created_at || ''}</span></div><div style="margin-top:6px">${r.content || r.comment || ''}</div>`;
                         wrapper.appendChild(div);
                     });
                     if (wrapper.dataset.autoScroll === 'true') {
@@ -1240,7 +1242,7 @@ document.addEventListener('DOMContentLoaded', function(){
                     const replyForm = container.querySelector('.ms-discussion-reply-form');
                     if (!listEl) return;
 
-                    listEl.innerHTML = '<li style="padding:12px;color:#666">جاري التحميل...</li>';
+                    listEl.innerHTML = '<li style="padding:12px;color:var(--ms-muted, #6B7280)">جاري التحميل...</li>';
 
                     try {
                         const params = new URLSearchParams({ action: 'ms_get_discussions', building_id: buildingId });
@@ -1251,11 +1253,11 @@ document.addEventListener('DOMContentLoaded', function(){
                             if (messagesEl) messagesEl.innerHTML = '';
                             if (replyForm) replyForm.style.display = 'none';
                         } else {
-                            listEl.innerHTML = '<li style="padding:12px;color:#666">فشل جلب المواضيع.</li>';
+                            listEl.innerHTML = '<li style="padding:12px;color:var(--ms-muted, #6B7280)">فشل جلب المواضيع.</li>';
                         }
                     } catch (err) {
                         console.error('Discussions fetch error', err);
-                        listEl.innerHTML = '<li style="padding:12px;color:#666">خطأ في الاتصال أثناء جلب المواضيع.</li>';
+                        listEl.innerHTML = '<li style="padding:12px;color:var(--ms-muted, #6B7280)">خطأ في الاتصال أثناء جلب المواضيع.</li>';
                     }
                 }
 
@@ -1266,7 +1268,7 @@ document.addEventListener('DOMContentLoaded', function(){
                     const replyForm = container.querySelector('.ms-discussion-reply-form');
                     if (!messagesEl) return;
 
-                    messagesEl.innerHTML = '<div style="color:#666;padding:12px">جاري التحميل...</div>';
+                    messagesEl.innerHTML = '<div style="color:var(--ms-muted, #6B7280);padding:12px">جاري التحميل...</div>';
 
                     try {
                         const params = new URLSearchParams({ action: 'ms_get_discussion_replies', discussion_id: discussionId });
@@ -1279,12 +1281,12 @@ document.addEventListener('DOMContentLoaded', function(){
                                 replyForm.dataset.currentDiscussion = discussionId;
                             }
                         } else {
-                            messagesEl.innerHTML = '<div style="color:#666;padding:12px">فشل جلب الردود.</div>';
+                            messagesEl.innerHTML = '<div style="color:var(--ms-muted, #6B7280);padding:12px">فشل جلب الردود.</div>';
                             if (replyForm) replyForm.style.display = 'none';
                         }
                     } catch (err) {
                         console.error('Discussion replies fetch error', err);
-                        messagesEl.innerHTML = '<div style="color:#666;padding:12px">خطأ في الاتصال أثناء جلب الردود.</div>';
+                        messagesEl.innerHTML = '<div style="color:var(--ms-muted, #6B7280);padding:12px">خطأ في الاتصال أثناء جلب الردود.</div>';
                         if (replyForm) replyForm.style.display = 'none';
                     }
                 }
@@ -1306,7 +1308,7 @@ document.addEventListener('DOMContentLoaded', function(){
                         if (discussionId) {
                             const siblings = li.parentElement.querySelectorAll('li');
                             siblings.forEach(s => s.style.background = '');
-                            li.style.background = '#f8fafc';
+                            li.style.background = 'var(--ms-surface-alt, #FAF6EF)';
                             loadDiscussionReplies(discussionId);
                         }
                     }
@@ -1501,7 +1503,7 @@ console.info('MostaagerQA helpers are available in the browser console. Use Most
     function renderDiscussionList(container, topics) {
         container.innerHTML = '';
         if (!topics || topics.length === 0) {
-            container.innerHTML = '<li style="padding:12px;color:#666">لا توجد مواضيع.</li>';
+            container.innerHTML = '<li style="padding:12px;color:var(--ms-muted, #6B7280)">لا توجد مواضيع.</li>';
             return;
         }
         topics.forEach(t => {
@@ -1510,7 +1512,7 @@ console.info('MostaagerQA helpers are available in the browser console. Use Most
             li.style.borderBottom = '1px solid #f3f4f6';
             li.style.cursor = 'pointer';
             li.dataset.discussionId = t.id || t.ID || t.post_id || '';
-            li.innerHTML = `<div style="font-weight:600">${t.title || t.post_title || 'بدون عنوان'}</div><div style="font-size:12px;color:#666;margin-top:6px">${t.excerpt || t.created_at || ''}</div>`;
+            li.innerHTML = `<div style="font-weight:600">${t.title || t.post_title || 'بدون عنوان'}</div><div style="font-size:12px;color:var(--ms-muted, #6B7280);margin-top:6px">${t.excerpt || t.created_at || ''}</div>`;
             container.appendChild(li);
         });
     }
@@ -1518,14 +1520,14 @@ console.info('MostaagerQA helpers are available in the browser console. Use Most
     function renderDiscussionMessages(wrapper, replies) {
         wrapper.innerHTML = '';
         if (!replies || replies.length === 0) {
-            wrapper.innerHTML = '<div style="color:#666">لا توجد ردود حتى الآن.</div>';
+            wrapper.innerHTML = '<div style="color:var(--ms-muted, #6B7280)">لا توجد ردود حتى الآن.</div>';
             return;
         }
         replies.forEach(r => {
             const div = document.createElement('div');
             div.style.padding = '8px';
             div.style.borderBottom = '1px solid #f3f4f6';
-            div.innerHTML = `<div style="font-size:13px;color:#111"><strong>${r.author_name || r.author || 'مستخدم'}</strong> — <span style="font-size:12px;color:#666">${r.created_at || ''}</span></div><div style="margin-top:6px">${r.content || r.comment || ''}</div>`;
+            div.innerHTML = `<div style="font-size:13px;color:var(--ms-primary, #0D1B2A)"><strong>${r.author_name || r.author || 'مستخدم'}</strong> — <span style="font-size:12px;color:var(--ms-muted, #6B7280)">${r.created_at || ''}</span></div><div style="margin-top:6px">${r.content || r.comment || ''}</div>`;
             wrapper.appendChild(div);
         });
         wrapper.scrollTop = wrapper.scrollHeight;
@@ -1539,7 +1541,7 @@ console.info('MostaagerQA helpers are available in the browser console. Use Most
         const messagesEl = container.querySelector('.ms-discussion-messages');
         const replyForm = container.querySelector('.ms-discussion-reply-form');
         if (!listEl) return;
-        listEl.innerHTML = '<li style="padding:12px;color:#666">جاري التحميل...</li>';
+        listEl.innerHTML = '<li style="padding:12px;color:var(--ms-muted, #6B7280)">جاري التحميل...</li>';
         try {
             const params = new URLSearchParams({ action: 'ms_get_discussions', building_id: buildingId });
             const resp = await fetch(ajax.ajax_url, { method: 'POST', credentials: 'same-origin', headers: { 'Content-Type': 'application/x-www-form-urlencoded' }, body: params });
@@ -1549,11 +1551,11 @@ console.info('MostaagerQA helpers are available in the browser console. Use Most
                 if (messagesEl) messagesEl.innerHTML = '';
                 if (replyForm) replyForm.style.display = 'none';
             } else {
-                listEl.innerHTML = '<li style="padding:12px;color:#666">فشل جلب المواضيع.</li>';
+                listEl.innerHTML = '<li style="padding:12px;color:var(--ms-muted, #6B7280)">فشل جلب المواضيع.</li>';
             }
         } catch (err) {
             console.error('Standalone discussions fetch error', err);
-            listEl.innerHTML = '<li style="padding:12px;color:#666">خطأ في الاتصال أثناء جلب المواضيع.</li>';
+            listEl.innerHTML = '<li style="padding:12px;color:var(--ms-muted, #6B7280)">خطأ في الاتصال أثناء جلب المواضيع.</li>';
         }
     }
 
@@ -1564,7 +1566,7 @@ console.info('MostaagerQA helpers are available in the browser console. Use Most
         const messagesEl = container.querySelector('.ms-discussion-messages');
         const replyForm = container.querySelector('.ms-discussion-reply-form');
         if (!messagesEl) return;
-        messagesEl.innerHTML = '<div style="color:#666;padding:12px">جاري التحميل...</div>';
+        messagesEl.innerHTML = '<div style="color:var(--ms-muted, #6B7280);padding:12px">جاري التحميل...</div>';
         try {
             const params = new URLSearchParams({ action: 'ms_get_discussion_replies', discussion_id: discussionId });
             const resp = await fetch(ajax.ajax_url, { method: 'POST', credentials: 'same-origin', headers: { 'Content-Type': 'application/x-www-form-urlencoded' }, body: params });
@@ -1576,12 +1578,12 @@ console.info('MostaagerQA helpers are available in the browser console. Use Most
                     replyForm.dataset.currentDiscussion = discussionId;
                 }
             } else {
-                messagesEl.innerHTML = '<div style="color:#666;padding:12px">فشل جلب الردود.</div>';
+                messagesEl.innerHTML = '<div style="color:var(--ms-muted, #6B7280);padding:12px">فشل جلب الردود.</div>';
                 if (replyForm) replyForm.style.display = 'none';
             }
         } catch (err) {
             console.error('Standalone discussion replies error', err);
-            messagesEl.innerHTML = '<div style="color:#666;padding:12px">خطأ في الاتصال أثناء جلب الردود.</div>';
+            messagesEl.innerHTML = '<div style="color:var(--ms-muted, #6B7280);padding:12px">خطأ في الاتصال أثناء جلب الردود.</div>';
         }
     }
 
@@ -1596,7 +1598,7 @@ console.info('MostaagerQA helpers are available in the browser console. Use Most
         const li = e.target.closest(rootSelector + ' .ms-discussions-list-ul li');
         if (li && li.dataset.discussionId) {
             li.parentElement.querySelectorAll('li').forEach(s => s.style.background = '');
-            li.style.background = '#f8fafc';
+            li.style.background = 'var(--ms-surface-alt, #FAF6EF)';
             loadDiscussionReplies(li.dataset.discussionId);
         }
     });

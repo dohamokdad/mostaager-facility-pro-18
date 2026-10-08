@@ -1,7 +1,7 @@
 /* Notification Dashboard Styles */
 .ms-notification-dashboard {
     padding: 20px;
-    background: #f8fafc;
+    background: var(--ms-surface-alt, #FAF6EF);
     border-radius: 12px;
     margin: 20px 0;
 }
@@ -12,13 +12,13 @@
 }
 
 .ms-dashboard-header h2 {
-    color: #1e293b;
+    color: var(--ms-primary, #0D1B2A);
     font-size: 28px;
     margin-bottom: 10px;
 }
 
 .ms-dashboard-header p {
-    color: #64748b;
+    color: var(--ms-muted, #6B7280);
     font-size: 16px;
 }
 
@@ -51,19 +51,19 @@
     display: flex;
     align-items: center;
     justify-content: center;
-    background: #f1f5f9;
+    background: var(--ms-surface-alt, #FAF6EF);
     border-radius: 50%;
 }
 
 .ms-stat-info h3 {
-    color: #1e293b;
+    color: var(--ms-primary, #0D1B2A);
     font-size: 24px;
     margin: 0;
     font-weight: 700;
 }
 
 .ms-stat-info p {
-    color: #64748b;
+    color: var(--ms-muted, #6B7280);
     font-size: 14px;
     margin: 5px 0 0 0;
 }
@@ -82,11 +82,11 @@
 }
 
 .ms-form-section h3 {
-    color: #1e293b;
+    color: var(--ms-primary, #0D1B2A);
     font-size: 20px;
     margin-bottom: 20px;
     padding-bottom: 15px;
-    border-bottom: 2px solid #e2e8f0;
+    border-bottom: 2px solid var(--ms-border, #ECE3D4);
 }
 
 .ms-form-group {
@@ -95,7 +95,7 @@
 
 .ms-form-group label {
     display: block;
-    color: #475569;
+    color: var(--ms-text, #1E2B3A);
     font-size: 14px;
     font-weight: 600;
     margin-bottom: 8px;
@@ -108,7 +108,7 @@
 .ms-form-group textarea {
     width: 100%;
     padding: 12px 15px;
-    border: 2px solid #e2e8f0;
+    border: 2px solid var(--ms-border, #ECE3D4);
     border-radius: 8px;
     font-size: 14px;
     transition: border-color 0.2s;
@@ -118,7 +118,7 @@
 .ms-form-group select:focus,
 .ms-form-group textarea:focus {
     outline: none;
-    border-color: #3b82f6;
+    border-color: var(--ms-accent, #D4AF37);
 }
 
 .ms-form-group textarea {
@@ -157,21 +157,21 @@
 }
 
 .ms-btn-primary {
-    background: #3b82f6;
-    color: white;
+    background: var(--ms-accent, #D4AF37);
+    color: var(--ms-primary, #0D1B2A);
 }
 
 .ms-btn-primary:hover {
-    background: #2563eb;
+    background: var(--ms-accent, #D4AF37);
 }
 
 .ms-btn-secondary {
-    background: #64748b;
+    background: var(--ms-muted, #6B7280);
     color: white;
 }
 
 .ms-btn-secondary:hover {
-    background: #475569;
+    background: var(--ms-text, #1E2B3A);
 }
 
 /* Responsive Design */
@@ -201,19 +201,19 @@
 .ms-realtime-notification {
     position: relative;
     padding: 16px 44px 16px 16px;
-    border: 1px solid #bfdbfe;
-    border-inline-start: 4px solid #2563eb;
+    border: 1px solid var(--ms-accent-line, #E9D69B);
+    border-inline-start: 4px solid var(--ms-accent, #D4AF37);
     border-radius: 14px;
     background: #ffffff;
-    color: #0f172a;
-    box-shadow: 0 12px 30px rgba(15, 23, 42, .18);
+    color: var(--ms-primary, #0D1B2A);
+    box-shadow: 0 12px 30px rgba(13, 27, 42, .18);
     pointer-events: auto;
     animation: ms-notification-slide-in .22s ease-out;
 }
 
 .ms-realtime-notification__title {
     margin-bottom: 5px;
-    color: #1d4ed8;
+    color: var(--ms-primary, #0D1B2A);
     font-size: 13px;
     font-weight: 800;
 }
@@ -232,7 +232,7 @@
     border: 0;
     border-radius: 50%;
     background: transparent;
-    color: #64748b;
+    color: var(--ms-muted, #6B7280);
     cursor: pointer;
     font-size: 21px;
     line-height: 1;
@@ -240,9 +240,9 @@
 
 .ms-realtime-notification__close:hover,
 .ms-realtime-notification__close:focus-visible {
-    background: #eff6ff;
-    color: #1d4ed8;
-    outline: 2px solid #93c5fd;
+    background: var(--ms-accent-soft, #F8F0D8);
+    color: var(--ms-primary, #0D1B2A);
+    outline: 2px solid var(--ms-accent-line, #E9D69B);
     outline-offset: 2px;
 }
 
@@ -263,15 +263,15 @@
     .ms-realtime-notification { animation: none; }
 }
 
-.ms-notification-preferences{margin:18px 0;padding:20px;border:1px solid #e5e7eb;border-radius:16px;background:#fff;color:#0f172a}
+.ms-notification-preferences{margin:18px 0;padding:20px;border:1px solid var(--ms-border, #ECE3D4);border-radius:16px;background:#fff;color:var(--ms-primary, #0D1B2A)}
 .ms-preferences-header{display:flex;justify-content:space-between;gap:16px;align-items:flex-start;margin-bottom:16px}
-.ms-preferences-header h3{margin:0 0 5px;font-size:18px;color:#0f172a}
-.ms-preferences-header p{margin:0;color:#64748b;line-height:1.7}
-.ms-eyebrow{font-size:11px!important;color:#2563eb!important;font-weight:700!important;letter-spacing:.04em}
-.ms-preference-row{display:flex;justify-content:space-between;align-items:center;gap:16px;padding:13px 0;border-top:1px solid #f1f5f9;cursor:pointer}
-.ms-preference-row strong,.ms-preference-row small{display:block}.ms-preference-row small{margin-top:3px;color:#64748b}
-.ms-preference-row input{width:19px;height:19px;accent-color:#2563eb}
-.ms-preferences-status{font-size:12px;color:#15803d}.ms-preferences-status.is-error{color:#b91c1c}
-.ms-realtime-notification__link{display:inline-block;margin-top:10px;color:#2563eb;font-weight:700;text-decoration:none}
+.ms-preferences-header h3{margin:0 0 5px;font-size:18px;color:var(--ms-primary, #0D1B2A)}
+.ms-preferences-header p{margin:0;color:var(--ms-muted, #6B7280);line-height:1.7}
+.ms-eyebrow{font-size:11px!important;color:var(--ms-primary, #0D1B2A)!important;font-weight:700!important;letter-spacing:.04em}
+.ms-preference-row{display:flex;justify-content:space-between;align-items:center;gap:16px;padding:13px 0;border-top:1px solid var(--ms-surface-alt, #FAF6EF);cursor:pointer}
+.ms-preference-row strong,.ms-preference-row small{display:block}.ms-preference-row small{margin-top:3px;color:var(--ms-muted, #6B7280)}
+.ms-preference-row input{width:19px;height:19px;accent-color:var(--ms-primary, #0D1B2A)}
+.ms-preferences-status{font-size:12px;color:var(--ms-success, #15803D)}.ms-preferences-status.is-error{color:var(--ms-danger, #B42318)}
+.ms-realtime-notification__link{display:inline-block;margin-top:10px;color:var(--ms-primary, #0D1B2A);font-weight:700;text-decoration:none}
 .ms-realtime-notification__link:hover{text-decoration:underline}
 @media(max-width:600px){.ms-preferences-header{display:block}.ms-preferences-status{display:block;margin-top:8px}}

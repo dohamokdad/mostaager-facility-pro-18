@@ -34,9 +34,9 @@ add_action('mostaager_agent_subscription_cron', function () {
 
         $invoice_id = ms_create_agent_subscription_invoice($agent->ID, $invoice_amount);
         if ($invoice_id) {
-            error_log('Mostaager Agent Subscription created invoice: agent=' . $agent->ID . ' invoice=' . $invoice_id . ' amount=' . $invoice_amount);
+            if (defined('WP_DEBUG') && WP_DEBUG) { error_log('Mostaager Agent Subscription created invoice: agent=' . $agent->ID . ' invoice=' . $invoice_id . ' amount=' . $invoice_amount); }
         } else {
-            error_log('Mostaager Agent Subscription skipped creating duplicate invoice for agent=' . $agent->ID . ' amount=' . $invoice_amount);
+            if (defined('WP_DEBUG') && WP_DEBUG) { error_log('Mostaager Agent Subscription skipped creating duplicate invoice for agent=' . $agent->ID . ' amount=' . $invoice_amount); }
         }
     }
 });

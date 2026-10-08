@@ -1130,16 +1130,30 @@ add_action('wp_ajax_approve_invoice', function () {
         wp_send_json_error('invalid_invoice_data', 400);
     }
 
+    // كل إضافة للرصيد تمر عبر ووكومرس: التحصيل اليدوي يُسجَّل كطلب مدفوع
+    // بطريقة "تحصيل نقدي"، والترحيل للمحفظة يتم من hooks ووكومرس نفسها.
+    $order = function_exists('ms_create_offline_paid_order')
+        ? ms_create_offline_paid_order(array(
+            'amount'      => $amount,
+            'customer_id' => absint(get_post_meta($invoice_id, 'user_id', true)),
+            'description' => 'تحصيل فاتورة #' . absint($invoice_id),
+            'credit_type' => 'building_wallet',
+            'building_id' => absint($building_id),
+            'invoice_id'  => absint($invoice_id),
+        ))
+        : new WP_Error('helper_missing', 'دالة التحصيل غير متاحة.');
+
+    if (is_wp_error($order)) {
+        wp_send_json_error(array('code' => $order->get_error_code(), 'message' => $order->get_error_message()), 500);
+    }
+
     update_post_meta($invoice_id, 'status', 'paid');
+    update_post_meta($invoice_id, '_ms_wc_order_id', $order->get_id());
     if (function_exists('update_field')) {
         update_field('status', 'paid', $invoice_id);
     }
 
-    if (function_exists('ms_update_building_wallet_balance')) {
-        ms_update_building_wallet_balance($building_id, $amount);
-    }
-
-    wp_send_json_success(['message' => 'invoice_approved']);
+    wp_send_json_success(['message' => 'invoice_approved', 'order_id' => $order->get_id()]);
 });
 
 add_action('wp_ajax_withdraw_wallet', function () {
@@ -1700,12 +1714,8 @@ add_action('wp_ajax_ms_pay_invoice', function () {
         wp_send_json_error('invoice_not_found', 404);
     }
 
-    $can_access_invoice = $invoice->user_id === $user->ID;
-    if (!$can_access_invoice && function_exists('ms_invoice_belongs_to_owner')) {
-        $can_access_invoice = ms_invoice_belongs_to_owner($invoice_id, $user->ID);
-    }
-
-    if (!$can_access_invoice) {
+    // $wpdb يرجّع user_id كنص ← المقارنة === مع int كانت ترجع false دائماً
+    if (!ms_user_can_access_invoice($user->ID, $invoice_id)) {
         wp_send_json_error('not_owner', 403);
     }
 
@@ -1724,6 +1734,10 @@ add_action('wp_ajax_ms_pay_invoice', function () {
     }
 
     $payment_url = ms_create_woo_order_for_invoice($invoice_id);
+    // فاتورة مسددة أو ملغاة: رسالة واضحة بدل رابط دفع جديد
+    if (is_wp_error($payment_url)) {
+        wp_send_json_error(array('code' => $payment_url->get_error_code(), 'message' => $payment_url->get_error_message()), 409);
+    }
     if (!$payment_url) {
         wp_send_json_error(array('code' => 'order_creation_failed', 'message' => function_exists('ms_get_woo_payment_setup_message') && ms_get_woo_payment_setup_message() ? ms_get_woo_payment_setup_message() : 'تعذر إنشاء طلب الدفع. راجع إعدادات WooCommerce وCheckout وبوابة الدفع.'), 500);
     }
@@ -1753,6 +1767,9 @@ add_action('wp_ajax_ms_create_wallet_recharge', function () {
     }
 
     $payment_url = ms_create_woo_order_for_wallet_recharge($user->ID, $amount);
+    if (is_wp_error($payment_url)) {
+        wp_send_json_error(array('code' => $payment_url->get_error_code(), 'message' => $payment_url->get_error_message()), 422);
+    }
     if (!$payment_url) {
         wp_send_json_error(array('code' => 'order_creation_failed', 'message' => function_exists('ms_get_woo_payment_setup_message') && ms_get_woo_payment_setup_message() ? ms_get_woo_payment_setup_message() : 'تعذر إنشاء طلب الدفع. راجع إعدادات WooCommerce وCheckout وبوابة الدفع.'), 500);
     }
@@ -1810,6 +1827,10 @@ add_action('wp_ajax_ms_purchase_subscription_plan', function () {
     }
 
     $payment_url = ms_create_woo_order_for_invoice($invoice_id);
+    // فاتورة مسددة أو ملغاة: رسالة واضحة بدل رابط دفع جديد
+    if (is_wp_error($payment_url)) {
+        wp_send_json_error(array('code' => $payment_url->get_error_code(), 'message' => $payment_url->get_error_message()), 409);
+    }
     if (!$payment_url) {
         wp_send_json_error(array('code' => 'order_creation_failed', 'message' => function_exists('ms_get_woo_payment_setup_message') && ms_get_woo_payment_setup_message() ? ms_get_woo_payment_setup_message() : 'تعذر إنشاء طلب الدفع. راجع إعدادات WooCommerce وCheckout وبوابة الدفع.'), 500);
     }
@@ -1997,6 +2018,11 @@ add_action('wp_ajax_ms_release_deposit', function () {
         wp_send_json_error(array('message' => 'مبلغ الخصم غير صالح.'), 400);
     }
 
+    // سبب الخصم إلزامي عند وجود خصم — حماية للمالك والمستأجر عند أي نزاع
+    if ($deduction_amount > 0 && mb_strlen(trim(wp_unslash($deduction_reason))) < 3) {
+        wp_send_json_error(array('message' => 'deduction_reason_required'), 400);
+    }
+
     // Release the deposit
     if (!function_exists('ms_release_security_deposit')) {
         wp_send_json_error(array('message' => 'نظام إطلاق التأمين غير متاح.'), 500);
@@ -2077,6 +2103,10 @@ add_action('wp_ajax_ms_pay_maintenance_invoice', function () {
     }
 
     $payment_url = ms_create_woo_order_for_invoice((int) $invoice->id);
+    // فاتورة مسددة أو ملغاة: رسالة واضحة بدل رابط دفع جديد
+    if (is_wp_error($payment_url)) {
+        wp_send_json_error(array('code' => $payment_url->get_error_code(), 'message' => $payment_url->get_error_message()), 409);
+    }
     if (!$payment_url) {
         wp_send_json_error(array('code' => 'order_creation_failed', 'message' => function_exists('ms_get_woo_payment_setup_message') && ms_get_woo_payment_setup_message() ? ms_get_woo_payment_setup_message() : 'تعذر إنشاء طلب الدفع. راجع إعدادات WooCommerce وCheckout وبوابة الدفع.'), 500);
     }
@@ -2113,90 +2143,92 @@ add_action('wp_ajax_ms_check_agent_subscription', function () {
  * جلب المالكين حسب المبنى
  */
 add_action('wp_ajax_ms_get_owners_by_building', function () {
-    if (!is_user_logged_in()) {
-        wp_send_json_error('not_logged_in', 401);
-    }
-    
-    $user = wp_get_current_user();
-    if (!function_exists('ms_user_has_role') || !ms_user_has_role($user->ID, 'agent')) {
+    // nonce + تحقق أن المبنى ضمن مباني الوسيط (كان أي وسيط يستطيع سحب بيانات أي مبنى)
+    $user_id = ms_ajax_guard('ms_dashboard_nonce');
+
+    if (!function_exists('ms_user_has_role') || !ms_user_has_role($user_id, 'agent')) {
         wp_send_json_error('forbidden', 403);
     }
-    
-    if (!isset($_POST['building_id'])) {
+
+    $building_id = isset($_POST['building_id']) ? absint($_POST['building_id']) : 0;
+    if (!$building_id) {
         wp_send_json_error('missing_building_id', 400);
     }
-    
-    $building_id = intval($_POST['building_id']);
-    
+
+    if (!ms_user_can_access_building($user_id, $building_id)) {
+        wp_send_json_error('forbidden_building', 403);
+    }
+
     if (!function_exists('ms_get_owners_by_building')) {
         wp_send_json_error('function_not_available', 500);
     }
-    
-    $owners = ms_get_owners_by_building($building_id);
-    wp_send_json_success(array('owners' => $owners));
+
+    wp_send_json_success(array('owners' => ms_get_owners_by_building($building_id)));
 });
 
 /**
  * جلب المستأجرين حسب المبنى
  */
 add_action('wp_ajax_ms_get_tenants_by_building', function () {
-    if (!is_user_logged_in()) {
-        wp_send_json_error('not_logged_in', 401);
-    }
-    
-    $user = wp_get_current_user();
-    if (!function_exists('ms_user_has_role') || !ms_user_has_role($user->ID, 'agent')) {
+    // nonce + تحقق أن المبنى ضمن مباني الوسيط (كان أي وسيط يستطيع سحب بيانات أي مبنى)
+    $user_id = ms_ajax_guard('ms_dashboard_nonce');
+
+    if (!function_exists('ms_user_has_role') || !ms_user_has_role($user_id, 'agent')) {
         wp_send_json_error('forbidden', 403);
     }
-    
-    if (!isset($_POST['building_id'])) {
+
+    $building_id = isset($_POST['building_id']) ? absint($_POST['building_id']) : 0;
+    if (!$building_id) {
         wp_send_json_error('missing_building_id', 400);
     }
-    
-    $building_id = intval($_POST['building_id']);
-    
+
+    if (!ms_user_can_access_building($user_id, $building_id)) {
+        wp_send_json_error('forbidden_building', 403);
+    }
+
     if (!function_exists('ms_get_tenants_by_building')) {
         wp_send_json_error('function_not_available', 500);
     }
-    
-    $tenants = ms_get_tenants_by_building($building_id);
-    wp_send_json_success(array('tenants' => $tenants));
+
+    wp_send_json_success(array('tenants' => ms_get_tenants_by_building($building_id)));
 });
 
 /**
  * رفع عقد الإيجار
  */
 add_action('wp_ajax_ms_upload_rent_contract', function () {
-    if (!is_user_logged_in()) {
-        wp_send_json_error('not_logged_in', 401);
-    }
-    
-    $user = wp_get_current_user();
-    if (!function_exists('ms_user_has_role') || !ms_user_has_role($user->ID, 'agent')) {
+    // nonce + ملكية العقار + فحص حقيقي لمحتوى الملف (نوع MIME القادم من المتصفح قابل للتزوير)
+    $user_id = ms_ajax_guard('ms_dashboard_nonce');
+    $user    = get_userdata($user_id);
+
+    if (!function_exists('ms_user_has_role') || !ms_user_has_role($user_id, 'agent')) {
         wp_send_json_error('forbidden', 403);
     }
-    
-    if (!isset($_POST['property_id']) || !isset($_FILES['contract'])) {
+
+    $property_id = isset($_POST['property_id']) ? absint($_POST['property_id']) : 0;
+    if (!$property_id || empty($_FILES['contract'])) {
         wp_send_json_error('invalid_data', 400);
     }
-    
-    $property_id = intval($_POST['property_id']);
-    $file = $_FILES['contract'];
-    
-    // التحقق من الملف
-    if ($file['error'] !== UPLOAD_ERR_OK) {
-        wp_send_json_error('upload_error', 400);
+
+    if (!ms_user_can_access_property($user_id, $property_id)) {
+        wp_send_json_error('forbidden_property', 403);
     }
-    
-    // التحقق من نوع الملف
-    $allowed_types = array('application/pdf', 'image/jpeg', 'image/png');
-    if (!in_array($file['type'], $allowed_types)) {
-        wp_send_json_error('invalid_file_type', 400);
+
+    $file  = $_FILES['contract'];
+    $valid = ms_validate_upload($file, array('pdf', 'jpg', 'jpeg', 'png'));
+    if (is_wp_error($valid)) {
+        wp_send_json_error($valid->get_error_message(), 400);
     }
-    
-    // رفع الملف
-    require_once(ABSPATH . 'wp-admin/includes/file.php');
-    $upload = wp_handle_upload($file, array('test_form' => false));
+
+    require_once ABSPATH . 'wp-admin/includes/file.php';
+    $upload = wp_handle_upload($file, array(
+        'test_form' => false,
+        'mimes'     => array(
+            'pdf'          => 'application/pdf',
+            'jpg|jpeg|jpe' => 'image/jpeg',
+            'png'          => 'image/png',
+        ),
+    ));
     
     if (isset($upload['error'])) {
         wp_send_json_error($upload['error'], 500);
@@ -2236,36 +2268,38 @@ add_action('wp_ajax_ms_upload_rent_contract', function () {
  * رفع عقد البيع
  */
 add_action('wp_ajax_ms_upload_sale_contract', function () {
-    if (!is_user_logged_in()) {
-        wp_send_json_error('not_logged_in', 401);
-    }
-    
-    $user = wp_get_current_user();
-    if (!function_exists('ms_user_has_role') || !ms_user_has_role($user->ID, 'agent')) {
+    // nonce + ملكية العقار + فحص حقيقي لمحتوى الملف (نوع MIME القادم من المتصفح قابل للتزوير)
+    $user_id = ms_ajax_guard('ms_dashboard_nonce');
+    $user    = get_userdata($user_id);
+
+    if (!function_exists('ms_user_has_role') || !ms_user_has_role($user_id, 'agent')) {
         wp_send_json_error('forbidden', 403);
     }
-    
-    if (!isset($_POST['property_id']) || !isset($_FILES['contract'])) {
+
+    $property_id = isset($_POST['property_id']) ? absint($_POST['property_id']) : 0;
+    if (!$property_id || empty($_FILES['contract'])) {
         wp_send_json_error('invalid_data', 400);
     }
-    
-    $property_id = intval($_POST['property_id']);
-    $file = $_FILES['contract'];
-    
-    // التحقق من الملف
-    if ($file['error'] !== UPLOAD_ERR_OK) {
-        wp_send_json_error('upload_error', 400);
+
+    if (!ms_user_can_access_property($user_id, $property_id)) {
+        wp_send_json_error('forbidden_property', 403);
     }
-    
-    // التحقق من نوع الملف
-    $allowed_types = array('application/pdf', 'image/jpeg', 'image/png');
-    if (!in_array($file['type'], $allowed_types)) {
-        wp_send_json_error('invalid_file_type', 400);
+
+    $file  = $_FILES['contract'];
+    $valid = ms_validate_upload($file, array('pdf', 'jpg', 'jpeg', 'png'));
+    if (is_wp_error($valid)) {
+        wp_send_json_error($valid->get_error_message(), 400);
     }
-    
-    // رفع الملف
-    require_once(ABSPATH . 'wp-admin/includes/file.php');
-    $upload = wp_handle_upload($file, array('test_form' => false));
+
+    require_once ABSPATH . 'wp-admin/includes/file.php';
+    $upload = wp_handle_upload($file, array(
+        'test_form' => false,
+        'mimes'     => array(
+            'pdf'          => 'application/pdf',
+            'jpg|jpeg|jpe' => 'image/jpeg',
+            'png'          => 'image/png',
+        ),
+    ));
     
     if (isset($upload['error'])) {
         wp_send_json_error($upload['error'], 500);

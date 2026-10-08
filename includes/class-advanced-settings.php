@@ -96,7 +96,7 @@ class MS_Advanced_Settings {
                     'currency' => array(
                         'type' => 'select',
                         'label' => 'العملة',
-                        'default' => 'SAR',
+                        'default' => 'EGP',
                         'options' => array(
                             'SAR' => 'ريال سعودي',
                             'EGP' => 'جنيه مصري',
@@ -329,17 +329,10 @@ class MS_Advanced_Settings {
                         'default' => true,
                         'description' => 'إنشاء فواتير تلقائياً للرسومات الدورية'
                     ),
-                    'payment_gateway' => array(
-                        'type' => 'select',
-                        'label' => 'بوابة الدفع',
-                        'default' => 'telr',
-                        'options' => array(
-                            'telr' => 'Telr',
-                            'stripe' => 'Stripe',
-                            'paypal' => 'PayPal',
-                            'manual' => 'يدوي'
-                        ),
-                        'description' => 'بوابة الدفع الافتراضية'
+                    'payment_note' => array(
+                        'type' => 'info',
+                        'label' => 'بوابات الدفع',
+                        'description' => 'الدفع يتم بالكامل عبر WooCommerce — لا توجد بوابة مدمجة في الإضافة.'
                     )
                 )
             ),

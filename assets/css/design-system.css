@@ -20,41 +20,41 @@ html, body {
 .ms-dashboard { box-sizing: border-box; }
 
 .ms-status-badge{display:inline-block;padding:4px 8px;border-radius:4px;font-weight:600}
-.ms-status-badge--paid{background:#10b981;color:#fff}
-.ms-status-badge--pending{background:#f59e0b;color:#fff}
-.ms-status-badge--overdue{background:#ef4444;color:#fff}
+.ms-status-badge--paid{background:var(--ms-success, #15803D);color:#fff}
+.ms-status-badge--pending{background:var(--ms-warning, #B45309);color:#fff}
+.ms-status-badge--overdue{background:var(--ms-danger, #B42318);color:#fff}
 
 .ms-table{width:100%;border-collapse:collapse}
-.ms-table th,.ms-table td{padding:10px;border-bottom:1px solid #e5e7eb;text-align:right}
+.ms-table th,.ms-table td{padding:10px;border-bottom:1px solid var(--ms-border, #ECE3D4);text-align:right}
 
-.ms-toast{background:#111;color:#fff;padding:10px 14px;border-radius:6px;margin-bottom:8px;box-shadow:0 6px 18px rgba(2,6,23,0.08)}
-.ms-toast--success{background:#10b981}
-.ms-toast--error{background:#ef4444}
+.ms-toast{background:var(--ms-primary, #0D1B2A);color:#fff;padding:10px 14px;border-radius:6px;margin-bottom:8px;box-shadow:0 6px 18px rgba(13, 27, 42,0.08)}
+.ms-toast--success{background:var(--ms-success, #15803D)}
+.ms-toast--error{background:var(--ms-danger, #B42318)}
 
 .ms-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:16px}
-.ms-card{background:#fff;border:1px solid #e5e7eb;padding:16px;border-radius:8px}
-.ms-input{width:100%;padding:8px;border:1px solid #ddd;border-radius:6px}
+.ms-card{background:#fff;border:1px solid var(--ms-border, #ECE3D4);padding:16px;border-radius:8px}
+.ms-input{width:100%;padding:8px;border:1px solid var(--ms-border, #ECE3D4);border-radius:6px}
 .ms-button{display:inline-block;padding:10px 14px;border-radius:6px;border:none;cursor:pointer}
-.ms-button-primary{background:#2563eb;color:#fff}
+.ms-button-primary{background:var(--ms-accent, #D4AF37);color: var(--ms-primary, #0D1B2A)}
 .ms-form-row{margin-bottom:12px}
 
 /* Additional design-system utilities requested by migration plan */
-.ms-badge-paid{background:#10b981;color:#fff;padding:4px 8px;border-radius:6px;font-weight:700}
-.ms-badge-pending{background:#f59e0b;color:#fff;padding:4px 8px;border-radius:6px;font-weight:700}
-.ms-badge-overdue{background:#ef4444;color:#fff;padding:4px 8px;border-radius:6px;font-weight:700}
+.ms-badge-paid{background:var(--ms-success, #15803D);color:#fff;padding:4px 8px;border-radius:6px;font-weight:700}
+.ms-badge-pending{background:var(--ms-warning, #B45309);color:#fff;padding:4px 8px;border-radius:6px;font-weight:700}
+.ms-badge-overdue{background:var(--ms-danger, #B42318);color:#fff;padding:4px 8px;border-radius:6px;font-weight:700}
 
-.ms-skeleton{background:linear-gradient(90deg,#f3f4f6 25%,#e5e7eb 37%,#f3f4f6 63%);background-size:400% 100%;animation:ms-skeleton 1.2s ease-in-out infinite;border-radius:6px}
+.ms-skeleton{background:linear-gradient(90deg,var(--ms-surface-alt, #FAF6EF) 25%,var(--ms-border, #ECE3D4) 37%,var(--ms-surface-alt, #FAF6EF) 63%);background-size:400% 100%;animation:ms-skeleton 1.2s ease-in-out infinite;border-radius:6px}
 @keyframes ms-skeleton{0%{background-position:100% 50%}100%{background-position:0 50%}}
 
-.ms-loading-spinner{width:28px;height:28px;border:4px solid rgba(0,0,0,0.08);border-top-color:#2563eb;border-radius:50%;animation:ms-spin 1s linear infinite}
+.ms-loading-spinner{width:28px;height:28px;border:4px solid rgba(0,0,0,0.08);border-top-color:var(--ms-primary, #0D1B2A);border-radius:50%;animation:ms-spin 1s linear infinite}
 @keyframes ms-spin{to{transform:rotate(360deg)}}
 
-.ms-empty-state{padding:40px;text-align:center;color:#6b7280}
+.ms-empty-state{padding:40px;text-align:center;color:var(--ms-muted, #6B7280)}
 .ms-empty-state h3{margin:0 0 8px;font-size:18px}
 .ms-empty-state p{margin:0;font-size:14px}
 
 .ms-form-group{margin-bottom:12px;display:block}
-.ms-form-error{color:#ef4444;font-size:13px;margin-top:6px}
+.ms-form-error{color:var(--ms-danger, #B42318);font-size:13px;margin-top:6px}
 
 /* ============================================
    تحسينات تصميم لوحة التحكم
@@ -62,17 +62,17 @@ html, body {
    ============================================ */
 
 :root {
-    --color-primary: var(--e-global-color-secondary, #2563eb);
-    --color-success: #10b981;
-    --color-warning: #f59e0b;
-    --color-error: #ef4444;
-    --color-info: #3b82f6;
+    --color-primary: var(--ms-primary, #0D1B2A);
+    --color-success: var(--ms-success, #15803D);
+    --color-warning: var(--ms-warning, #B45309);
+    --color-error: var(--ms-danger, #B42318);
+    --color-info: var(--ms-primary, #0D1B2A);
     
-    --color-bg-light: #f8fafc;
-    --color-bg-lighter: #f1f5f9;
-    --color-border: #e2e8f0;
-    --color-text-primary: #0f172a;
-    --color-text-secondary: #64748b;
+    --color-bg-light: var(--ms-surface-alt, #FAF6EF);
+    --color-bg-lighter: var(--ms-page, #FBF8F3);
+    --color-border: var(--ms-border, #ECE3D4);
+    --color-text-primary: var(--ms-primary, #0D1B2A);
+    --color-text-secondary: var(--ms-muted, #6B7280);
 }
 
 .ms-card {
@@ -80,7 +80,7 @@ html, body {
 }
 
 .ms-card:hover {
-    box-shadow: 0 24px 64px rgba(15, 23, 42, 0.12);
+    box-shadow: 0 24px 64px rgba(13, 27, 42, 0.12);
     transform: translateY(-2px);
 }
 
@@ -155,7 +155,7 @@ table tbody tr:last-child td {
 .ms-discussion-reply-form textarea:focus {
     outline: none;
     border-color: var(--color-primary);
-    box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.1);
+    box-shadow: 0 0 0 3px rgba(212, 175, 55, 0.1);
 }
 
 .ms-discussion-create-form button,
@@ -172,7 +172,7 @@ table tbody tr:last-child td {
 
 .ms-discussion-create-form button:hover,
 .ms-discussion-reply-form button:hover {
-    background: #1d4ed8;
+    background: var(--ms-accent, #D4AF37);
     transform: translateY(-1px);
 }
 
@@ -280,7 +280,7 @@ table tbody tr:last-child td {
 
 .ms-eyebrow {
     margin: 0 0 5px;
-    color: #2563eb;
+    color: var(--ms-primary, #0D1B2A);
     font-size: 12px;
     font-weight: 800;
     letter-spacing: .02em;
@@ -288,7 +288,7 @@ table tbody tr:last-child td {
 
 .ms-page-subtitle {
     margin: 6px 0 0;
-    color: #64748b;
+    color: var(--ms-muted, #6B7280);
     font-size: 14px;
     line-height: 1.7;
 }
@@ -303,10 +303,10 @@ table tbody tr:last-child td {
 .ms-action-button {
     min-height: 40px;
     padding: 9px 14px;
-    border: 1px solid #cbd5e1;
+    border: 1px solid var(--ms-border-strong, #DCCFB8);
     border-radius: 9px;
     background: #fff;
-    color: #334155;
+    color: var(--ms-text, #1E2B3A);
     cursor: pointer;
     font: inherit;
     font-size: 13px;
@@ -316,23 +316,23 @@ table tbody tr:last-child td {
 
 .ms-action-button:hover,
 .ms-action-button:focus-visible {
-    border-color: #2563eb;
-    background: #eff6ff;
-    color: #1d4ed8;
-    outline: 2px solid #93c5fd;
+    border-color: var(--ms-accent, #D4AF37);
+    background: var(--ms-accent-soft, #F8F0D8);
+    color: var(--ms-primary, #0D1B2A);
+    outline: 2px solid var(--ms-accent-line, #E9D69B);
     outline-offset: 2px;
 }
 
 .ms-action-button-primary {
-    border-color: #2563eb;
-    background: #2563eb;
-    color: #fff;
+    border-color: var(--ms-accent, #D4AF37);
+    background: var(--ms-accent, #D4AF37);
+    color: var(--ms-primary, #0D1B2A);
 }
 
 .ms-action-button-primary:hover,
 .ms-action-button-primary:focus-visible {
-    background: #1d4ed8;
-    color: #fff;
+    background: var(--ms-accent, #D4AF37);
+    color: var(--ms-primary, #0D1B2A);
 }
 
 .ms-guided-empty-state {
@@ -342,9 +342,9 @@ table tbody tr:last-child td {
     gap: 16px;
     margin: 0 0 20px;
     padding: 18px 20px;
-    border: 1px solid #bfdbfe;
+    border: 1px solid var(--ms-accent-line, #E9D69B);
     border-radius: 14px;
-    background: linear-gradient(90deg, #eff6ff, #fff);
+    background: linear-gradient(90deg, var(--ms-accent-soft, #F8F0D8), #fff);
 }
 
 .ms-guided-empty-state__icon {
@@ -353,19 +353,19 @@ table tbody tr:last-child td {
     height: 46px;
     place-items: center;
     border-radius: 12px;
-    background: #dbeafe;
+    background: var(--ms-accent-soft, #F8F0D8);
     font-size: 22px;
 }
 
 .ms-guided-empty-state h2 {
     margin: 0 0 4px;
-    color: #0f172a;
+    color: var(--ms-primary, #0D1B2A);
     font-size: 17px;
 }
 
 .ms-guided-empty-state p {
     margin: 0;
-    color: #475569;
+    color: var(--ms-text, #1E2B3A);
     font-size: 13px;
     line-height: 1.7;
 }
@@ -391,12 +391,12 @@ table tbody tr:last-child td {
     }
 }
 
-.ms-action-center{margin:0 0 20px;padding:18px 20px;border:1px solid #e2e8f0;border-radius:16px;background:#fff;box-shadow:0 4px 14px rgba(15,23,42,.04)}
-.ms-action-center__header{display:flex;justify-content:space-between;align-items:center;gap:12px;margin-bottom:14px}.ms-action-center__header h2{margin:0;color:#0f172a;font-size:18px}.ms-action-center__header>span{padding:5px 10px;border-radius:999px;background:#f1f5f9;color:#475569;font-size:12px}
-.ms-action-center__empty{padding:12px;border-radius:10px;background:#f8fafc;color:#64748b;font-size:13px}.ms-action-center__grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(230px,1fr));gap:10px}
-.ms-action-item{display:flex;justify-content:space-between;align-items:center;gap:12px;text-align:right;padding:14px;border:1px solid #e2e8f0;border-radius:12px;background:#fff;cursor:pointer;color:#0f172a}.ms-action-item:hover,.ms-action-item:focus-visible{border-color:#93c5fd;background:#eff6ff;outline:2px solid #bfdbfe;outline-offset:2px}.ms-action-item strong,.ms-action-item small{display:block}.ms-action-item small{margin-top:4px;color:#64748b;font-size:12px}.ms-action-item b{min-width:34px;height:34px;display:grid;place-items:center;border-radius:10px;background:#eff6ff;color:#1d4ed8}.ms-action-item--warning b{background:#fef3c7;color:#92400e}.ms-action-item--info b{background:#dbeafe;color:#1e40af}
+.ms-action-center{margin:0 0 20px;padding:18px 20px;border:1px solid var(--ms-border, #ECE3D4);border-radius:16px;background:#fff;box-shadow:0 4px 14px rgba(13, 27, 42,.04)}
+.ms-action-center__header{display:flex;justify-content:space-between;align-items:center;gap:12px;margin-bottom:14px}.ms-action-center__header h2{margin:0;color:var(--ms-primary, #0D1B2A);font-size:18px}.ms-action-center__header>span{padding:5px 10px;border-radius:999px;background:var(--ms-surface-alt, #FAF6EF);color:var(--ms-text, #1E2B3A);font-size:12px}
+.ms-action-center__empty{padding:12px;border-radius:10px;background:var(--ms-surface-alt, #FAF6EF);color:var(--ms-muted, #6B7280);font-size:13px}.ms-action-center__grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(230px,1fr));gap:10px}
+.ms-action-item{display:flex;justify-content:space-between;align-items:center;gap:12px;text-align:right;padding:14px;border:1px solid var(--ms-border, #ECE3D4);border-radius:12px;background:#fff;cursor:pointer;color:var(--ms-primary, #0D1B2A)}.ms-action-item:hover,.ms-action-item:focus-visible{border-color:var(--ms-accent-line, #E9D69B);background:var(--ms-accent-soft, #F8F0D8);outline:2px solid var(--ms-accent-line, #E9D69B);outline-offset:2px}.ms-action-item strong,.ms-action-item small{display:block}.ms-action-item small{margin-top:4px;color:var(--ms-muted, #6B7280);font-size:12px}.ms-action-item b{min-width:34px;height:34px;display:grid;place-items:center;border-radius:10px;background:var(--ms-accent-soft, #F8F0D8);color:var(--ms-primary, #0D1B2A)}.ms-action-item--warning b{background:var(--ms-warning-soft, #FEF3C7);color:var(--ms-warning, #B45309)}.ms-action-item--info b{background:var(--ms-accent-soft, #F8F0D8);color:var(--ms-primary, #0D1B2A)}
 @media(max-width:600px){.ms-action-center__header{display:block}.ms-action-center__header>span{display:inline-block;margin-top:8px}.ms-action-center__grid{grid-template-columns:1fr}}
 
-.ms-subscription-summary>div{border:1px solid #dbe3ea;background:#f8fafc;padding:14px 16px;min-height:74px}.ms-subscription-summary small{display:block;color:#64748b;font-size:12px;margin-bottom:8px}.ms-subscription-summary strong{display:block;color:#0f172a;font-size:16px}.ms-subscription-status-active,.ms-subscription-status-paid{color:#15803d!important}.ms-subscription-status-expired{color:#b91c1c!important}.ms-subscription-status-due,.ms-subscription-status-pending{color:#b45309!important}@media(max-width:720px){.ms-subscription-summary{grid-template-columns:repeat(2,minmax(0,1fr))!important}}@media(max-width:480px){.ms-subscription-summary{grid-template-columns:1fr!important}}
+.ms-subscription-summary>div{border:1px solid var(--ms-border, #ECE3D4);background:var(--ms-surface-alt, #FAF6EF);padding:14px 16px;min-height:74px}.ms-subscription-summary small{display:block;color:var(--ms-muted, #6B7280);font-size:12px;margin-bottom:8px}.ms-subscription-summary strong{display:block;color:var(--ms-primary, #0D1B2A);font-size:16px}.ms-subscription-status-active,.ms-subscription-status-paid{color:var(--ms-success, #15803D)!important}.ms-subscription-status-expired{color:var(--ms-danger, #B42318)!important}.ms-subscription-status-due,.ms-subscription-status-pending{color:var(--ms-warning, #B45309)!important}@media(max-width:720px){.ms-subscription-summary{grid-template-columns:repeat(2,minmax(0,1fr))!important}}@media(max-width:480px){.ms-subscription-summary{grid-template-columns:1fr!important}}
 
-.ms-count-badge{display:inline-flex;align-items:center;gap:5px;padding:8px 12px;border:1px solid #e2e8f0;background:#f8fafc;color:#475569;font-size:13px;font-weight:600;white-space:nowrap}.ms-count-badge strong{color:#c24126;font-size:16px}.ms-agent-properties-grid .ms-property-card{min-width:0}@media(max-width:700px){.ms-properties-header{align-items:stretch!important;flex-direction:column}.ms-properties-header .ms-action-button{width:100%}.ms-building-selector-row{align-items:stretch!important;flex-direction:column}.ms-building-counts{width:100%}.ms-count-badge{flex:1;justify-content:center}}
+.ms-count-badge{display:inline-flex;align-items:center;gap:5px;padding:8px 12px;border:1px solid var(--ms-border, #ECE3D4);background:var(--ms-surface-alt, #FAF6EF);color:var(--ms-text, #1E2B3A);font-size:13px;font-weight:600;white-space:nowrap}.ms-count-badge strong{color:var(--ms-primary, #0D1B2A);font-size:16px}.ms-agent-properties-grid .ms-property-card{min-width:0}@media(max-width:700px){.ms-properties-header{align-items:stretch!important;flex-direction:column}.ms-properties-header .ms-action-button{width:100%}.ms-building-selector-row{align-items:stretch!important;flex-direction:column}.ms-building-counts{width:100%}.ms-count-badge{flex:1;justify-content:center}}

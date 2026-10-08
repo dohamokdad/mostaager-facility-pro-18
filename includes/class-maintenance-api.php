@@ -131,14 +131,17 @@ class MS_Maintenance_API {
         $page = max(1, intval($request->get_param('page')));
         $per_page = min(100, max(1, intval($request->get_param('per_page'))));
         
-        $where = ['1=1'];
-        if ($building_id) $where[] = $wpdb->prepare("building_id = %d", $building_id);
-        if ($status) $where[] = $wpdb->prepare("status = %s", $status);
-        if ($priority) $where[] = $wpdb->prepare("priority = %s", $priority);
-        
+        // تُبنى العناصر النائبة والقيم منفصلة وتمر على prepare() مرة واحدة فقط
+        // (تمرير نص سبق تحضيره إلى prepare() ثانيةً يكسر عدّ العناصر النائبة إن احتوى %)
+        $where  = array('1=1');
+        $params = array();
+        if ($building_id) { $where[] = 'm.building_id = %d'; $params[] = absint($building_id); }
+        if ($status)      { $where[] = 'm.status = %s';      $params[] = $status; }
+        if ($priority)    { $where[] = 'm.priority = %s';    $params[] = $priority; }
+
         $where_clause = implode(' AND ', $where);
         $offset = ($page - 1) * $per_page;
-        
+
         $tickets = $wpdb->get_results($wpdb->prepare(
             "SELECT m.*, b.building_name, u.unit_number, f.title AS facility_name
             FROM {$table} m
@@ -148,12 +151,12 @@ class MS_Maintenance_API {
             WHERE {$where_clause}
             ORDER BY m.created_at DESC
             LIMIT %d OFFSET %d",
-            $per_page, $offset
+            array_merge($params, array($per_page, $offset))
         ));
-        
-        // Fix: use separate query for count
-        $total = $wpdb->get_var("SELECT COUNT(*) FROM {$table} WHERE {$where_clause}");
-        
+
+        $count_sql = "SELECT COUNT(*) FROM {$table} m WHERE {$where_clause}";
+        $total = (int) ($params ? $wpdb->get_var($wpdb->prepare($count_sql, $params)) : $wpdb->get_var($count_sql));
+
         return new WP_REST_Response([
             'success' => true,
             'data' => $tickets,
@@ -452,16 +455,25 @@ class MS_Maintenance_API {
         $table = $wpdb->prefix . 'ms_maintenance_requests';
         $building_id = $request->get_param('building_id');
         
-        $where = $building_id ? $wpdb->prepare("WHERE building_id = %d", $building_id) : '';
-        
+        // استعلام واحد بدل خمسة
+        $sql = "SELECT COUNT(*) AS total,
+                       SUM(status = 'new') AS new_count,
+                       SUM(status = 'in_progress') AS in_progress,
+                       SUM(status = 'completed') AS completed,
+                       SUM(priority = 'high' AND status != 'completed') AS high_priority
+                FROM {$table}";
+        $row = $building_id
+            ? $wpdb->get_row($wpdb->prepare($sql . ' WHERE building_id = %d', absint($building_id)))
+            : $wpdb->get_row($sql);
+
         $stats = [
-            'total' => intval($wpdb->get_var("SELECT COUNT(*) FROM {$table} {$where}") ?: 0),
-            'new' => intval($wpdb->get_var("SELECT COUNT(*) FROM {$table} {$where} " . ($where ? 'AND' : 'WHERE') . " status = 'new'") ?: 0),
-            'in_progress' => intval($wpdb->get_var("SELECT COUNT(*) FROM {$table} {$where} " . ($where ? 'AND' : 'WHERE') . " status = 'in_progress'") ?: 0),
-            'completed' => intval($wpdb->get_var("SELECT COUNT(*) FROM {$table} {$where} " . ($where ? 'AND' : 'WHERE') . " status = 'completed'") ?: 0),
-            'high_priority' => intval($wpdb->get_var("SELECT COUNT(*) FROM {$table} {$where} " . ($where ? 'AND' : 'WHERE') . " priority = 'high' AND status != 'completed'") ?: 0),
+            'total' => intval($row->total ?? 0),
+            'new' => intval($row->new_count ?? 0),
+            'in_progress' => intval($row->in_progress ?? 0),
+            'completed' => intval($row->completed ?? 0),
+            'high_priority' => intval($row->high_priority ?? 0),
         ];
-        
+
         return new WP_REST_Response([
             'success' => true,
             'stats' => $stats,

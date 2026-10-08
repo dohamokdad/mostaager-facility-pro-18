@@ -139,7 +139,7 @@
 .ms-reports-button-primary:hover {
     background: #1d4ed8;
     transform: translateY(-2px);
-    box-shadow: 0 4px 12px rgba(37, 99, 235, 0.3);
+    box-shadow: 0 4px 12px rgba(212, 175, 55, 0.3);
 }
 
 .ms-reports-button-secondary {
@@ -192,7 +192,7 @@
 .ms-filter-select:focus {
     outline: none;
     border-color: var(--ms-reports-primary);
-    box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.1);
+    box-shadow: 0 0 0 3px rgba(212, 175, 55, 0.1);
 }
 
 .ms-filter-button {
@@ -360,7 +360,7 @@
     align-items: center;
     justify-content: center;
     font-size: 1.5rem;
-    background: linear-gradient(135deg, rgba(37, 99, 235, 0.1), rgba(96, 165, 250, 0.1));
+    background: linear-gradient(135deg, rgba(212, 175, 55, 0.1), rgba(96, 165, 250, 0.1));
     color: var(--ms-reports-primary);
     margin-bottom: 16px;
 }
@@ -458,7 +458,7 @@
 .ms-export-option:hover,
 .ms-export-option.selected {
     border-color: var(--ms-reports-primary);
-    background: rgba(37, 99, 235, 0.05);
+    background: rgba(212, 175, 55, 0.05);
 }
 
 .ms-export-option-icon {

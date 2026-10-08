@@ -1,0 +1,5 @@
+cache/
+.graphify_python
+.graphify_root
+2026-*/
+*.sig

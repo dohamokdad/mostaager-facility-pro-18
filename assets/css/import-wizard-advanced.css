@@ -156,7 +156,7 @@
 .ms-import-file-upload:hover,
 .ms-import-file-upload.dragover {
     border-color: var(--ms-import-primary);
-    background: rgba(37, 99, 235, 0.05);
+    background: rgba(212, 175, 55, 0.05);
 }
 
 .ms-import-file-upload-icon {
@@ -194,7 +194,7 @@
 .ms-import-file-upload-button:hover {
     background: #1d4ed8;
     transform: translateY(-2px);
-    box-shadow: 0 4px 12px rgba(37, 99, 235, 0.3);
+    box-shadow: 0 4px 12px rgba(212, 175, 55, 0.3);
 }
 
 .ms-import-file-info {
@@ -259,7 +259,7 @@
 
 .ms-import-template-card.selected {
     border-color: var(--ms-import-primary);
-    background: rgba(37, 99, 235, 0.05);
+    background: rgba(212, 175, 55, 0.05);
 }
 
 .ms-import-template-card.selected::after {
@@ -382,7 +382,7 @@
     gap: 12px;
     margin-bottom: 20px;
     padding: 16px;
-    background: rgba(37, 99, 235, 0.1);
+    background: rgba(212, 175, 55, 0.1);
     border-radius: 10px;
 }
 
@@ -574,7 +574,7 @@
 .ms-import-wizard-button-primary:hover {
     background: #1d4ed8;
     transform: translateY(-2px);
-    box-shadow: 0 4px 12px rgba(37, 99, 235, 0.3);
+    box-shadow: 0 4px 12px rgba(212, 175, 55, 0.3);
 }
 
 .ms-import-wizard-button:disabled {

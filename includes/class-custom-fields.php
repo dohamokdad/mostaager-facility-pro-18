@@ -12,7 +12,7 @@ class MS_Custom_Fields_Manager {
     public function __construct() {
         add_action('add_meta_boxes', array($this, 'add_custom_meta_boxes'));
         add_action('save_post', array($this, 'save_custom_fields'));
-        add_filter('houzez_property_meta_fields', array($this, 'add_custom_fields_to_meta'));
+        // houzez_property_meta_fields غير موجود في Houzez 4.3.5 — تم حذف التسجيل الميت
         add_action('wp_ajax_ms_add_custom_field', array($this, 'add_custom_field'));
         add_action('wp_ajax_ms_delete_custom_field', array($this, 'delete_custom_field'));
     }

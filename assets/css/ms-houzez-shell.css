@@ -1,0 +1,78 @@
+/* ==========================================================================
+   Mostaager ↔ Houzez dashboard shell
+   1) صفحات مستأجر داخل إطار لوحة Houzez
+   2) هوية مستأجر (كحلي/ذهبي) على لوحة Houzez نفسها — body.ms-hz-brand
+      تعطيل: add_filter('ms_houzez_brand_dashboard', '__return_false');
+   ========================================================================== */
+
+/* ---- 1) المحتوى داخل الإطار ---- */
+.ms-sidebar[hidden],
+.ms-hz-shell .ms-sidebar--in-shell { display: none !important; }
+
+.ms-hz-shell .ms-dashboard {
+    display: block;
+    min-height: 0;
+    padding: 0;
+    gap: 0;
+    background: none;
+}
+.ms-hz-shell .ms-dashboard .ms-content { padding: 0; max-width: none; width: auto; }
+.ms-hz-shell .dashboard-content.ms-hz-content { padding: 24px; }
+@media (max-width: 767.98px) {
+    .ms-hz-shell .dashboard-content.ms-hz-content { padding: 14px; }
+}
+
+/* ---- القسم المحقون في قائمة Houzez ---- */
+.ms-hz-nav {
+    padding-bottom: 4px;
+    margin-bottom: 4px;
+    border-bottom: 1px solid rgba(212, 175, 55, .16);
+}
+.ms-hz-nav .ms-hz-icon {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 16px;
+    height: 16px;
+    font-style: normal;
+}
+.ms-hz-nav .ms-hz-icon svg { width: 17px; height: 17px; }
+
+/* ---- 2) هوية مستأجر على لوحة Houzez ---- */
+body.ms-hz-brand .dashboard-sidebar,
+body.ms-hz-brand .sidebar-logo {
+    background-color: #0D1B2A;
+}
+body.ms-hz-brand .dashboard-sidebar {
+    border-left-color: rgba(212, 175, 55, .18);
+    background-image:
+        url('../img/ms-skyline.svg'),
+        radial-gradient(320px 220px at 110% -5%, rgba(212, 175, 55, .14), transparent 65%);
+    background-repeat: no-repeat, no-repeat;
+    background-position: center bottom, 0 0;
+    background-size: 100% auto, auto;
+    scrollbar-width: thin;
+    scrollbar-color: rgba(212, 175, 55, .35) transparent;
+}
+body.ms-hz-brand .sidebar-logo { border-bottom: 1px solid rgba(212, 175, 55, .16); }
+body.ms-hz-brand .nav-box h5 { color: rgba(255, 255, 255, .42); letter-spacing: .04em; }
+body.ms-hz-brand .nav-box ul li a {
+    color: rgba(255, 255, 255, .74);
+    transition: background-color .25s cubic-bezier(.22, .8, .24, 1), color .2s ease;
+}
+body.ms-hz-brand .nav-box ul li a i { transition: transform .3s cubic-bezier(.34, 1.4, .5, 1); }
+body.ms-hz-brand .nav-box ul li a:hover {
+    background-color: rgba(255, 255, 255, .05);
+    color: #fff;
+}
+body.ms-hz-brand .nav-box ul li a:hover i { transform: translateX(-3px); }
+body.ms-hz-brand .nav-box ul li a.active {
+    background-color: rgba(212, 175, 55, .14);
+    border-color: #D4AF37;
+    color: #D4AF37;
+}
+
+@media (prefers-reduced-motion: reduce) {
+    body.ms-hz-brand .nav-box ul li a,
+    body.ms-hz-brand .nav-box ul li a i { transition: none; }
+}

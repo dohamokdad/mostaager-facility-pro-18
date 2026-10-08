@@ -182,6 +182,16 @@ function ms_render_inline_property_form($args = array())
     $form_id = 'ms-inline-property-form-' . wp_rand(100, 99999);
 
     ob_start();
+    // قائمة الوسطاء لحقل «الوسيط المتابع» — كان المتغير $agents غير مُعرّف (تحذير PHP + قائمة فارغة)
+    $agents = array();
+    $agent_roles = array_values(array_filter(array('agent', 'houzez_agent', 'houzez_agency'), 'get_role'));
+    if ($agent_roles) {
+        foreach (get_users(array('role__in' => $agent_roles, 'orderby' => 'display_name', 'number' => 200)) as $agent_user) {
+            $agents[] = array('user_id' => $agent_user->ID, 'label' => $agent_user->display_name ?: $agent_user->user_login);
+        }
+    }
+    $agents = apply_filters('ms_inline_form_agents', $agents);
+
     ?>
     <form id="<?php echo esc_attr($form_id); ?>" class="ms-inline-property-form" data-user-id="<?php echo esc_attr($user_id); ?>" novalidate>
         <input type="hidden" name="action" value="ms_inline_save_property">

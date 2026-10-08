@@ -93,7 +93,8 @@ function ms_render_building_manager_metabox($post)
                     <?php echo esc_html($manager->display_name . ' (@' . $manager->user_login . ')'); ?>
                 </option>
             <?php endforeach; ?>
-        </select>
+                <option value="new">+ أنشئ مبنى جديداً من هذا العقار</option>
+</select>
 
         <?php if ($current_manager_id) :
             $mgr = get_userdata($current_manager_id); ?>
@@ -293,7 +294,7 @@ function ms_render_property_building_metabox($post)
 {
     global $wpdb;
 
-    $current = intval(get_post_meta($post->ID, '_ms_building_id', true)) ?: intval(get_post_meta($post->ID, 'ms_building_id', true)) ?: intval(get_post_meta($post->ID, 'building_id', true));
+    $current = ms_property_building_id($post->ID);
 
     $tbl = $wpdb->prefix . 'ms_buildings';
     $rows = $wpdb->get_results("SELECT id, title, wp_post_id FROM {$tbl} ORDER BY title ASC");
@@ -328,19 +329,26 @@ function ms_save_property_building($post_id, $post)
     ) {
         return;
     }
-    if (defined('DOING_AUTOSAVE') && DOING_AUTOSAVE) return;
-    if (!current_user_can('edit_post', $post_id)) return;
+    if (!ms_property_save_guard($post_id, $post, 'building_metabox')) return;
 
-    $ms_bid = isset($_POST['ms_property_building_id']) ? intval($_POST['ms_property_building_id']) : 0;
+    $ms_bid = isset($_POST['ms_property_building_id']) ? absint($_POST['ms_property_building_id']) : 0;
 
+    // إنشاء مبنى من العقار — المسار الوحيد المعتمد (ms_create_building_from_property)
+    if (isset($_POST['ms_property_building_id']) && $_POST['ms_property_building_id'] === 'new') {
+        $new_building_id = ms_create_building_from_property($post_id, array('title' => get_the_title($post_id)));
+        if ($new_building_id) {
+            set_transient('ms_sync_notice_' . $post_id, 'تم إنشاء مبنى مرتبط بهذا العقار.', 30);
+        }
+        return;
+    }
+
+    // الكتابة/المسح على كل المفاتيح المعروفة تمر من الطبقة الموحّدة
     if ($ms_bid <= 0) {
-        delete_post_meta($post_id, '_ms_building_id');
-        delete_post_meta($post_id, 'ms_building_id');
-        delete_post_meta($post_id, 'building_id');
+        foreach (MS_BUILDING_META_KEYS as $ms_meta_key) {
+            delete_post_meta($post_id, $ms_meta_key);
+        }
     } else {
-        update_post_meta($post_id, '_ms_building_id', $ms_bid);
-        update_post_meta($post_id, 'ms_building_id', $ms_bid);
-        update_post_meta($post_id, 'building_id', $ms_bid);
+        ms_link_property_building($post_id, $ms_bid);
     }
 }
 

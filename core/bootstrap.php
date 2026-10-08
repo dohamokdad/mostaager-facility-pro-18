@@ -153,11 +153,17 @@ if (file_exists(MOSTAAGER_ENTERPRISE_PATH . 'includes/houzez/class-houzez-search
 if (file_exists(MOSTAAGER_ENTERPRISE_PATH . 'includes/houzez/class-houzez-notifications.php')) {
     require_once MOSTAAGER_ENTERPRISE_PATH . 'includes/houzez/class-houzez-notifications.php';
 }
-if (file_exists(MOSTAAGER_ENTERPRISE_PATH . 'includes/houzez/class-property-sync.php')) {
-    require_once MOSTAAGER_ENTERPRISE_PATH . 'includes/houzez/class-property-sync.php';
+require_once MOSTAAGER_ENTERPRISE_PATH . 'includes/ms-icons.php';
+require_once MOSTAAGER_ENTERPRISE_PATH . 'includes/ms-property-link.php';
+require_once MOSTAAGER_ENTERPRISE_PATH . 'includes/wallet-woo-sync.php';
+if (file_exists(MOSTAAGER_ENTERPRISE_PATH . 'includes/houzez/class-houzez-dashboard-bridge.php')) {
+    require_once MOSTAAGER_ENTERPRISE_PATH . 'includes/houzez/class-houzez-dashboard-bridge.php';
 }
-if (file_exists(MOSTAAGER_ENTERPRISE_PATH . 'includes/houzez/class-lead-converter.php')) {
-    require_once MOSTAAGER_ENTERPRISE_PATH . 'includes/houzez/class-lead-converter.php';
+// includes/houzez/class-property-sync.php و includes/houzez-sync.php حُذفا في 18.8.0:
+// كلاهما كان مساراً ثانياً لإنشاء مبنى من عقار ولم يكن مُفعّلاً أصلاً (لا instantiation ولا require).
+// المسار الوحيد الآن: ms_create_building_from_property() من صندوق «المبنى» الفعلي.
+if (file_exists(MOSTAAGER_ENTERPRISE_PATH . 'includes/houzez/class-crm-bridge.php')) {
+    require_once MOSTAAGER_ENTERPRISE_PATH . 'includes/houzez/class-crm-bridge.php';
 }
 if (class_exists('MFP_Houzez_Map_Status')) {
     if (!defined('WP_INSTALLING') || !WP_INSTALLING) {
@@ -204,6 +210,9 @@ if (file_exists(MOSTAAGER_ENTERPRISE_PATH . 'includes/tenant-dashboard-enhanceme
 if (file_exists(MOSTAAGER_ENTERPRISE_PATH . 'includes/user-experience.php')) {
     require_once MOSTAAGER_ENTERPRISE_PATH . 'includes/user-experience.php';
 }
+if (file_exists(MOSTAAGER_ENTERPRISE_PATH . 'includes/API/class-ms-api.php')) {
+    require_once MOSTAAGER_ENTERPRISE_PATH . 'includes/API/class-ms-api.php';
+}
 if (file_exists(MOSTAAGER_ENTERPRISE_PATH . 'includes/API/RestApi.php')) {
     require_once MOSTAAGER_ENTERPRISE_PATH . 'includes/API/RestApi.php';
     add_action('rest_api_init', array('MostaagerFacilitiesPro\API\RestApi', 'register_routes'));
@@ -236,11 +245,7 @@ if (file_exists(MOSTAAGER_ENTERPRISE_PATH . 'includes/shortcodes.php')) {
 if (file_exists(MOSTAAGER_ENTERPRISE_PATH . 'includes/api.php')) {
     require_once MOSTAAGER_ENTERPRISE_PATH . 'includes/api.php';
 }
-if (file_exists(MOSTAAGER_ENTERPRISE_PATH . 'includes/telr-integration.php')) {
-    add_action('plugins_loaded', function() {
-        require_once MOSTAAGER_ENTERPRISE_PATH . 'includes/telr-integration.php';
-    }, 20);
-}
+// بوابة Telr المدمجة حُذفت في 18.11.0 — كل الدفع يتم عبر بوابات WooCommerce
 if (file_exists(MOSTAAGER_ENTERPRISE_PATH . 'includes/agent-subscription.php')) {
     require_once MOSTAAGER_ENTERPRISE_PATH . 'includes/agent-subscription.php';
 }
@@ -409,6 +414,12 @@ add_action('wp_enqueue_scripts', function () {
         array('ms-dashboard'),
         file_exists($design_css_path) ? filemtime($design_css_path) : '1.0'
     );
+
+    // UX helpers (busy state + Arabic error messages) — in <head> so inline dashboard scripts can use them
+    $ux_js = MOSTAAGER_ENTERPRISE_PATH . 'assets/js/ms-ux.js';
+    if (file_exists($ux_js)) {
+        wp_enqueue_script('mostaager-ux', MOSTAAGER_ENTERPRISE_URL . 'assets/js/ms-ux.js', array(), filemtime($ux_js), false);
+    }
 
     wp_enqueue_script(
         'mostaager-dashboard-js',
@@ -630,4 +641,29 @@ add_action('init', function () {
 });
 
 add_action('ms_recurring_maintenance_cron', 'ms_process_recurring_maintenance');
+
+// Brand layer (هوية مستأجر): fonts + ms-brand.css — loaded LAST so it wins over legacy dashboard CSS.
+add_action('wp_enqueue_scripts', function () {
+    $content = is_singular() ? (string) get_post_field('post_content', get_queried_object_id()) : '';
+    $is_dashboard = false;
+    foreach (array('owner_dashboard_v4', 'rent_dashboard_v4', 'agent_dashboard_v4', 'manager_dashboard_v4', 'ms_dashboard', 'mostaager_owner_reports') as $sc) {
+        if (strpos($content, '[' . $sc) !== false) { $is_dashboard = true; break; }
+    }
+    if (!apply_filters('ms_load_brand_layer', $is_dashboard)) {
+        return;
+    }
+    // خطوط Google: طلب مستقل لكل عائلة.
+    // رابط css2 يحمل أكثر من family= يكسر بعض إضافات التحسين (WP-Optimize Minify
+    // يقرأ الاستعلام بـ parse_str فيبقى آخر family فقط ثم يسقط بخطأ قاتل).
+    // للتعطيل نهائياً (مثلاً إذا كان القالب يحمّل نفس الخطوط): 
+    //   add_filter('ms_load_brand_fonts', '__return_false');
+    if (apply_filters('ms_load_brand_fonts', true)) {
+        wp_enqueue_style('ms-brand-font-cairo', 'https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;700;800&display=swap', array(), null);
+        wp_enqueue_style('ms-brand-font-tajawal', 'https://fonts.googleapis.com/css2?family=Tajawal:wght@400;500;700&display=swap', array(), null);
+    }
+    $brand_css = MOSTAAGER_ENTERPRISE_PATH . 'assets/css/ms-brand.css';
+    if (file_exists($brand_css)) {
+        wp_enqueue_style('ms-brand', MOSTAAGER_ENTERPRISE_URL . 'assets/css/ms-brand.css', array(), filemtime($brand_css));
+    }
+}, 999);
 

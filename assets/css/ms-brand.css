@@ -1,0 +1,948 @@
+/* ==========================================================================
+   Mostaager — Brand Layer v2 (Owner / Tenant / Building / Agent)
+   هوية «مستأجر العقاري» + نظام حركة موحّد
+   كل الحركة على transform/opacity فقط (أداء 60fps) وتتوقف مع prefers-reduced-motion.
+   ========================================================================== */
+
+:root {
+    /* الهوية */
+    --ms-navy: #0D1B2A;
+    --ms-navy-2: #16283C;
+    --ms-navy-3: #1F3651;
+    --ms-gold: #D4AF37;
+    --ms-gold-light: #E8CB6A;
+    --ms-gold-dark: #B88D16;
+    --ms-gold-deep: #8B6B18;
+    --ms-beige: #F2E9DB;
+    --ms-gray: #6B7280;
+    --ms-white: #FFFFFF;
+
+    /* أدوار دلالية */
+    --ms-primary: var(--ms-navy);
+    --ms-accent: var(--ms-gold);
+    --ms-accent-dark: var(--ms-gold-dark);
+    --ms-accent-soft: #F8F0D8;
+    --ms-accent-line: #E9D69B;
+    --ms-page: #F7F3EC;
+    --ms-surface: #FFFFFF;
+    --ms-surface-alt: #FAF6EF;
+    --ms-border: #ECE3D4;
+    --ms-border-strong: #DCCFB8;
+    --ms-text: #1E2B3A;
+    --ms-muted: #6B7280;
+
+    --ms-success: #15803D;  --ms-success-soft: #E8F5EC;
+    --ms-danger:  #B42318;  --ms-danger-soft:  #FDECEA;
+    --ms-warning: #B45309;  --ms-warning-soft: #FEF3C7;
+
+    /* شكل */
+    --ms-radius-xl: 24px;
+    --ms-radius-lg: 18px;
+    --ms-radius: 14px;
+    --ms-radius-sm: 10px;
+    --ms-shadow-sm: 0 1px 2px rgba(13, 27, 42, .05);
+    --ms-shadow: 0 1px 2px rgba(13, 27, 42, .04), 0 8px 24px -6px rgba(13, 27, 42, .08);
+    --ms-shadow-hover: 0 2px 6px rgba(13, 27, 42, .06), 0 22px 40px -12px rgba(13, 27, 42, .18);
+    --ms-glow-gold: 0 10px 26px -8px rgba(212, 175, 55, .55);
+    --ms-font: 'Cairo', 'Tajawal', Tahoma, Arial, sans-serif;
+    --ms-sidebar-w: 268px;
+
+    /* حركة */
+    --ms-ease: cubic-bezier(.22, .8, .24, 1);        /* خروج ناعم */
+    --ms-ease-spring: cubic-bezier(.34, 1.4, .5, 1); /* ارتداد خفيف */
+    --ms-dur-1: .18s;
+    --ms-dur-2: .32s;
+    --ms-dur-3: .55s;
+}
+
+/* ==========================================================================
+   Keyframes
+   ========================================================================== */
+@keyframes msFadeUp   { from { opacity: 0; transform: translate3d(0, 14px, 0); } to { opacity: 1; transform: none; } }
+@keyframes msFadeIn   { from { opacity: 0; } to { opacity: 1; } }
+@keyframes msSlideIn  { from { opacity: 0; transform: translate3d(24px, 0, 0); } to { opacity: 1; transform: none; } }
+@keyframes msScaleIn  { from { opacity: 0; transform: scale(.96); } to { opacity: 1; transform: none; } }
+@keyframes msRuleGrow { from { transform: scaleX(0); } to { transform: scaleX(1); } }
+@keyframes msShine    { from { transform: translateX(-150%) skewX(-18deg); } to { transform: translateX(350%) skewX(-18deg); } }
+@keyframes msFloat    { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(-4px); } }
+@keyframes msPulse    { 0% { box-shadow: 0 0 0 0 rgba(180, 35, 24, .45); } 70% { box-shadow: 0 0 0 7px rgba(180, 35, 24, 0); } 100% { box-shadow: 0 0 0 0 rgba(180, 35, 24, 0); } }
+@keyframes msSkyline  { from { opacity: 0; transform: translate3d(0, 10px, 0); } to { opacity: var(--ms-skyline-o, .3); transform: none; } }
+
+/* ==========================================================================
+   الإطار العام
+   ========================================================================== */
+.ms-dashboard {
+    display: flex;
+    align-items: flex-start;
+    gap: 28px;
+    min-height: 100vh;
+    padding: 28px;
+    background:
+        radial-gradient(1200px 520px at 100% -10%, rgba(212, 175, 55, .10), transparent 60%),
+        radial-gradient(900px 480px at 0% 110%, rgba(13, 27, 42, .06), transparent 60%),
+        var(--ms-page);
+    color: var(--ms-text);
+    font-family: var(--ms-font);
+    direction: rtl;
+    box-sizing: border-box;
+    -webkit-font-smoothing: antialiased;
+}
+.ms-dashboard *,
+.ms-dashboard *::before,
+.ms-dashboard *::after { box-sizing: border-box; }
+.ms-dashboard,
+.ms-dashboard button,
+.ms-dashboard input,
+.ms-dashboard select,
+.ms-dashboard textarea { font-family: var(--ms-font); }
+.ms-dashboard ::selection { background: rgba(212, 175, 55, .35); color: var(--ms-navy); }
+
+/* ==========================================================================
+   الشريط الجانبي
+   ========================================================================== */
+.ms-dashboard .ms-sidebar {
+    position: sticky;
+    top: 28px;
+    flex: 0 0 var(--ms-sidebar-w);
+    width: var(--ms-sidebar-w);
+    max-height: calc(100vh - 56px);
+    overflow-y: auto;
+    overflow-x: hidden;
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+    padding: 24px 16px 0;
+    background:
+        radial-gradient(420px 260px at 110% -10%, rgba(212, 175, 55, .16), transparent 65%),
+        linear-gradient(180deg, var(--ms-navy) 0%, #0A1622 100%);
+    border: 1px solid rgba(212, 175, 55, .14);
+    border-radius: var(--ms-radius-xl);
+    box-shadow: 0 30px 60px -24px rgba(13, 27, 42, .55);
+    scrollbar-width: thin;
+    scrollbar-color: rgba(212, 175, 55, .35) transparent;
+    animation: msSlideIn var(--ms-dur-3) var(--ms-ease) both;
+}
+body.admin-bar .ms-dashboard .ms-sidebar { top: 60px; max-height: calc(100vh - 88px); }
+
+.ms-sidebar-brand {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 2px 8px 20px;
+    margin-bottom: 10px;
+    border-bottom: 1px solid rgba(212, 175, 55, .18);
+}
+.ms-sidebar-logo { max-height: 48px; width: auto; }
+.ms-sidebar-mark {
+    position: relative;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 46px;
+    height: 46px;
+    border-radius: 50%;
+    color: var(--ms-gold);
+    background: radial-gradient(circle at 30% 25%, rgba(212, 175, 55, .22), rgba(212, 175, 55, .04));
+    box-shadow: inset 0 0 0 2px rgba(212, 175, 55, .85);
+    flex-shrink: 0;
+    animation: msFloat 6s ease-in-out infinite;
+}
+.ms-sidebar-mark .ms-icon { width: 22px; height: 22px; }
+.ms-sidebar-wordmark strong {
+    display: block;
+    color: #fff;
+    font-size: 23px;
+    font-weight: 800;
+    line-height: 1.15;
+    letter-spacing: -.01em;
+}
+.ms-sidebar-wordmark small { color: rgba(255, 255, 255, .62); font-size: 12px; }
+.ms-sidebar-wordmark small i { color: var(--ms-gold); font-style: normal; margin: 0 3px; }
+
+.ms-dashboard .ms-sidebar-title {
+    color: rgba(255, 255, 255, .38);
+    font-size: 11px;
+    font-weight: 700;
+    letter-spacing: .08em;
+    text-transform: none;
+    padding: 8px 12px 6px;
+    margin: 0;
+}
+
+.ms-dashboard .ms-sidebar-menu {
+    position: relative;
+    list-style: none;
+    margin: 0;
+    padding: 0;
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+}
+.ms-dashboard .ms-sidebar-menu li { position: relative; z-index: 1; margin: 0; width: 100%; }
+
+/* عناصر القائمة تدخل بالتتابع */
+.ms-dashboard .ms-sidebar-menu li { animation: msFadeIn var(--ms-dur-3) var(--ms-ease) both; }
+.ms-dashboard .ms-sidebar-menu li:nth-child(1)  { animation-delay: .08s; }
+.ms-dashboard .ms-sidebar-menu li:nth-child(2)  { animation-delay: .11s; }
+.ms-dashboard .ms-sidebar-menu li:nth-child(3)  { animation-delay: .14s; }
+.ms-dashboard .ms-sidebar-menu li:nth-child(4)  { animation-delay: .17s; }
+.ms-dashboard .ms-sidebar-menu li:nth-child(5)  { animation-delay: .20s; }
+.ms-dashboard .ms-sidebar-menu li:nth-child(6)  { animation-delay: .23s; }
+.ms-dashboard .ms-sidebar-menu li:nth-child(7)  { animation-delay: .26s; }
+.ms-dashboard .ms-sidebar-menu li:nth-child(8)  { animation-delay: .29s; }
+.ms-dashboard .ms-sidebar-menu li:nth-child(9)  { animation-delay: .32s; }
+.ms-dashboard .ms-sidebar-menu li:nth-child(n+10) { animation-delay: .35s; }
+
+.ms-dashboard .ms-tab-link,
+.ms-dashboard .ms-sidebar-menu li > a {
+    position: relative;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 10px;
+    width: 100%;
+    padding: 11px 14px;
+    border-radius: 12px;
+    background: transparent;
+    color: rgba(255, 255, 255, .72);
+    text-decoration: none !important;
+    font-size: 14.5px;
+    font-weight: 600;
+    transition: color var(--ms-dur-2) var(--ms-ease), background-color var(--ms-dur-2) var(--ms-ease);
+}
+.ms-dashboard .ms-tab-link .ms-menu-icon,
+.ms-dashboard .ms-sidebar-menu li > a .ms-menu-icon {
+    transition: transform var(--ms-dur-2) var(--ms-ease-spring), color var(--ms-dur-2) var(--ms-ease);
+}
+.ms-dashboard .ms-tab-link:hover,
+.ms-dashboard .ms-sidebar-menu li > a:hover { color: #fff; background: rgba(255, 255, 255, .05); }
+.ms-dashboard .ms-tab-link:hover .ms-menu-icon,
+.ms-dashboard .ms-sidebar-menu li > a:hover .ms-menu-icon { transform: translateX(-3px) scale(1.08); }
+
+.ms-dashboard .ms-tab-link.active,
+.ms-dashboard .ms-sidebar-menu li.active > a { color: var(--ms-gold); background: transparent; }
+
+/* مؤشر منزلق واحد (يُنشأ بالـ JS) — يتحرك بين العناصر بانسيابية */
+.ms-dashboard .ms-nav-indicator {
+    position: absolute;
+    z-index: 0;
+    inset-inline: 0;
+    top: 0;
+    height: 44px;
+    border-radius: 12px;
+    background: linear-gradient(270deg, rgba(212, 175, 55, .20), rgba(212, 175, 55, .06));
+    box-shadow: inset 0 0 0 1px rgba(212, 175, 55, .22);
+    transition: transform .45s var(--ms-ease-spring), height .3s var(--ms-ease), width .3s var(--ms-ease), opacity .2s;
+    pointer-events: none;
+    will-change: transform;
+}
+.ms-dashboard .ms-nav-indicator::before {
+    content: "";
+    position: absolute;
+    inset-inline-start: -16px;
+    top: 9px;
+    bottom: 9px;
+    width: 4px;
+    border-radius: 0 4px 4px 0;
+    background: linear-gradient(180deg, var(--ms-gold-light), var(--ms-gold));
+    box-shadow: 0 0 14px rgba(212, 175, 55, .7);
+}
+/* احتياطي بدون JS: خلفية ثابتة للعنصر النشط */
+.ms-dashboard .ms-sidebar-menu:not(.has-indicator) .ms-tab-link.active,
+.ms-dashboard .ms-sidebar-menu:not(.has-indicator) li.active > a { background: rgba(212, 175, 55, .14); }
+
+.ms-dashboard .ms-menu-item-main { display: inline-flex; align-items: center; gap: 12px; min-width: 0; }
+.ms-dashboard .ms-menu-icon {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 22px;
+    height: 22px;
+    background: none;
+    border-radius: 0;
+    color: inherit;
+    font-size: 0;
+    flex-shrink: 0;
+}
+.ms-dashboard .ms-menu-label { color: inherit; font-weight: inherit; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.ms-dashboard .ms-menu-badge {
+    min-width: 22px;
+    padding: 1px 8px;
+    border-radius: 999px;
+    background: var(--ms-gold);
+    color: var(--ms-navy);
+    font-size: 12px;
+    font-weight: 800;
+    text-align: center;
+}
+.ms-dashboard .ms-menu-logout { margin-top: 12px; padding-top: 12px; border-top: 1px solid rgba(255, 255, 255, .08); }
+.ms-dashboard .ms-menu-logout > a { color: rgba(255, 255, 255, .55); }
+.ms-dashboard .ms-menu-logout > a:hover { color: #FCA5A5; background: rgba(180, 35, 24, .12); }
+
+.ms-sidebar-skyline {
+    --ms-skyline-o: .32;
+    flex-shrink: 0;
+    height: 90px;
+    margin: auto -16px 0;
+    background: url('../img/ms-skyline.svg') center bottom / 100% auto no-repeat;
+    opacity: var(--ms-skyline-o);
+    pointer-events: none;
+    animation: msSkyline 1.1s var(--ms-ease) .4s both;
+}
+
+/* ==========================================================================
+   المحتوى + انتقال الأقسام
+   ========================================================================== */
+.ms-dashboard .ms-content { flex: 1 1 auto; min-width: 0; padding: 0; }
+
+/* كل مرة يظهر فيها قسم (تبويب) يدخل بانسيابية، وأبناؤه بالتتابع */
+.ms-dashboard .ms-tab-content.active { animation: msFadeIn var(--ms-dur-2) var(--ms-ease) both; }
+.ms-dashboard .ms-tab-content.active > *,
+.ms-dashboard .ms-tab-content.active > .ms-grid > *,
+.ms-dashboard .ms-tab-content.active > .ms-owner-grid > * {
+    animation: msFadeUp var(--ms-dur-3) var(--ms-ease) both;
+}
+.ms-dashboard .ms-tab-content.active > :nth-child(1) { animation-delay: .02s; }
+.ms-dashboard .ms-tab-content.active > :nth-child(2) { animation-delay: .08s; }
+.ms-dashboard .ms-tab-content.active > :nth-child(3) { animation-delay: .14s; }
+.ms-dashboard .ms-tab-content.active > :nth-child(4) { animation-delay: .20s; }
+.ms-dashboard .ms-tab-content.active > :nth-child(n+5) { animation-delay: .26s; }
+.ms-dashboard .ms-tab-content.active > .ms-grid > :nth-child(2),
+.ms-dashboard .ms-tab-content.active > .ms-owner-grid > :nth-child(2) { animation-delay: .12s; }
+.ms-dashboard .ms-tab-content.active > .ms-grid > :nth-child(3),
+.ms-dashboard .ms-tab-content.active > .ms-owner-grid > :nth-child(3) { animation-delay: .18s; }
+.ms-dashboard .ms-tab-content.active > .ms-grid > :nth-child(4),
+.ms-dashboard .ms-tab-content.active > .ms-owner-grid > :nth-child(4) { animation-delay: .24s; }
+.ms-dashboard .ms-tab-content.active > .ms-grid > :nth-child(n+5),
+.ms-dashboard .ms-tab-content.active > .ms-owner-grid > :nth-child(n+5) { animation-delay: .30s; }
+
+/* عناصر أسفل الشاشة تظهر عند التمرير (يضيف الـ JS .ms-reveal ثم .is-in) */
+.ms-dashboard .ms-reveal { opacity: 0; transform: translate3d(0, 18px, 0); transition: opacity .6s var(--ms-ease), transform .6s var(--ms-ease); }
+.ms-dashboard .ms-reveal.is-in { opacity: 1; transform: none; }
+
+/* ==========================================================================
+   رأس الصفحة — Hero كحلي بإضاءة ذهبية وأفق القاهرة (من مزاج الـ moodboard)
+   ========================================================================== */
+.ms-dashboard .ms-owner-top,
+.ms-dashboard .ms-agent-topbar,
+.ms-dashboard .ms-page-header {
+    position: relative;
+    isolation: isolate;
+    display: flex;
+    align-items: flex-end;
+    justify-content: space-between;
+    flex-wrap: wrap;
+    gap: 20px 28px;
+    margin: 0 0 24px;
+    padding: 34px 34px 32px;
+    background:
+        radial-gradient(460px 240px at 6% -10%, rgba(212, 175, 55, .18), transparent 65%),
+        radial-gradient(400px 220px at 100% 120%, rgba(212, 175, 55, .10), transparent 70%),
+        linear-gradient(135deg, var(--ms-navy) 0%, var(--ms-navy-2) 55%, var(--ms-navy-3) 100%);
+    border: 1px solid rgba(212, 175, 55, .18);
+    border-radius: var(--ms-radius-xl);
+    box-shadow: 0 26px 50px -26px rgba(13, 27, 42, .6);
+    color: #fff;
+    overflow: hidden;
+    animation: msScaleIn var(--ms-dur-3) var(--ms-ease) .05s both;
+}
+.ms-dashboard .ms-owner-top::after,
+.ms-dashboard .ms-agent-topbar::after,
+.ms-dashboard .ms-page-header::after {
+    --ms-skyline-o: .22;
+    content: "";
+    position: absolute;
+    z-index: -1;
+    inset-inline-end: 0;
+    bottom: -2px;
+    width: min(520px, 55%);
+    height: 120px;
+    background: url('../img/ms-skyline.svg') left bottom / auto 100% no-repeat;
+    -webkit-mask-image: linear-gradient(270deg, transparent 0%, #000 45%);
+    mask-image: linear-gradient(270deg, transparent 0%, #000 45%);
+    opacity: var(--ms-skyline-o);
+    pointer-events: none;
+    animation: msSkyline 1.2s var(--ms-ease) .25s both;
+}
+.ms-dashboard .ms-owner-top::before,
+.ms-dashboard .ms-agent-topbar::before,
+.ms-dashboard .ms-page-header::before {
+    content: "";
+    position: absolute;
+    z-index: -1;
+    inset: 0;
+    background: linear-gradient(0deg, rgba(13, 27, 42, .55), transparent 55%);
+    pointer-events: none;
+}
+.ms-dashboard .ms-owner-top > *,
+.ms-dashboard .ms-agent-topbar > *,
+.ms-dashboard .ms-page-header > * { position: relative; }
+
+.ms-dashboard .ms-eyebrow {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    margin: 0 0 10px;
+    padding: 4px 12px;
+    border-radius: 999px;
+    background: rgba(212, 175, 55, .14);
+    box-shadow: inset 0 0 0 1px rgba(212, 175, 55, .35);
+    color: var(--ms-gold-light) !important;
+    font-size: 12.5px !important;
+    font-weight: 700 !important;
+    letter-spacing: 0 !important;
+}
+.ms-dashboard .ms-eyebrow::before {
+    content: "";
+    width: 6px;
+    height: 6px;
+    border-radius: 50%;
+    background: var(--ms-gold);
+    box-shadow: 0 0 10px var(--ms-gold);
+}
+.ms-dashboard .ms-owner-top h1,
+.ms-dashboard .ms-agent-topbar h1,
+.ms-dashboard .ms-page-header h1 {
+    margin: 0;
+    color: #fff;
+    font-size: clamp(24px, 2.4vw, 34px);
+    font-weight: 800;
+    line-height: 1.3;
+    letter-spacing: -.01em;
+}
+.ms-dashboard .ms-owner-top h1::after,
+.ms-dashboard .ms-agent-topbar h1::after,
+.ms-dashboard .ms-page-header h1::after {
+    content: "";
+    display: block;
+    width: 64px;
+    height: 3px;
+    margin-top: 12px;
+    border-radius: 3px;
+    background: linear-gradient(270deg, var(--ms-gold-light), var(--ms-gold));
+    transform-origin: right center;
+    animation: msRuleGrow .8s var(--ms-ease) .35s both;
+}
+.ms-dashboard .ms-owner-top .ms-page-subtitle,
+.ms-dashboard .ms-agent-topbar .ms-page-subtitle,
+.ms-dashboard .ms-page-header .ms-page-subtitle,
+.ms-dashboard .ms-owner-top p:not(.ms-eyebrow),
+.ms-dashboard .ms-agent-topbar p:not(.ms-eyebrow) {
+    margin: 12px 0 0;
+    color: rgba(255, 255, 255, .72);
+    font-size: 15px;
+    max-width: 560px;
+}
+.ms-dashboard .ms-dashboard-actions { display: flex; flex-wrap: wrap; gap: 10px; }
+
+/* أزرار داخل الـ Hero: الثانوية زجاجية */
+.ms-dashboard .ms-owner-top .ms-action-button:not(.ms-action-button-primary),
+.ms-dashboard .ms-agent-topbar .ms-action-button:not(.ms-action-button-primary),
+.ms-dashboard .ms-page-header .ms-action-button:not(.ms-action-button-primary) {
+    background: rgba(255, 255, 255, .08);
+    border-color: rgba(255, 255, 255, .22);
+    color: #fff;
+    -webkit-backdrop-filter: blur(6px);
+    backdrop-filter: blur(6px);
+}
+.ms-dashboard .ms-owner-top .ms-action-button:not(.ms-action-button-primary):hover,
+.ms-dashboard .ms-agent-topbar .ms-action-button:not(.ms-action-button-primary):hover,
+.ms-dashboard .ms-page-header .ms-action-button:not(.ms-action-button-primary):hover {
+    background: rgba(255, 255, 255, .16);
+    border-color: rgba(212, 175, 55, .6);
+    color: #fff;
+}
+
+/* ==========================================================================
+   الأزرار
+   ========================================================================== */
+.ms-dashboard .ms-action-button,
+.ms-dashboard .ms-btn,
+.ms-dashboard .button,
+.ms-dashboard button.ms-invoice-action {
+    position: relative;
+    overflow: hidden;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    min-height: 44px;
+    padding: 10px 20px;
+    border: 1px solid var(--ms-border-strong);
+    border-radius: 12px;
+    background: var(--ms-surface);
+    color: var(--ms-navy);
+    font-size: 14px;
+    font-weight: 700;
+    line-height: 1.3;
+    text-decoration: none;
+    cursor: pointer;
+    transition: transform var(--ms-dur-2) var(--ms-ease-spring), box-shadow var(--ms-dur-2) var(--ms-ease),
+                background-color var(--ms-dur-1) ease, border-color var(--ms-dur-1) ease, color var(--ms-dur-1) ease;
+}
+.ms-dashboard .ms-action-button:hover,
+.ms-dashboard .ms-btn:hover,
+.ms-dashboard .button:hover,
+.ms-dashboard button.ms-invoice-action:hover {
+    transform: translateY(-2px);
+    border-color: var(--ms-navy);
+    background: var(--ms-surface-alt);
+    color: var(--ms-navy);
+    box-shadow: var(--ms-shadow);
+}
+.ms-dashboard .ms-action-button:active,
+.ms-dashboard .ms-btn:active,
+.ms-dashboard .button:active,
+.ms-dashboard button:active:not(:disabled) { transform: translateY(0) scale(.97); transition-duration: .08s; }
+
+.ms-dashboard .ms-action-button-primary,
+.ms-dashboard .ms-btn-primary,
+.ms-dashboard .button-primary,
+.ms-dashboard .ms-pay-now-btn,
+.ms-dashboard .ms-invoice-action-pay,
+.ms-dashboard button[type="submit"]:not(.ms-btn-secondary):not(.ms-danger) {
+    position: relative;
+    overflow: hidden;
+    background: linear-gradient(135deg, var(--ms-gold-light) 0%, var(--ms-gold) 55%, var(--ms-gold-dark) 130%) !important;
+    border-color: transparent !important;
+    color: var(--ms-navy) !important;
+    box-shadow: 0 1px 0 rgba(255, 255, 255, .45) inset, 0 6px 16px -8px rgba(184, 141, 22, .7);
+}
+.ms-dashboard .ms-action-button-primary:hover,
+.ms-dashboard .ms-btn-primary:hover,
+.ms-dashboard .button-primary:hover,
+.ms-dashboard .ms-pay-now-btn:hover,
+.ms-dashboard .ms-invoice-action-pay:hover,
+.ms-dashboard button[type="submit"]:not(.ms-btn-secondary):not(.ms-danger):hover {
+    transform: translateY(-2px);
+    color: var(--ms-navy) !important;
+    box-shadow: 0 1px 0 rgba(255, 255, 255, .45) inset, var(--ms-glow-gold);
+}
+/* لمعة تمر على الزر الذهبي عند المرور */
+.ms-dashboard .ms-action-button-primary::after,
+.ms-dashboard .ms-pay-now-btn::after,
+.ms-dashboard .ms-invoice-action-pay::after,
+.ms-dashboard button[type="submit"]:not(.ms-btn-secondary):not(.ms-danger)::after {
+    content: "";
+    position: absolute;
+    top: -20%;
+    bottom: -20%;
+    left: 0;
+    width: 40%;
+    background: linear-gradient(90deg, transparent, rgba(255, 255, 255, .55), transparent);
+    transform: translateX(-150%) skewX(-18deg);
+    pointer-events: none;
+}
+.ms-dashboard .ms-action-button-primary:hover::after,
+.ms-dashboard .ms-pay-now-btn:hover::after,
+.ms-dashboard .ms-invoice-action-pay:hover::after,
+.ms-dashboard button[type="submit"]:not(.ms-btn-secondary):not(.ms-danger):hover::after { animation: msShine .8s var(--ms-ease); }
+
+.ms-dashboard .ms-danger,
+.ms-dashboard .ms-delete-facility-btn,
+.ms-dashboard .ms-cancel-invoice-btn {
+    background: var(--ms-surface) !important;
+    border: 1px solid rgba(180, 35, 24, .45) !important;
+    color: var(--ms-danger) !important;
+}
+.ms-dashboard .ms-danger:hover,
+.ms-dashboard .ms-delete-facility-btn:hover,
+.ms-dashboard .ms-cancel-invoice-btn:hover { background: var(--ms-danger) !important; border-color: var(--ms-danger) !important; color: #fff !important; }
+
+.ms-dashboard button:disabled,
+.ms-dashboard button[aria-busy="true"],
+.ms-dashboard .button:disabled { opacity: .65; cursor: progress; box-shadow: none !important; transform: none !important; }
+/* مؤشر تحميل دائري للزر المشغول (MSUX.busy) */
+.ms-dashboard button[aria-busy="true"]::before {
+    content: "";
+    width: 14px;
+    height: 14px;
+    border-radius: 50%;
+    border: 2px solid currentColor;
+    border-inline-end-color: transparent;
+    animation: msSpin .7s linear infinite;
+}
+@keyframes msSpin { to { transform: rotate(-360deg); } }
+
+.ms-dashboard .ms-invoice-pdf-link {
+    display: inline-flex !important;
+    align-items: center;
+    gap: 4px;
+    color: var(--ms-navy) !important;
+    font-weight: 700;
+    font-size: 12.5px !important;
+    text-decoration: none !important;
+    background-image: linear-gradient(var(--ms-gold), var(--ms-gold));
+    background-size: 100% 2px;
+    background-position: 0 100%;
+    background-repeat: no-repeat;
+    transition: background-size var(--ms-dur-2) var(--ms-ease), color var(--ms-dur-1);
+}
+.ms-dashboard .ms-invoice-pdf-link:hover { background-size: 100% 100%; background-image: linear-gradient(var(--ms-accent-soft), var(--ms-accent-soft)); }
+
+/* ==========================================================================
+   البطاقات
+   ========================================================================== */
+.ms-dashboard .ms-card {
+    position: relative;
+    background: var(--ms-surface);
+    border: 1px solid var(--ms-border);
+    border-radius: var(--ms-radius-lg);
+    box-shadow: var(--ms-shadow);
+    padding: 22px 24px;
+    transition: transform var(--ms-dur-2) var(--ms-ease), box-shadow var(--ms-dur-2) var(--ms-ease), border-color var(--ms-dur-2) var(--ms-ease);
+}
+.ms-dashboard .ms-card:hover { box-shadow: var(--ms-shadow-hover); transform: none; }
+.ms-dashboard .ms-card h3 { margin: 0 0 12px; color: var(--ms-muted); font-size: 14px; font-weight: 700; }
+.ms-dashboard .ms-tab-content > .ms-card > h3,
+.ms-dashboard .ms-tab-content > h2,
+.ms-dashboard .ms-tab-content > .ms-card > h2 {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    color: var(--ms-navy);
+    font-size: 17px;
+    font-weight: 800;
+}
+.ms-dashboard .ms-tab-content > .ms-card > h3::before,
+.ms-dashboard .ms-tab-content > .ms-card > h2::before {
+    content: "";
+    width: 4px;
+    height: 18px;
+    border-radius: 4px;
+    background: linear-gradient(180deg, var(--ms-gold-light), var(--ms-gold));
+}
+
+.ms-dashboard .ms-grid,
+.ms-dashboard .ms-owner-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+    gap: 18px;
+}
+.ms-dashboard .ms-owner-grid .ms-card { min-height: 0; }
+
+/* ---- بطاقات المؤشرات KPI (يضيف الـ JS الصنف .ms-kpi وأيقونة) ---- */
+.ms-dashboard .ms-kpi {
+    overflow: hidden;
+    padding: 22px 24px 20px;
+    border-top: 1px solid var(--ms-border) !important;
+}
+.ms-dashboard .ms-kpi::after {
+    content: "";
+    position: absolute;
+    inset-inline-end: -40px;
+    top: -40px;
+    width: 140px;
+    height: 140px;
+    border-radius: 50%;
+    background: radial-gradient(circle, rgba(212, 175, 55, .16), transparent 70%);
+    transition: transform .6s var(--ms-ease);
+    pointer-events: none;
+}
+.ms-dashboard .ms-kpi:hover {
+    transform: translateY(-4px);
+    border-color: var(--ms-accent-line) !important;
+    box-shadow: var(--ms-shadow-hover);
+}
+.ms-dashboard .ms-kpi:hover::after { transform: scale(1.35); }
+.ms-dashboard .ms-kpi > h3 { padding-inline-end: 52px; }
+.ms-dashboard .ms-kpi-icon {
+    position: absolute;
+    top: 18px;
+    inset-inline-end: 18px;
+    z-index: 1;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 42px;
+    height: 42px;
+    border-radius: 12px;
+    background: linear-gradient(145deg, var(--ms-navy-2), var(--ms-navy));
+    color: var(--ms-gold);
+    box-shadow: 0 8px 18px -8px rgba(13, 27, 42, .6);
+    transition: transform var(--ms-dur-2) var(--ms-ease-spring);
+}
+.ms-dashboard .ms-kpi:hover .ms-kpi-icon { transform: rotate(-6deg) scale(1.06); }
+.ms-dashboard .ms-kpi-icon .ms-icon { width: 20px; height: 20px; }
+
+.ms-dashboard .ms-number,
+.ms-dashboard .ms-amount {
+    color: var(--ms-navy);
+    font-size: 30px;
+    font-weight: 800;
+    line-height: 1.2;
+    letter-spacing: -.01em;
+    font-variant-numeric: tabular-nums;
+}
+
+/* الحالة الفارغة الإرشادية */
+.ms-dashboard .ms-guided-empty-state {
+    display: flex;
+    align-items: center;
+    gap: 18px;
+    flex-wrap: wrap;
+    margin: 0 0 24px;
+    padding: 24px 26px;
+    background: linear-gradient(135deg, var(--ms-accent-soft), #FFFBF1);
+    border: 1px dashed var(--ms-accent-line);
+    border-radius: var(--ms-radius-lg);
+    animation: msFadeUp var(--ms-dur-3) var(--ms-ease) .15s both;
+}
+.ms-dashboard .ms-guided-empty-state__icon { font-size: 34px; animation: msFloat 4s ease-in-out infinite; }
+.ms-dashboard .ms-guided-empty-state h2 { margin: 0 0 4px; color: var(--ms-navy); font-size: 18px; }
+.ms-dashboard .ms-guided-empty-state p { margin: 0; color: var(--ms-muted); }
+.ms-dashboard .ms-guided-empty-state > div:nth-child(2) { flex: 1 1 260px; }
+
+/* ==========================================================================
+   الجداول
+   ========================================================================== */
+.ms-dashboard .ms-table-wrap,
+.ms-dashboard .ms-table-scroll {
+    width: 100%;
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+    border: 1px solid var(--ms-border);
+    border-radius: var(--ms-radius);
+    background: var(--ms-surface);
+    scrollbar-width: thin;
+    scrollbar-color: var(--ms-accent-line) transparent;
+}
+.ms-dashboard table { width: 100%; border-collapse: separate; border-spacing: 0; background: var(--ms-surface); font-size: 14px; }
+.ms-dashboard table thead th,
+.ms-dashboard table > tr:first-child > th {
+    position: sticky;
+    top: 0;
+    background: var(--ms-navy) !important;
+    color: rgba(255, 255, 255, .92) !important;
+    font-weight: 700;
+    font-size: 12.5px;
+    letter-spacing: .01em;
+    padding: 13px 16px !important;
+    text-align: right !important;
+    white-space: nowrap;
+    border: 0 !important;
+}
+.ms-dashboard table tbody td {
+    padding: 13px 16px;
+    border-bottom: 1px solid var(--ms-border);
+    color: var(--ms-text);
+    vertical-align: middle;
+    transition: background-color var(--ms-dur-1) ease;
+}
+.ms-dashboard table tbody tr:last-child td { border-bottom: 0; }
+.ms-dashboard table tbody tr:nth-child(even) td { background: #FCFAF6; }
+.ms-dashboard table tbody tr { transition: box-shadow var(--ms-dur-2) var(--ms-ease); }
+.ms-dashboard table tbody tr:hover td { background: var(--ms-accent-soft); }
+.ms-dashboard table tbody tr:hover { box-shadow: inset -3px 0 0 var(--ms-gold); }
+.ms-dashboard table.striped > tbody > :nth-child(odd),
+.ms-dashboard table.widefat { background: var(--ms-surface); border: 0; }
+
+/* أزرار داخل الجداول */
+.ms-dashboard table .ms-pay-now-btn,
+.ms-dashboard table button.ms-invoice-action,
+.ms-dashboard table .ms-mark-paid-btn {
+    min-height: 34px !important;
+    padding: 6px 14px !important;
+    border-radius: 9px !important;
+    font-size: 13px !important;
+    font-weight: 700 !important;
+    line-height: 1.3 !important;
+    white-space: nowrap;
+}
+.ms-dashboard table .ms-pay-now-btn { border: 0 !important; }
+
+/* شارات الحالة: نقطة ملونة + كبسولة (يضيف الـ JS .ms-pill للنصوص الملونة) */
+.ms-dashboard .ms-pill {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 3px 10px 3px 12px;
+    border-radius: 999px;
+    font-size: 12.5px;
+    font-weight: 700;
+    background: color-mix(in srgb, currentColor 11%, transparent);
+    white-space: nowrap;
+}
+.ms-dashboard .ms-pill::before { content: ""; width: 6px; height: 6px; border-radius: 50%; background: currentColor; }
+.ms-dashboard .ms-pill.is-overdue::before { animation: msPulse 1.8s ease-out infinite; }
+
+/* ==========================================================================
+   النماذج
+   ========================================================================== */
+.ms-dashboard input[type="text"],
+.ms-dashboard input[type="email"],
+.ms-dashboard input[type="tel"],
+.ms-dashboard input[type="number"],
+.ms-dashboard input[type="date"],
+.ms-dashboard input[type="month"],
+.ms-dashboard input[type="password"],
+.ms-dashboard input[type="url"],
+.ms-dashboard input[type="search"],
+.ms-dashboard select,
+.ms-dashboard textarea,
+.ms-dashboard .ms-input {
+    min-height: 46px;
+    padding: 11px 14px;
+    border: 1px solid var(--ms-border-strong) !important;
+    border-radius: 12px !important;
+    background: #FFFDF9;
+    color: var(--ms-text);
+    font-size: 14.5px;
+    transition: border-color var(--ms-dur-1) ease, box-shadow var(--ms-dur-2) var(--ms-ease), background-color var(--ms-dur-1) ease;
+}
+.ms-dashboard textarea { min-height: 100px; }
+.ms-dashboard input:hover,
+.ms-dashboard select:hover,
+.ms-dashboard textarea:hover { border-color: var(--ms-accent-line) !important; }
+.ms-dashboard input:focus,
+.ms-dashboard select:focus,
+.ms-dashboard textarea:focus {
+    outline: none;
+    background: #fff;
+    border-color: var(--ms-gold) !important;
+    box-shadow: 0 0 0 4px rgba(212, 175, 55, .22);
+}
+.ms-dashboard label { color: var(--ms-text); font-weight: 600; }
+
+.ms-dashboard a:focus-visible,
+.ms-dashboard button:focus-visible,
+.ms-dashboard [role="button"]:focus-visible,
+.ms-dashboard .ms-tab-link:focus-visible { outline: 3px solid var(--ms-gold); outline-offset: 2px; }
+
+/* ==========================================================================
+   عناصر متفرقة
+   ========================================================================== */
+.ms-dashboard .ms-status-badge,
+.ms-dashboard .ms-badge,
+.ms-dashboard .ms-count-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 4px 11px;
+    border-radius: 999px;
+    font-size: 12.5px;
+    font-weight: 700;
+}
+.ms-dashboard .ms-status-badge--paid { background: var(--ms-success-soft); color: var(--ms-success); }
+.ms-dashboard .ms-status-badge--pending { background: var(--ms-warning-soft); color: var(--ms-warning); }
+.ms-dashboard .ms-status-badge--overdue { background: var(--ms-danger-soft); color: var(--ms-danger); }
+
+.ms-dashboard .ms-invoice-tab,
+.ms-dashboard .ms-invoice-subtab {
+    border-radius: 999px !important;
+    padding: 8px 18px !important;
+    font-weight: 700;
+    transition: background-color var(--ms-dur-2) var(--ms-ease), color var(--ms-dur-2) var(--ms-ease), transform var(--ms-dur-2) var(--ms-ease-spring);
+}
+.ms-dashboard .ms-invoice-tab:hover,
+.ms-dashboard .ms-invoice-subtab:hover { transform: translateY(-1px); }
+
+.ms-dashboard .ms-building-picker.is-single #ms-building-selector,
+.ms-dashboard .ms-building-picker.is-single > h3 { display: none; }
+.ms-dashboard .ms-building-picker.is-single { padding-block: 12px; }
+
+.ms-toast { border-radius: 12px; font-family: var(--ms-font); animation: msFadeUp var(--ms-dur-2) var(--ms-ease) both; }
+.ms-toast--success { background: var(--ms-success); }
+.ms-toast--error { background: var(--ms-danger); }
+
+/* ==========================================================================
+   الشاشات المتوسطة والهاتف
+   ========================================================================== */
+@media (max-width: 1200px) {
+    :root { --ms-sidebar-w: 236px; }
+    .ms-dashboard { gap: 20px; padding: 20px; }
+}
+
+@media (max-width: 991px) {
+    .ms-dashboard { flex-direction: column; align-items: stretch; gap: 16px; padding: 0 0 28px; }
+    .ms-dashboard .ms-sidebar {
+        position: sticky;
+        top: 0;
+        z-index: 50;
+        flex: none;
+        width: 100%;
+        min-width: 0;
+        max-width: 100vw;
+        max-height: none;
+        overflow: visible;
+        flex-direction: row;
+        align-items: center;
+        gap: 0;
+        padding: 8px 10px;
+        border-radius: 0 0 20px 20px;
+        border-width: 0 0 1px;
+        background: rgba(13, 27, 42, .94);
+        -webkit-backdrop-filter: saturate(160%) blur(12px);
+        backdrop-filter: saturate(160%) blur(12px);
+        animation: msFadeIn var(--ms-dur-3) var(--ms-ease) both;
+    }
+    body.admin-bar .ms-dashboard .ms-sidebar { top: 46px; max-height: none; }
+    .ms-sidebar-brand,
+    .ms-dashboard .ms-sidebar-title,
+    .ms-sidebar-skyline { display: none; }
+    .ms-dashboard .ms-sidebar-menu {
+        flex-direction: row;
+        flex: 1 1 auto;
+        min-width: 0;
+        gap: 4px;
+        width: 100%;
+        overflow-x: auto;
+        scroll-behavior: smooth;
+        scrollbar-width: none;
+    }
+    .ms-dashboard .ms-sidebar-menu::-webkit-scrollbar { display: none; }
+    .ms-dashboard .ms-sidebar-menu li { width: auto; flex: 0 0 auto; }
+    .ms-dashboard .ms-tab-link,
+    .ms-dashboard .ms-sidebar-menu li > a {
+        flex-direction: column;
+        justify-content: center;
+        gap: 4px;
+        min-width: 74px;
+        min-height: 58px;
+        padding: 8px 10px;
+        font-size: 12px;
+    }
+    .ms-dashboard .ms-menu-item-main { flex-direction: column; gap: 4px; }
+    .ms-dashboard .ms-tab-link:hover .ms-menu-icon { transform: translateY(-2px); }
+    .ms-dashboard .ms-nav-indicator { inset-inline: auto; right: 0; height: 58px !important; }
+    .ms-dashboard .ms-nav-indicator::before {
+        inset-inline-start: 14px;
+        inset-inline-end: 14px;
+        top: auto;
+        bottom: 3px;
+        width: auto;
+        height: 3px;
+        border-radius: 3px;
+    }
+    .ms-dashboard .ms-menu-logout { margin: 0; padding: 0; border: 0; }
+    .ms-dashboard .ms-menu-badge { position: absolute; top: 4px; inset-inline-end: 8px; font-size: 10px; padding: 0 6px; }
+    .ms-dashboard .ms-content { padding: 0 14px; width: 100%; max-width: 100vw; }
+    .ms-dashboard .ms-owner-top,
+    .ms-dashboard .ms-agent-topbar,
+    .ms-dashboard .ms-page-header { padding: 26px 22px 24px; align-items: flex-start; border-radius: 20px; }
+}
+
+@media (max-width: 600px) {
+    .ms-dashboard .ms-dashboard-actions { width: 100%; }
+    .ms-dashboard .ms-dashboard-actions .ms-action-button { flex: 1 1 calc(50% - 10px); }
+    .ms-dashboard .ms-dashboard-actions .ms-action-button-primary { flex-basis: 100%; }
+    .ms-dashboard .ms-number,
+    .ms-dashboard .ms-amount { font-size: 25px; }
+    .ms-dashboard .ms-card { padding: 18px; border-radius: 16px; }
+    .ms-dashboard .ms-grid,
+    .ms-dashboard .ms-owner-grid { grid-template-columns: 1fr; gap: 12px; }
+}
+
+/* ==========================================================================
+   احترام تفضيل تقليل الحركة
+   ========================================================================== */
+@media (prefers-reduced-motion: reduce) {
+    .ms-dashboard *,
+    .ms-dashboard *::before,
+    .ms-dashboard *::after {
+        animation: none !important;
+        transition: none !important;
+        scroll-behavior: auto !important;
+    }
+    .ms-dashboard .ms-reveal { opacity: 1; transform: none; }
+}

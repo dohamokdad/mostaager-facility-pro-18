@@ -55,8 +55,6 @@ class MS_Advanced_Integrations {
                 return $this->test_stripe_connection($config);
             case 'paypal':
                 return $this->test_paypal_connection($config);
-            case 'telr':
-                return $this->test_telr_connection($config);
             default:
                 return array('success' => false, 'error' => 'نوع التكامل غير معروف');
         }
@@ -148,14 +146,7 @@ class MS_Advanced_Integrations {
         return array('success' => false, 'error' => 'تكامل PayPal يتطلب إعداد API');
     }
     
-    /**
-     * Test Telr connection
-     */
-    private function test_telr_connection($config) {
-        // Placeholder for Telr API test
-        return array('success' => false, 'error' => 'تكامل Telr يتطلب إعداد API');
-    }
-    
+        
     /**
      * Save integration config
      */
@@ -407,12 +398,6 @@ class MS_Advanced_Integrations {
                     'description' => 'تكامل مع PayPal',
                     'icon' => '🅿️',
                     'required_fields' => array('client_id', 'client_secret')
-                ),
-                'telr' => array(
-                    'name' => 'Telr',
-                    'description' => 'تكامل مع Telr',
-                    'icon' => '🌍',
-                    'required_fields' => array('api_key', 'store_id')
                 )
             )
         );

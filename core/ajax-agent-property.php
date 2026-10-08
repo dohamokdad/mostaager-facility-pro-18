@@ -127,7 +127,7 @@ add_action('wp_ajax_ms_agent_update_property_status', function () {
     $listing_ids = array_values(array_unique(array_filter($listing_ids)));
     
     // Debug: log for troubleshooting
-    error_log('Property status update check - User ID: ' . $user->ID . ', Prop ID: ' . $prop_id . ', Listing IDs: ' . implode(',', $listing_ids));
+    if (defined('WP_DEBUG') && WP_DEBUG) { error_log('Property status update check - User ID: ' . $user->ID . ', Prop ID: ' . $prop_id . ', Listing IDs: ' . implode(',', $listing_ids)); }
     
     if (!in_array($prop_id, $listing_ids, true)) {
         wp_send_json_error('permission_denied', 403);

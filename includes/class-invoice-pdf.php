@@ -1,520 +1,400 @@
 <?php
 /**
- * Mostager Facilities Pro - Invoice PDF Generator
- * Generates branded Arabic RTL PDF invoices using TCPDF
- * 
- * @package Mostager_Facilities_Pro
- * @version 2.0.0
- * 
- * REQUIREMENT: composer require tecnickcom/tcpdf
- * Place in: mostager-facilities-pro/vendor/
+ * Mostaager Facility PRO — Invoice PDF
+ *
+ * فاتورة عربية RTL بهوية المنصة. تعتمد على محرك MS_PDF (includes/class-ms-pdf.php).
+ *
+ * نقاط الدخول:
+ *  - GET  admin-ajax.php?action=ms_download_invoice&id=ID&_wpnonce=...   (رابط تحميل مباشر)
+ *  - POST admin-ajax.php  action=mostager_email_invoice                  (إرسال بالبريد)
+ *  - ms_invoice_pdf_url($id)  ← استخدمها في أي قالب لتوليد رابط التحميل
+ *
+ * إعدادات اختيارية (wp_options):
+ *  - ms_invoice_vat_rate       نسبة الضريبة (0 افتراضياً). المبلغ المخزَّن يُعامَل كإجمالي شامل.
+ *  - ms_invoice_bank_details   نص بيانات التحويل البنكي. إن كان فارغاً لا يظهر الصندوق.
+ *  - ms_invoice_payment_terms  نص شروط السداد.
+ *
+ * @package Mostaager_Facility_Pro
  */
 
-if (!defined('ABSPATH')) exit;
-
-// Autoload TCPDF if available
-$tcpdf_autoload = MOSTAGER_PLUGIN_DIR . 'vendor/autoload.php';
-if (file_exists($tcpdf_autoload)) {
-    require_once $tcpdf_autoload;
+if (!defined('ABSPATH')) {
+    exit;
 }
 
 class Mostager_Invoice_PDF {
-    
-    private $plugin_url;
-    private $plugin_dir;
-    
-    public function __construct() {
-        $this->plugin_url = defined('MOSTAGER_PLUGIN_URL') ? MOSTAGER_PLUGIN_URL : plugin_dir_url(dirname(__FILE__));
-        $this->plugin_dir = defined('MOSTAGER_PLUGIN_DIR') ? MOSTAGER_PLUGIN_DIR : plugin_dir_path(dirname(__FILE__));
-    }
-    
+
     /**
-     * Generate and output invoice PDF
-     * 
-     * @param int $invoice_id Invoice ID
-     * @param string $output 'D' for download, 'I' for inline, 'S' for string
-     * @return void|string
+     * @param int    $invoice_id
+     * @param string $output 'D' تحميل | 'I' عرض | 'S' نص | 'F' حفظ في $path
+     * @param string $path   مسار الحفظ عند 'F'
+     * @return string|bool|WP_Error
      */
-    public function generate_invoice($invoice_id, $output = 'D') {
-        global $wpdb;
-        
-        // Validate TCPDF is available
-        if (!class_exists('TCPDF')) {
-            wp_die('مكتبة TCPDF غير متوفرة. يرجى تثبيتها عبر Composer: composer require tecnickcom/tcpdf');
-        }
-        
-        // Get invoice data with JOINs (canonical ms_ tables)
-        $invoice = $wpdb->get_row($wpdb->prepare(
-            "SELECT i.*, b.title AS building_name, b.address AS building_address, u.unit_number, u.floor, u.id AS unit_id, usr.display_name AS owner_name, usr.user_email AS owner_email
-            FROM {$wpdb->prefix}ms_invoices i
-            LEFT JOIN {$wpdb->prefix}ms_buildings b ON i.building_id = b.id
-            LEFT JOIN {$wpdb->prefix}ms_units u ON i.unit_id = u.id
-            LEFT JOIN {$wpdb->users} usr ON i.user_id = usr.ID
-            WHERE i.id = %d",
-            $invoice_id
-        ));
-        
+    public function generate_invoice($invoice_id, $output = 'D', $path = '') {
+        $invoice = self::get_invoice($invoice_id);
         if (!$invoice) {
             return new WP_Error('not_found', 'الفاتورة غير موجودة');
         }
-        
-        // Use single-line invoice approach: represent invoice as single item
-        $items = array();
-        $desc = '';
-        if (!empty($invoice->description)) {
-            $desc = wp_strip_all_tags($invoice->description);
+
+        $number = self::number($invoice);
+        $pdf    = MS_PDF::create('فاتورة ' . $number);
+        if (is_wp_error($pdf)) {
+            return $pdf;
+        }
+
+        $totals = self::totals($invoice);
+
+        try {
+            $pdf->SetSubject(self::type_label($invoice) . ' - ' . ($invoice->building_name ?: ''));
+            $pdf->AddPage();
+
+            MS_PDF::render_header($pdf, self::type_label($invoice), 'رقم: ' . MS_PDF::ltr($number));
+            $this->render_info($pdf, $invoice);
+            $this->render_items($pdf, $invoice, $totals);
+            $this->render_totals($pdf, $totals);
+            $this->render_notes($pdf);
+            $this->render_qr($pdf, $invoice, $number, $totals['total']);
+
+            $content = $pdf->Output('', 'S');
+        } catch (Exception $e) {
+            if (defined('WP_DEBUG') && WP_DEBUG) {
+                error_log('[MS Invoice PDF] ' . $e->getMessage());
+            }
+            return new WP_Error('pdf_failed', 'تعذّر إنشاء ملف الفاتورة.');
+        }
+
+        $filename = 'فاتورة-' . $number . '.pdf';
+
+        switch ($output) {
+            case 'S':
+                return $content;
+            case 'F':
+                return $path && false !== file_put_contents($path, $content);
+            case 'I':
+                MS_PDF::send_file($content, $filename, 'application/pdf', true);
+                return true;
+            case 'D':
+            default:
+                MS_PDF::send_file($content, $filename, 'application/pdf');
+                return true;
+        }
+    }
+
+    /* ------------------------------------------------------------------ */
+
+    public static function get_invoice($invoice_id) {
+        global $wpdb;
+        return $wpdb->get_row($wpdb->prepare(
+            "SELECT i.*, b.title AS building_name, b.address AS building_address,
+                    u.unit_number, u.floor, usr.display_name AS customer_name
+             FROM {$wpdb->prefix}ms_invoices i
+             LEFT JOIN {$wpdb->prefix}ms_buildings b ON i.building_id = b.id
+             LEFT JOIN {$wpdb->prefix}ms_units u ON i.unit_id = u.id
+             LEFT JOIN {$wpdb->users} usr ON i.user_id = usr.ID
+             WHERE i.id = %d",
+            absint($invoice_id)
+        ));
+    }
+
+    private static function number($invoice) {
+        return !empty($invoice->invoice_number) ? $invoice->invoice_number : (string) absint($invoice->id);
+    }
+
+    /**
+     * كان الكود القديم يضيف 14% فوق المبلغ ← إجمالي PDF لا يطابق المبلغ المطلوب دفعه.
+     * الآن: المبلغ المخزَّن هو الإجمالي دائماً، والضريبة (إن وُجدت) تُعرض كجزء منه.
+     */
+    private static function totals($invoice) {
+        $total = round((float) ($invoice->amount ?? 0), 2);
+        $rate  = (float) get_option('ms_invoice_vat_rate', 0);
+        $rate  = $rate > 1 ? $rate / 100 : $rate; // يقبل 14 أو 0.14
+
+        if ($rate > 0) {
+            $subtotal = round($total / (1 + $rate), 2);
+            $tax      = round($total - $subtotal, 2);
         } else {
-            $desc = 'فاتورة خدمات';
+            $subtotal = $total;
+            $tax      = 0.0;
         }
-        $items[] = (object) array(
-            'description' => $desc,
-            'quantity' => 1,
-            'unit' => '',
-            'unit_price' => floatval($invoice->amount ?? 0),
-            'total' => floatval($invoice->amount ?? 0),
-        );
-        
-        // Calculate totals
-        $subtotal = 0;
-        foreach ($items as $item) {
-            $subtotal += floatval($item->total);
-        }
-        $tax_rate = 0.14; // 14% Egyptian VAT
-        $tax_amount = $subtotal * $tax_rate;
-        $total = $subtotal + $tax_amount;
-        
-        // Create PDF
-        $pdf = new TCPDF('P', 'mm', 'A4', true, 'UTF-8', false);
-        
-        // Document settings
-        $pdf->SetCreator('Mostager Facilities Pro');
-        $pdf->SetAuthor('منصة مستأجر العقاري');
-        $pdf->SetTitle('فاتورة #' . ($invoice->invoice_number ?: $invoice_id));
-        $pdf->SetSubject('فاتورة مصاريف مرافق - ' . $invoice->building_name);
-        
-        // Remove default header/footer
-        $pdf->setPrintHeader(false);
-        $pdf->setPrintFooter(true);
-        $pdf->setFooterFont(['aealarabiya', '', 9]);
-        $pdf->setFooterMargin(10);
-        
-        // RTL mode
-        $pdf->setRTL(true);
-        
-        // Set margins
-        $pdf->SetMargins(12, 10, 12);
-        $pdf->SetAutoPageBreak(true, 15);
-        
-        // Set Arabic font
-        $pdf->SetFont('aealarabiya', '', 11);
-        
-        // Add page
-        $pdf->AddPage();
-        
-        // ========== HEADER ==========
-        $this->render_header($pdf, $invoice);
-        
-        // ========== INVOICE INFO ==========
-        $this->render_invoice_info($pdf, $invoice);
-        
-        // ========== ITEMS TABLE ==========
-        $this->render_items_table($pdf, $items);
-        
-        // ========== TOTALS ==========
-        $this->render_totals($pdf, $subtotal, $tax_amount, $total);
-        
-        // ========== NOTES & FOOTER ==========
-        $this->render_footer_notes($pdf, $invoice);
-        
-        // ========== QR CODE ==========
-        if (method_exists($pdf, 'write2DBarcode')) {
-            $qr_data = json_encode([
-                'invoice' => $invoice->invoice_number,
-                'amount' => $total,
-                'building' => $invoice->building_name,
-                'date' => $invoice->issue_date,
-            ]);
-            $pdf->SetXY(12, -45);
-            $pdf->write2DBarcode($qr_data, 'QRCODE,L', '', '', 30, 30);
-        }
-        
-        // ========== OUTPUT ==========
-        $filename = 'فاتورة_' . ($invoice->invoice_number ?: $invoice_id) . '_' . sanitize_file_name($invoice->building_name) . '.pdf';
-        
-        return $pdf->Output($filename, $output);
+
+        return compact('subtotal', 'tax', 'total', 'rate');
     }
-    
-    /**
-     * Render PDF header with branding
-     */
-    private function render_header($pdf, $invoice) {
-        // Blue header bar
-        $pdf->SetFillColor(10, 42, 74);
-        $pdf->Rect(0, 0, 210, 38, 'F');
-        
-        // Company name
-        $pdf->SetTextColor(255, 255, 255);
-        $pdf->SetFont('aealarabiya', 'B', 18);
-        $pdf->SetXY(15, 8);
-        $pdf->Cell(100, 10, 'منصة مستأجر العقاري', 0, 0, 'R');
-        
-        // Subtitle
-        $pdf->SetFont('aealarabiya', '', 10);
-        $pdf->SetXY(15, 19);
-        $pdf->Cell(100, 6, 'نظام إدارة المرافق والعقارات', 0, 0, 'R');
-        
-        // Contact info
-        $pdf->SetFont('aealarabiya', '', 8);
-        $pdf->SetXY(15, 26);
-        $pdf->Cell(100, 5, 'info@ejar-egy.com | 01010756695 | www.ejar-egy.com', 0, 0, 'R');
-        
-        // Invoice type badge
-        $pdf->SetFillColor(212, 175, 55);
-        $pdf->SetTextColor(10, 42, 74);
-        $pdf->SetFont('aealarabiya', 'B', 13);
-        $pdf->SetXY(140, 10);
-        $pdf->Cell(55, 10, 'فاتورة مصاريف مرافق', 0, 1, 'C', true);
-        
-        // Invoice number
-        $pdf->SetFont('aealarabiya', '', 10);
-        $pdf->SetTextColor(255, 255, 255);
-        $pdf->SetXY(140, 21);
-        $pdf->Cell(55, 7, 'رقم: ' . ($invoice->invoice_number ?: $invoice->id), 0, 1, 'C');
-        
-        // Gold line
-        $pdf->SetFillColor(212, 175, 55);
-        $pdf->Rect(0, 38, 210, 1.5, 'F');
+
+    private static function type_label($invoice) {
+        $type = strtolower((string) ($invoice->invoice_type ?? '') . ' ' . (string) ($invoice->invoice_category ?? ''));
+        if (strpos($type, 'subscription') !== false || strpos($type, 'agent-fees') !== false) return 'فاتورة اشتراك';
+        if (strpos($type, 'maintenance') !== false) return 'فاتورة صيانة';
+        if (strpos($type, 'sale') !== false)        return 'فاتورة بيع';
+        if (strpos($type, 'rent') !== false)        return 'فاتورة إيجار';
+        return 'فاتورة مصاريف مرافق';
     }
-    
-    /**
-     * Render invoice info section
-     */
-    private function render_invoice_info($pdf, $invoice) {
-        $pdf->SetY(48);
-        $pdf->SetTextColor(10, 42, 74);
-        
-        // Section title
-        $pdf->SetFont('aealarabiya', 'B', 12);
+
+    private static function date($value) {
+        if (empty($value) || strpos((string) $value, '0000') === 0) {
+            return '-';
+        }
+        $ts = strtotime($value);
+        if (!$ts) {
+            return '-';
+        }
+        $out = date_i18n('j F Y', $ts);
+        return preg_match('/\p{Arabic}/u', $out) ? $out : MS_PDF::ltr($out);
+    }
+
+    /* ------------------------------------------------------------------ */
+
+    private function render_info($pdf, $invoice) {
+        $pdf->SetTextColor(13, 27, 42);
+        $pdf->SetFont(MS_PDF::FONT, 'B', 12);
         $pdf->Cell(0, 8, 'معلومات الفاتورة', 0, 1, 'R');
-        
-        // Two-column layout
-        $col_width = 88;
-        $line_height = 7;
-        
-        $pdf->SetFont('aealarabiya', '', 10);
-        $pdf->SetTextColor(80, 80, 80);
-        
-        // Right column - Building & Unit info
-        $pdf->SetX(12);
-        $pdf->Cell($col_width, $line_height, 'المبنى: ' . ($invoice->building_name ?: '---'), 0, 0, 'R');
-        $pdf->Cell($col_width, $line_height, 'تاريخ الإصدار: ' . $this->format_date($invoice->issue_date), 0, 1, 'R');
-        
-        $pdf->SetX(12);
-        $pdf->Cell($col_width, $line_height, 'العنوان: ' . ($invoice->building_address ?: '---'), 0, 0, 'R');
-        $pdf->Cell($col_width, $line_height, 'تاريخ الاستحقاق: ' . $this->format_date($invoice->due_date), 0, 1, 'R');
-        
-        $pdf->SetX(12);
-        $pdf->Cell($col_width, $line_height, 'الوحدة: ' . ($invoice->unit_number ?: '---') . ($invoice->floor ? ' (الدور ' . $invoice->floor . ')' : ''), 0, 0, 'R');
-        $pdf->Cell($col_width, $line_height, 'حالة الدفع: ' . $this->get_status_label($invoice->status), 0, 1, 'R');
-        
-        // Owner info if available
-        if ($invoice->owner_name) {
-            $pdf->SetX(12);
-            $pdf->Cell($col_width, $line_height, 'رئيس اتحاد الملاك: ' . $invoice->owner_name, 0, 0, 'R');
-            $pdf->Cell($col_width, $line_height, '', 0, 1, 'R');
+
+        $w  = 93;
+        $lh = 7;
+        $pdf->SetFont(MS_PDF::FONT, '', 10);
+        $pdf->SetTextColor(70, 70, 70);
+
+        $unit = $invoice->unit_number ? MS_PDF::ltr($invoice->unit_number) : '-';
+        if (!empty($invoice->floor)) {
+            $unit .= ' (الدور ' . $invoice->floor . ')';
         }
-        
-        // Separator line
-        $pdf->SetY($pdf->GetY() + 5);
+
+        $rows = array(
+            array('العميل: ' . ($invoice->customer_name ?: '-'), 'تاريخ الإصدار: ' . self::date($invoice->created_at ?? '')),
+            array('المبنى: ' . ($invoice->building_name ?: '-'), 'تاريخ الاستحقاق: ' . self::date($invoice->due_date ?? '')),
+            array('العنوان: ' . ($invoice->building_address ?: '-'), 'حالة الدفع: ' . MS_PDF::status_label($invoice->status ?? '')),
+            array('الوحدة: ' . $unit, !empty($invoice->paid_date) ? 'تاريخ الدفع: ' . self::date($invoice->paid_date) : ''),
+        );
+
+        foreach ($rows as $row) {
+            $pdf->Cell($w, $lh, $row[0], 0, 0, 'R');
+            $pdf->Cell($w, $lh, $row[1], 0, 1, 'R');
+        }
+
+        $pdf->Ln(4);
         $pdf->SetDrawColor(212, 175, 55);
         $pdf->Line(12, $pdf->GetY(), 198, $pdf->GetY());
-        $pdf->SetY($pdf->GetY() + 5);
-    }
-    
-    /**
-     * Render items table
-     */
-    private function render_items_table($pdf, $items) {
-        $pdf->SetTextColor(10, 42, 74);
-        $pdf->SetFont('aealarabiya', 'B', 11);
-        $pdf->Cell(0, 8, 'تفاصيل المصاريف', 0, 1, 'R');
-        
-        // Table header
-        $pdf->SetFillColor(10, 42, 74);
-        $pdf->SetTextColor(255, 255, 255);
-        $pdf->SetFont('aealarabiya', 'B', 10);
-        
-        $col_desc = 70;
-        $col_qty = 30;
-        $col_unit = 35;
-        $col_total = 40;
-        $row_height = 9;
-        
-        $pdf->Cell($col_desc, $row_height, 'البيان', 1, 0, 'C', true);
-        $pdf->Cell($col_qty, $row_height, 'الكمية', 1, 0, 'C', true);
-        $pdf->Cell($col_unit, $row_height, 'السعر الوحدة', 1, 0, 'C', true);
-        $pdf->Cell($col_total, $row_height, 'الإجمالي', 1, 1, 'C', true);
-        
-        // Table rows
-        $pdf->SetTextColor(50, 50, 50);
-        $pdf->SetFont('aealarabiya', '', 10);
-        
-        $fill = false;
-        foreach ($items as $item) {
-            $pdf->SetFillColor($fill ? 248 : 255, $fill ? 248 : 255, $fill ? 248 : 255);
-            
-            $pdf->Cell($col_desc, $row_height, $item->description, 1, 0, 'R', true);
-            $pdf->Cell($col_qty, $row_height, $item->quantity . ' ' . ($item->unit ?: ''), 1, 0, 'C', true);
-            $pdf->Cell($col_unit, $row_height, number_format($item->unit_price, 2) . ' ج.م', 1, 0, 'C', true);
-            $pdf->Cell($col_total, $row_height, number_format($item->total, 2) . ' ج.م', 1, 1, 'C', true);
-            
-            $fill = !$fill;
-        }
-        
-        // If no items, show empty row
-        if (empty($items)) {
-            $pdf->SetFillColor(248, 248, 248);
-            $pdf->Cell($col_desc + $col_qty + $col_unit + $col_total, $row_height, 'لا توجد بنود', 1, 1, 'C', true);
-        }
-        
-        $pdf->Ln(3);
-    }
-    
-    /**
-     * Render totals section
-     */
-    private function render_totals($pdf, $subtotal, $tax_amount, $total) {
-        $col_label = 55;
-        $col_value = 40;
-        $row_height = 8;
-        
-        $pdf->SetX(103);
-        
-        // Subtotal
-        $pdf->SetFont('aealarabiya', '', 10);
-        $pdf->SetTextColor(80, 80, 80);
-        $pdf->Cell($col_label, $row_height, 'المجموع الفرعي:', 0, 0, 'R');
-        $pdf->SetTextColor(10, 42, 74);
-        $pdf->SetFont('aealarabiya', 'B', 10);
-        $pdf->Cell($col_value, $row_height, number_format($subtotal, 2) . ' ج.م', 0, 1, 'L');
-        
-        // Tax
-        $pdf->SetX(103);
-        $pdf->SetFont('aealarabiya', '', 10);
-        $pdf->SetTextColor(80, 80, 80);
-        $pdf->Cell($col_label, $row_height, 'ضريبة القيمة المضافة (14%):', 0, 0, 'R');
-        $pdf->SetTextColor(10, 42, 74);
-        $pdf->SetFont('aealarabiya', 'B', 10);
-        $pdf->Cell($col_value, $row_height, number_format($tax_amount, 2) . ' ج.م', 0, 1, 'L');
-        
-        // Discount if any
-        // $pdf->SetX(103);
-        // $pdf->SetFont('aealarabiya', '', 10);
-        // $pdf->SetTextColor(80, 80, 80);
-        // $pdf->Cell($col_label, $row_height, 'الخصم:', 0, 0, 'R');
-        // $pdf->SetTextColor(244, 67, 54);
-        // $pdf->SetFont('aealarabiya', 'B', 10);
-        // $pdf->Cell($col_value, $row_height, '- 0.00 ج.م', 0, 1, 'L');
-        
-        // Total with highlight
-        $pdf->SetX(103);
-        $pdf->SetFillColor(212, 175, 55);
-        $pdf->SetTextColor(10, 42, 74);
-        $pdf->SetFont('aealarabiya', 'B', 13);
-        $pdf->Cell($col_label, 12, 'الإجمالي:', 0, 0, 'R', true);
-        $pdf->Cell($col_value, 12, number_format($total, 2) . ' ج.م', 0, 1, 'L', true);
-        
         $pdf->Ln(5);
     }
-    
-    /**
-     * Render footer notes
-     */
-    private function render_footer_notes($pdf, $invoice) {
-        $pdf->SetTextColor(100, 100, 100);
-        $pdf->SetFont('aealarabiya', '', 9);
-        
-        // Notes
-        $notes = $invoice->notes ?: "شروط السداد:\n";
-        $notes .= "- يرجى سداد الفاتورة قبل تاريخ الاستحقاق لتجنب تطبيق غرامات التأخير بنسبة 2% شهرياً.\n";
-        $notes .= "- للاستفسارات، يرجى التواصل مع إدارة المبنى على الرقم 01010756695.\n";
-        $notes .= "- يمكن السداد عبر التحويل البنكي أو فوري أو Vodafone Cash.";
-        
-        $pdf->MultiCell(0, 6, $notes, 0, 'R');
-        
-        // Bank details box
-        $pdf->Ln(3);
-        $pdf->SetFillColor(248, 249, 250);
-        $pdf->SetDrawColor(212, 175, 55);
-        $pdf->SetTextColor(10, 42, 74);
-        $pdf->SetFont('aealarabiya', 'B', 9);
-        $pdf->Cell(0, 8, 'تفاصيل الحساب البنكي للتحويل', 1, 1, 'C', true);
-        $pdf->SetFont('aealarabiya', '', 9);
-        $pdf->SetTextColor(80, 80, 80);
-        $pdf->Cell(0, 6, 'البنك: البنك الأهلي المصري | اسم الحساب: مستأجر العقاري | رقم الحساب: سيتم إضافته', 1, 1, 'C', true);
+
+    private function render_items($pdf, $invoice, $totals) {
+        $desc = !empty($invoice->description) ? wp_strip_all_tags($invoice->description) : self::type_label($invoice);
+
+        $pdf->SetTextColor(13, 27, 42);
+        $pdf->SetFont(MS_PDF::FONT, 'B', 11);
+        $pdf->Cell(0, 8, 'التفاصيل', 0, 1, 'R');
+
+        $html  = '<table cellpadding="6" border="0.3" style="border-color:#d1d5db;">';
+        $html .= '<tr style="background-color:#0D1B2A;color:#ffffff;font-weight:bold;">'
+               . '<th width="55%" align="center">البيان</th>'
+               . '<th width="15%" align="center">الكمية</th>'
+               . '<th width="30%" align="center">المبلغ</th></tr>';
+        $html .= '<tr><td>' . esc_html($desc) . '</td>'
+               . '<td align="center">1</td>'
+               . '<td align="center">' . esc_html(MS_PDF::money($totals['subtotal'])) . '</td></tr>';
+        $html .= '</table>';
+
+        $pdf->SetFont(MS_PDF::FONT, '', 10);
+        $pdf->SetTextColor(50, 50, 50);
+        $pdf->writeHTML($html, true, false, true, false, '');
+        $pdf->Ln(2);
     }
-    
-    /**
-     * Custom footer
-     */
-    public function render_pdf_footer($pdf) {
-        $pdf->SetY(-12);
-        $pdf->SetFont('aealarabiya', '', 8);
-        $pdf->SetTextColor(150, 150, 150);
-        $pdf->Cell(0, 5, 'تم إنشاء هذه الفاتورة إلكترونياً بواسطة نظام مستأجر لإدارة المرافق | صفحة ' . $pdf->getAliasNumPage() . ' من ' . $pdf->getAliasNbPages(), 0, 0, 'C');
+
+    private function render_totals($pdf, $totals) {
+        $label = 55;
+        $value = 40;
+
+        if ($totals['tax'] > 0) {
+            $pct = rtrim(rtrim(number_format($totals['rate'] * 100, 2), '0'), '.');
+            $lines = array(
+                array('المبلغ قبل الضريبة:', $totals['subtotal']),
+                array('ضريبة القيمة المضافة (' . $pct . '%):', $totals['tax']),
+            );
+            foreach ($lines as $line) {
+                $pdf->SetX(103);
+                $pdf->SetFont(MS_PDF::FONT, '', 10);
+                $pdf->SetTextColor(80, 80, 80);
+                $pdf->Cell($label, 8, $line[0], 0, 0, 'R');
+                $pdf->SetFont(MS_PDF::FONT, 'B', 10);
+                $pdf->SetTextColor(13, 27, 42);
+                $pdf->Cell($value, 8, MS_PDF::money($line[1]), 0, 1, 'L');
+            }
+        }
+
+        $pdf->SetX(103);
+        $pdf->SetFillColor(212, 175, 55);
+        $pdf->SetTextColor(13, 27, 42);
+        $pdf->SetFont(MS_PDF::FONT, 'B', 13);
+        $pdf->Cell($label, 12, 'الإجمالي المستحق:', 0, 0, 'R', true);
+        $pdf->Cell($value, 12, MS_PDF::money($totals['total']), 0, 1, 'L', true);
+        $pdf->Ln(6);
     }
-    
-    /**
-     * Format date to Arabic
-     */
-    private function format_date($date) {
-        if (!$date) return '---';
-        
-        $timestamp = strtotime($date);
-        $months = [
-            '01' => 'يناير', '02' => 'فبراير', '03' => 'مارس',
-            '04' => 'أبريل', '05' => 'مايو', '06' => 'يونيو',
-            '07' => 'يوليو', '08' => 'أغسطس', '09' => 'سبتمبر',
-            '10' => 'أكتوبر', '11' => 'نوفمبر', '12' => 'ديسمبر'
-        ];
-        
-        $day = date('d', $timestamp);
-        $month = $months[date('m', $timestamp)] ?? date('m', $timestamp);
-        $year = date('Y', $timestamp);
-        
-        return $day . ' ' . $month . ' ' . $year;
+
+    private function render_notes($pdf) {
+        $default_terms = "شروط السداد:\n"
+            . "- يرجى سداد الفاتورة قبل تاريخ الاستحقاق.\n"
+            . "- للاستفسارات يرجى التواصل مع إدارة المبنى أو خدمة العملاء.";
+        $terms = trim((string) get_option('ms_invoice_payment_terms', $default_terms));
+
+        if ($terms !== '') {
+            $pdf->SetTextColor(100, 100, 100);
+            $pdf->SetFont(MS_PDF::FONT, '', 9);
+            $pdf->MultiCell(0, 6, MS_PDF::strip_emoji($terms), 0, 'R');
+        }
+
+        $bank = trim((string) get_option('ms_invoice_bank_details', ''));
+        if ($bank !== '') {
+            $pdf->Ln(3);
+            $pdf->SetFillColor(248, 249, 250);
+            $pdf->SetDrawColor(212, 175, 55);
+            $pdf->SetTextColor(13, 27, 42);
+            $pdf->SetFont(MS_PDF::FONT, 'B', 9);
+            $pdf->Cell(0, 8, 'بيانات التحويل البنكي', 1, 1, 'C', true);
+            $pdf->SetFont(MS_PDF::FONT, '', 9);
+            $pdf->SetTextColor(80, 80, 80);
+            $pdf->MultiCell(0, 6, MS_PDF::strip_emoji($bank), 1, 'C', true);
+        }
     }
-    
-    /**
-     * Get Arabic status label
-     */
-    private function get_status_label($status) {
-        $labels = [
-            'paid' => 'مسددة',
-            'pending' => 'معلقة',
-            'overdue' => 'متأخرة',
-            'cancelled' => 'ملغية',
-            'partial' => 'مسددة جزئياً',
-        ];
-        return $labels[$status] ?? $status;
+
+    private function render_qr($pdf, $invoice, $number, $total) {
+        if (!method_exists($pdf, 'write2DBarcode')) {
+            return;
+        }
+        $payload = wp_json_encode(array(
+            'invoice' => $number,
+            'amount'  => number_format($total, 2, '.', ''),
+            'date'    => substr((string) ($invoice->created_at ?? ''), 0, 10),
+        ));
+
+        // ضع الرمز في أسفل يسار الصفحة بدون تداخل مع المحتوى
+        $y = max($pdf->GetY() + 4, 240);
+        if ($y > 252) {
+            $pdf->AddPage();
+            $y = 20;
+        }
+        $pdf->write2DBarcode($payload, 'QRCODE,M', 168, $y, 28, 28, array(), 'N');
     }
-    
-    /**
-     * Send invoice via email with PDF attachment
-     * 
-     * @param int $invoice_id Invoice ID
-     * @param string $email Recipient email
-     * @return bool Success
-     */
+
+    /* ------------------------------------------------------------------ */
+
     public function email_invoice($invoice_id, $email) {
-        // Generate PDF to temporary file
-        $temp_file = wp_tempnam('invoice_' . $invoice_id . '.pdf');
-        
-        ob_start();
-        $result = $this->generate_invoice($invoice_id, 'F');
-        if (is_wp_error($result)) {
-            ob_end_clean();
-            @unlink($temp_file);
+        $content = $this->generate_invoice($invoice_id, 'S');
+        if (is_wp_error($content) || !$content) {
             return false;
         }
-        ob_end_clean();
-        
-        // Get invoice info for email from ms_ tables
-        global $wpdb;
-        $invoice = $wpdb->get_row($wpdb->prepare(
-            "SELECT i.*, b.title AS building_name, u.unit_number
-            FROM {$wpdb->prefix}ms_invoices i
-            LEFT JOIN {$wpdb->prefix}ms_buildings b ON i.building_id = b.id
-            LEFT JOIN {$wpdb->prefix}ms_units u ON i.unit_id = u.id
-            WHERE i.id = %d",
-            $invoice_id
-        ));
-        
-        $subject = 'فاتورة مصاريف مرافق #' . ($invoice->invoice_number ?: $invoice_id);
-        
-        $message = "مرحباً،\n\n";
-        $message .= "تم إصدار فاتورة جديدة للعقار.\n\n";
-        $message .= "المبنى: {$invoice->building_name}\n";
-        $message .= "الوحدة: {$invoice->unit_number}\n";
-        $message .= "رقم الفاتورة: {$invoice->invoice_number}\n\n";
-        $message .= "يمكنكم الاطلاع على الفاتورة المرفقة.\n\n";
-        $message .= "منصة مستأجر العقاري\n";
-        $message .= "info@ejar-egy.com | 01010756695";
-        
-        $headers = ['Content-Type: text/plain; charset=UTF-8'];
-        
-        $attachments = [$temp_file];
-        
-        $sent = wp_mail($email, $subject, $message, $headers, $attachments);
-        
-        @unlink($temp_file);
-        
+
+        $invoice = self::get_invoice($invoice_id);
+        $number  = self::number($invoice);
+
+        // الكود القديم كان يكتب الملف باسم عربي في مجلد العمل ويرسل ملفاً مؤقتاً فارغاً
+        $tmp = trailingslashit(get_temp_dir()) . 'invoice-' . absint($invoice_id) . '-' . wp_generate_password(8, false) . '.pdf';
+        if (false === file_put_contents($tmp, $content)) {
+            return false;
+        }
+
+        $subject = self::type_label($invoice) . ' #' . $number;
+        $message = "مرحباً،\n\n"
+            . "مرفق نسخة من الفاتورة رقم {$number}.\n"
+            . ($invoice->building_name ? "المبنى: {$invoice->building_name}\n" : '')
+            . ($invoice->unit_number ? "الوحدة: {$invoice->unit_number}\n" : '')
+            . 'المبلغ: ' . number_format((float) $invoice->amount, 2) . " ج.م\n\n"
+            . MS_PDF::brand('name') . "\n" . MS_PDF::brand('contact');
+
+        $sent = wp_mail($email, $subject, $message, array('Content-Type: text/plain; charset=UTF-8'), array($tmp));
+        @unlink($tmp);
+
         return $sent;
     }
 }
 
-/**
- * AJAX handler: Generate invoice PDF for download
- */
-add_action('wp_ajax_mostager_generate_invoice_pdf', 'mostager_ajax_generate_pdf');
-add_action('wp_ajax_nopriv_mostager_generate_invoice_pdf', 'mostager_ajax_generate_pdf');
+/* ====================================================================== *
+ * صلاحيات + نقاط الدخول
+ * ====================================================================== */
 
-function mostager_ajax_generate_pdf() {
-    // Check permissions
-    if (!is_user_logged_in()) {
-        wp_send_json_error('يجب تسجيل الدخول');
+/**
+ * من يحق له تحميل فاتورة؟ الأدمن، صاحب الفاتورة، مالك الوحدة، مدير المبنى.
+ * ملاحظة: $wpdb يرجّع الأرقام كنصوص ← نقارن بعد absint (مقارنة === مباشرة كانت تفشل دائماً).
+ */
+function ms_user_can_access_invoice_pdf($user_id, $invoice) {
+    $user_id = absint($user_id);
+    if (!$user_id || !$invoice) {
+        return false;
     }
-    
-    $invoice_id = isset($_POST['invoice_id']) ? intval($_POST['invoice_id']) : 0;
-    
-    if (!$invoice_id) {
-        wp_send_json_error('رقم الفاتورة مطلوب');
+    if (user_can($user_id, 'manage_options')) {
+        return true;
     }
-    
-    $generator = new Mostager_Invoice_PDF();
-    $result = $generator->generate_invoice($invoice_id, 'D');
-    
-    if (is_wp_error($result)) {
-        wp_send_json_error($result->get_error_message());
+    if (absint($invoice->user_id ?? 0) === $user_id) {
+        return true;
     }
-    
-    wp_send_json_success(['message' => 'تم إنشاء الفاتورة بنجاح']);
+    if (function_exists('ms_invoice_belongs_to_owner') && ms_invoice_belongs_to_owner(absint($invoice->id), $user_id)) {
+        return true;
+    }
+    $building_id = absint($invoice->building_id ?? 0);
+    if ($building_id && function_exists('ms_get_buildings_by_manager')
+        && function_exists('ms_user_has_role') && ms_user_has_role($user_id, 'building_manager')) {
+        foreach ((array) ms_get_buildings_by_manager($user_id) as $b) {
+            if (absint($b->id ?? $b->ID ?? 0) === $building_id) {
+                return true;
+            }
+        }
+    }
+    return false;
 }
 
 /**
- * AJAX handler: Send invoice via email
+ * رابط تحميل الفاتورة — nonce مربوط برقم الفاتورة نفسها.
  */
+function ms_invoice_pdf_url($invoice_id, $inline = false) {
+    $invoice_id = absint($invoice_id);
+    $args = array('action' => 'ms_download_invoice', 'id' => $invoice_id);
+    if ($inline) {
+        $args['inline'] = 1; // عرض داخل المتصفح بدل التحميل
+    }
+    return wp_nonce_url(add_query_arg($args, admin_url('admin-ajax.php')), 'ms_invoice_pdf_' . $invoice_id);
+}
+
+add_action('wp_ajax_ms_download_invoice', 'ms_ajax_download_invoice_pdf');
+function ms_ajax_download_invoice_pdf() {
+    $invoice_id = isset($_GET['id']) ? absint($_GET['id']) : 0;
+
+    if (!$invoice_id || !check_ajax_referer('ms_invoice_pdf_' . $invoice_id, '_wpnonce', false)) {
+        wp_die('رابط غير صالح أو منتهي الصلاحية. حدّث الصفحة وحاول مجدداً.', '', array('response' => 403));
+    }
+
+    $invoice = Mostager_Invoice_PDF::get_invoice($invoice_id);
+    if (!$invoice) {
+        wp_die('الفاتورة غير موجودة.', '', array('response' => 404));
+    }
+    if (!ms_user_can_access_invoice_pdf(get_current_user_id(), $invoice)) {
+        wp_die('غير مصرح لك بتحميل هذه الفاتورة.', '', array('response' => 403));
+    }
+
+    $mode   = !empty($_GET['inline']) ? 'I' : 'D';
+    $result = (new Mostager_Invoice_PDF())->generate_invoice($invoice_id, $mode);
+    if (is_wp_error($result)) {
+        wp_die(esc_html($result->get_error_message()), '', array('response' => 500));
+    }
+    exit;
+}
+
 add_action('wp_ajax_mostager_email_invoice', 'mostager_ajax_email_invoice');
 function mostager_ajax_email_invoice() {
-    if (!is_user_logged_in()) {
-        wp_send_json_error('يجب تسجيل الدخول');
+    $invoice_id = isset($_POST['invoice_id']) ? absint($_POST['invoice_id']) : 0;
+
+    if (!$invoice_id || !check_ajax_referer('ms_invoice_pdf_' . $invoice_id, 'security', false)) {
+        wp_send_json_error('فشل التحقق الأمني', 403);
     }
 
-    $current_user = wp_get_current_user();
-    $invoice_id = isset($_POST['invoice_id']) ? intval($_POST['invoice_id']) : 0;
-
-    // Allow administrators or owners who own the invoice to send it
-    $allowed = current_user_can('manage_options');
-    if (!$allowed && function_exists('ms_invoice_belongs_to_owner') && $invoice_id) {
-        $allowed = ms_invoice_belongs_to_owner($invoice_id, $current_user->ID);
+    $invoice = Mostager_Invoice_PDF::get_invoice($invoice_id);
+    if (!$invoice || !ms_user_can_access_invoice_pdf(get_current_user_id(), $invoice)) {
+        wp_send_json_error('غير مصرح', 403);
     }
 
-    if (! $allowed) {
-        wp_send_json_error('غير مصرح');
+    $email = isset($_POST['email']) ? sanitize_email(wp_unslash($_POST['email'])) : '';
+    if (!is_email($email)) {
+        wp_send_json_error('البريد الإلكتروني غير صالح', 400);
     }
 
-    $email = isset($_POST['email']) ? sanitize_email($_POST['email']) : '';
-    
-    if (!$invoice_id || !$email) {
-        wp_send_json_error('البيانات غير مكتملة');
-    }
-    
-    $generator = new Mostager_Invoice_PDF();
-    $sent = $generator->email_invoice($invoice_id, $email);
-    
-    if ($sent) {
+    if ((new Mostager_Invoice_PDF())->email_invoice($invoice_id, $email)) {
         wp_send_json_success('تم إرسال الفاتورة بنجاح');
-    } else {
-        wp_send_json_error('فشل إرسال الفاتورة');
     }
+    wp_send_json_error('فشل إرسال البريد الإلكتروني', 500);
 }

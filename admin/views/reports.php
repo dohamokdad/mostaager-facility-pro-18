@@ -20,6 +20,7 @@ if (!defined('ABSPATH')) {
             
             <form id="ms-generate-report-form">
                 <?php wp_nonce_field('ms_generate_report', 'nonce'); ?>
+                <?php wp_nonce_field('ms_export_report', 'ms_export_nonce', false); ?>
                 
                 <div class="ms-form-group">
                     <label>نوع التقرير</label>
@@ -58,7 +59,6 @@ if (!defined('ABSPATH')) {
             
             <div class="ms-export-buttons">
                 <button class="ms-btn ms-btn-secondary" data-format="csv">تصدير CSV</button>
-                <button class="ms-btn ms-btn-secondary" data-format="excel">تصدير Excel</button>
                 <button class="ms-btn ms-btn-secondary" data-format="pdf">تصدير PDF</button>
             </div>
         </div>
@@ -263,30 +263,36 @@ if (!defined('ABSPATH')) {
         
         initExportButtons: function() {
             $('.ms-export-buttons button').on('click', function() {
-                const format = $(this).data('format');
+                const $btn = $(this);
+                const format = $btn.data('format');
                 const reportData = $('#ms-report-content pre').text();
-                
-                const data = {
-                    action: 'ms_export_report',
-                    nonce: $('#ms-generate-report-form input[name="nonce"]').val(),
-                    report_type: $('#ms-report-type').val(),
-                    format: format,
-                    data: reportData
-                };
-                
+                const label = $btn.text();
+
+                $btn.prop('disabled', true).text('جاري التصدير...');
+
                 $.ajax({
                     url: ajaxurl,
                     type: 'POST',
-                    data: data,
+                    data: {
+                        action: 'ms_export_report',
+                        // كان يرسل nonce الخاص بإنشاء التقرير ← التصدير كان يفشل دائماً
+                        nonce: $('#ms-generate-report-form input[name="ms_export_nonce"]').val(),
+                        report_type: $('#ms-report-type').val(),
+                        format: format,
+                        data: reportData
+                    },
                     success: function(response) {
-                        if (response.success) {
+                        if (response.success && response.data.download_url) {
                             window.location.href = response.data.download_url;
                         } else {
-                            alert('حدث خطأ أثناء التصدير');
+                            alert((response.data && response.data.message) || 'حدث خطأ أثناء التصدير');
                         }
                     },
                     error: function() {
                         alert('حدث خطأ في الاتصال');
+                    },
+                    complete: function() {
+                        $btn.prop('disabled', false).text(label);
                     }
                 });
             });
